@@ -34,6 +34,25 @@ final class MediaTests: XCTestCase {
         XCTAssertTrue(MediaLibrary(directory: library.directory).sounds.isEmpty)
     }
 
+    /// 用真实播放层读取导入后的两种用途音轨，但不启动扬声器或耳机播放。
+    func testImportedSoundsResolveInRealAudioLayer() async throws {
+        let library = MediaLibrary()
+        let source = try XCTUnwrap(Bundle.main.url(forResource: "bell", withExtension: "wav"))
+        let sound = try await library.importFile(source, name: "Playback route fixture")
+        defer { try? library.remove(sound) }
+        let audio = HeadphoneAudio()
+        defer { audio.stop() }
+        for role in ["sleep", "alarm"] {
+            let player = try audio.preparePreview(name: "custom-\(role).\(sound.id.uuidString)", volume: 0.2)
+            XCTAssertGreaterThan(player.duration, 59)
+            XCTAssertFalse(player.isPlaying)
+            audio.updatePreviewVolume(0.6)
+            XCTAssertEqual(player.volume, 0.6, accuracy: 0.001)
+        }
+        XCTAssertThrowsError(try audio.preparePreview(name: "custom-alarm." + UUID().uuidString, volume: 0.2))
+        XCTAssertThrowsError(try audio.preparePreview(name: "custom-sleep.../../rain", volume: 0.2))
+    }
+
     /// 长音轨保留完整助眠长度，并把独立铃声限制为前六十秒。
     func testCustomAlarmIsTrimmedToSixtySeconds() async throws {
         let source = directory.appendingPathComponent("long.wav")
