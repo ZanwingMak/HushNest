@@ -27,9 +27,12 @@ final class HushNestUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["休息已暂停"].exists)
         let frozen = app.staticTexts["session.remaining"].label
         XCTAssertTrue(app.buttons["session.toggle"].isEnabled)
+        let resumedAt = Date()
         app.buttons["session.toggle"].tap()
         XCTAssertTrue(app.staticTexts["好好休息"].exists)
-        XCTAssertEqual(app.staticTexts["session.remaining"].label, frozen)
+        let resumed = seconds(app.staticTexts["session.remaining"].label)
+        XCTAssertLessThanOrEqual(resumed, seconds(frozen))
+        XCTAssertGreaterThanOrEqual(resumed, seconds(frozen) - Int(ceil(Date().timeIntervalSince(resumedAt))) - 1)
         app.buttons["session.cancel"].tap()
         app.buttons["结束休息"].tap()
         XCTAssertTrue(app.buttons["session.start"].waitForExistence(timeout: 5))
@@ -183,6 +186,11 @@ final class HushNestUITests: XCTestCase {
         add(attachment)
     }
 
+    /// 解析可见倒计时，允许恢复点击和系统动画期间真实流逝的时间。
+    private func seconds(_ text: String) -> Int {
+        text.split(separator: ":").compactMap { Int($0) }.reduce(0) { $0 * 60 + $1 }
+    }
+
     /// 验证耳机内试听的开始、停止与配置页退出时的自动停止。
     func testPreviewInteractions() {
         app.launch()
@@ -221,5 +229,20 @@ final class HushNestUITests: XCTestCase {
         app.tabBars.buttons["设置"].tap()
         XCTAssertTrue(app.buttons["settings.sound"].exists)
         screenshot("10-dark-settings")
+    }
+
+    /// 应用进入后台后再返回，倒计时仍按绝对截止时间进入提醒状态。
+    func testBackgroundDeadlineCatchesUp() {
+        app.launch()
+        app.buttons["test.quickStart"].tap()
+        XCTAssertTrue(app.buttons["session.toggle"].waitForExistence(timeout: 2))
+        let deadline = Date().addingTimeInterval(4)
+        XCUIDevice.shared.press(.home)
+        let elapsed = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in Date() >= deadline }, object: nil)
+        XCTAssertEqual(XCTWaiter.wait(for: [elapsed], timeout: 6), .completed)
+        app.activate()
+        XCTAssertTrue(app.buttons["session.finish"].waitForExistence(timeout: 5))
+        app.buttons["session.finish"].tap()
+        XCTAssertTrue(app.buttons["session.start"].waitForExistence(timeout: 5))
     }
 }
