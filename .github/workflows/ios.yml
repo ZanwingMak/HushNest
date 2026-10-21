@@ -1,0 +1,25 @@
+name: iOS 功能与交互测试
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: 准备 XcodeGen
+        run: command -v xcodegen || brew install xcodegen
+      - name: 执行无声自动化测试
+        run: bash scripts/test.sh
+      - name: 保存测试结果和界面截图
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HushNest-Test-Results
+          path: build/*.xcresult
+          retention-days: 14

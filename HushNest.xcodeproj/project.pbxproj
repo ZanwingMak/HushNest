@@ -1,0 +1,588 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		038380C23C5705CEE92DEB17 /* dawn.wav in Resources */ = {isa = PBXBuildFile; fileRef = C91A332CBE94B768403825BD /* dawn.wav */; };
+		12731B4383232E758BDFEF54 /* RestStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A684E97D3B30375F50F1E0C /* RestStoreTests.swift */; };
+		1F4AB1F0850B671B5E18FADF /* Session.swift in Sources */ = {isa = PBXBuildFile; fileRef = 602B11B4E85471419E669091 /* Session.swift */; };
+		349A87D13D08AC21FE5DA75C /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = F99B5AE81E0A2B16A8C193B8 /* PrivacyInfo.xcprivacy */; };
+		373A4456122D5B6B650A8FC2 /* ocean.wav in Resources */ = {isa = PBXBuildFile; fileRef = 7FA305CE3F1E678B6FF5BABD /* ocean.wav */; };
+		3EB79FF118A95A6F52EE3CEA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DDB5E92EDC2B7DE1805FC9EE /* Assets.xcassets */; };
+		5521C32BDCC57124FC5C9765 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB9C9561E37A17915DC53542 /* SettingsView.swift */; };
+		564504FA74AC417735BC394B /* SessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C5E78FC0FA3999BED11280E /* SessionTests.swift */; };
+		622B58E5031EA70C82F5F195 /* HeadphoneAudio.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB7FC083FAA1FF6B3DABD0D /* HeadphoneAudio.swift */; };
+		7E03353193A66732F2EAABF3 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65A8B5AEDF7D737E6BF01E93 /* Theme.swift */; };
+		8E9C69E4F27906C7F4803C81 /* orbit.wav in Resources */ = {isa = PBXBuildFile; fileRef = D3DEACE88C79D54A68DE4923 /* orbit.wav */; };
+		948FDD9E356BE6BA62D70AC1 /* HushNestApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6A8FB9868CA065770C28A24 /* HushNestApp.swift */; };
+		A015D2EF3CBCC1F92DA6029A /* RestStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD39DB714B595AB9DDD770E8 /* RestStore.swift */; };
+		B0F4B9C672F2027E8614AA26 /* HushNestUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1B227642A3BE259EC9C1DFB /* HushNestUITests.swift */; };
+		BDCB18A1C8C6B45650F645DA /* Sheets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32FE2BC123CE8D582C3F1955 /* Sheets.swift */; };
+		C9DC39025D35D8793451C9AC /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F1A3672678A888B7C1AECD8 /* HistoryView.swift */; };
+		D25B9468D0A9FE93BC23D014 /* bell.wav in Resources */ = {isa = PBXBuildFile; fileRef = 974620F62057B9AA5BE7C29E /* bell.wav */; };
+		DB52A24D2A0800B22E13C9DF /* rain.wav in Resources */ = {isa = PBXBuildFile; fileRef = 8F355B85D2F4BB532F4E17F3 /* rain.wav */; };
+		DB8213BA193E09CBBD754310 /* brown.wav in Resources */ = {isa = PBXBuildFile; fileRef = 27940971758A483C5BC39478 /* brown.wav */; };
+		DD311AE10A84D22C7FA021BE /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C52300501992275C026E6850 /* RootView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		C46DC48B2DE4DFCF15F241F8 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0E8B15E9C75C8E42150F03B7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7792202C75429FB5D8B65770;
+			remoteInfo = HushNest;
+		};
+		CF26C8195BD90634C70F7D56 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0E8B15E9C75C8E42150F03B7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7792202C75429FB5D8B65770;
+			remoteInfo = HushNest;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		27940971758A483C5BC39478 /* brown.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = brown.wav; sourceTree = "<group>"; };
+		32FE2BC123CE8D582C3F1955 /* Sheets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sheets.swift; sourceTree = "<group>"; };
+		3C5E78FC0FA3999BED11280E /* SessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionTests.swift; sourceTree = "<group>"; };
+		3F1A3672678A888B7C1AECD8 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
+		5FB7FC083FAA1FF6B3DABD0D /* HeadphoneAudio.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeadphoneAudio.swift; sourceTree = "<group>"; };
+		602B11B4E85471419E669091 /* Session.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Session.swift; sourceTree = "<group>"; };
+		65A8B5AEDF7D737E6BF01E93 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		6A684E97D3B30375F50F1E0C /* RestStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestStoreTests.swift; sourceTree = "<group>"; };
+		7FA305CE3F1E678B6FF5BABD /* ocean.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = ocean.wav; sourceTree = "<group>"; };
+		8F355B85D2F4BB532F4E17F3 /* rain.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = rain.wav; sourceTree = "<group>"; };
+		974620F62057B9AA5BE7C29E /* bell.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = bell.wav; sourceTree = "<group>"; };
+		B58425BDB02461CDAB43030C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		BD39DB714B595AB9DDD770E8 /* RestStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestStore.swift; sourceTree = "<group>"; };
+		BF98D30F0A19E9A0C6350843 /* HushNestUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = HushNestUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C52300501992275C026E6850 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		C5BD64A1A3F9FE6123550084 /* HushNest.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = HushNest.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C91A332CBE94B768403825BD /* dawn.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = dawn.wav; sourceTree = "<group>"; };
+		CB9C9561E37A17915DC53542 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		D1B227642A3BE259EC9C1DFB /* HushNestUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HushNestUITests.swift; sourceTree = "<group>"; };
+		D3DEACE88C79D54A68DE4923 /* orbit.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = orbit.wav; sourceTree = "<group>"; };
+		DDB5E92EDC2B7DE1805FC9EE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		E6A8FB9868CA065770C28A24 /* HushNestApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HushNestApp.swift; sourceTree = "<group>"; };
+		E731D60A8592B80479D15A2F /* HushNestTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = HushNestTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		F99B5AE81E0A2B16A8C193B8 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		171654617E0383A49FBCB6E9 /* HushNest */ = {
+			isa = PBXGroup;
+			children = (
+				5FB7FC083FAA1FF6B3DABD0D /* HeadphoneAudio.swift */,
+				3F1A3672678A888B7C1AECD8 /* HistoryView.swift */,
+				E6A8FB9868CA065770C28A24 /* HushNestApp.swift */,
+				BD39DB714B595AB9DDD770E8 /* RestStore.swift */,
+				C52300501992275C026E6850 /* RootView.swift */,
+				602B11B4E85471419E669091 /* Session.swift */,
+				CB9C9561E37A17915DC53542 /* SettingsView.swift */,
+				32FE2BC123CE8D582C3F1955 /* Sheets.swift */,
+				65A8B5AEDF7D737E6BF01E93 /* Theme.swift */,
+				2BC490343A208C7082AADA57 /* Resources */,
+			);
+			path = HushNest;
+			sourceTree = "<group>";
+		};
+		227998733503066B2A9D6AE5 /* HushNestUITests */ = {
+			isa = PBXGroup;
+			children = (
+				D1B227642A3BE259EC9C1DFB /* HushNestUITests.swift */,
+			);
+			path = HushNestUITests;
+			sourceTree = "<group>";
+		};
+		2BC490343A208C7082AADA57 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				DDB5E92EDC2B7DE1805FC9EE /* Assets.xcassets */,
+				974620F62057B9AA5BE7C29E /* bell.wav */,
+				27940971758A483C5BC39478 /* brown.wav */,
+				C91A332CBE94B768403825BD /* dawn.wav */,
+				B58425BDB02461CDAB43030C /* Info.plist */,
+				7FA305CE3F1E678B6FF5BABD /* ocean.wav */,
+				D3DEACE88C79D54A68DE4923 /* orbit.wav */,
+				F99B5AE81E0A2B16A8C193B8 /* PrivacyInfo.xcprivacy */,
+				8F355B85D2F4BB532F4E17F3 /* rain.wav */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		79063892199B49D2CB892C00 = {
+			isa = PBXGroup;
+			children = (
+				171654617E0383A49FBCB6E9 /* HushNest */,
+				A20848656D0187BF2B82CB91 /* HushNestTests */,
+				227998733503066B2A9D6AE5 /* HushNestUITests */,
+				BCB9F090AC4643360B38382B /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A20848656D0187BF2B82CB91 /* HushNestTests */ = {
+			isa = PBXGroup;
+			children = (
+				6A684E97D3B30375F50F1E0C /* RestStoreTests.swift */,
+				3C5E78FC0FA3999BED11280E /* SessionTests.swift */,
+			);
+			path = HushNestTests;
+			sourceTree = "<group>";
+		};
+		BCB9F090AC4643360B38382B /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				C5BD64A1A3F9FE6123550084 /* HushNest.app */,
+				E731D60A8592B80479D15A2F /* HushNestTests.xctest */,
+				BF98D30F0A19E9A0C6350843 /* HushNestUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		2CA84A73F974BB55B6879C15 /* HushNestUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 25E24852EED6FE6304D56073 /* Build configuration list for PBXNativeTarget "HushNestUITests" */;
+			buildPhases = (
+				8E5FDFFBC38AE08299375420 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				5C1912103C8C7D6A063F0FAB /* PBXTargetDependency */,
+			);
+			name = HushNestUITests;
+			packageProductDependencies = (
+			);
+			productName = HushNestUITests;
+			productReference = BF98D30F0A19E9A0C6350843 /* HushNestUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		7792202C75429FB5D8B65770 /* HushNest */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 07FFC9932E246645C81FE450 /* Build configuration list for PBXNativeTarget "HushNest" */;
+			buildPhases = (
+				4BA69815DFFB659FB09538E1 /* Sources */,
+				AE70B0CD80D3E9778F227B6C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = HushNest;
+			packageProductDependencies = (
+			);
+			productName = HushNest;
+			productReference = C5BD64A1A3F9FE6123550084 /* HushNest.app */;
+			productType = "com.apple.product-type.application";
+		};
+		E11AEEE5AC8DCD645BDFA005 /* HushNestTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B0F021D15AA1A92C327A9013 /* Build configuration list for PBXNativeTarget "HushNestTests" */;
+			buildPhases = (
+				CEDC0F42D1EA9506A5811D84 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				8A844FA337873D27CA41EF50 /* PBXTargetDependency */,
+			);
+			name = HushNestTests;
+			packageProductDependencies = (
+			);
+			productName = HushNestTests;
+			productReference = E731D60A8592B80479D15A2F /* HushNestTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		0E8B15E9C75C8E42150F03B7 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					2CA84A73F974BB55B6879C15 = {
+						DevelopmentTeam = 2Q2LMV7BR6;
+						ProvisioningStyle = Automatic;
+						TestTargetID = 7792202C75429FB5D8B65770;
+					};
+					7792202C75429FB5D8B65770 = {
+						DevelopmentTeam = 2Q2LMV7BR6;
+						ProvisioningStyle = Automatic;
+					};
+					E11AEEE5AC8DCD645BDFA005 = {
+						DevelopmentTeam = 2Q2LMV7BR6;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 074FEAFB318FA0CB989ADA4B /* Build configuration list for PBXProject "HushNest" */;
+			developmentRegion = "zh-Hans";
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				"zh-Hans",
+			);
+			mainGroup = 79063892199B49D2CB892C00;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = BCB9F090AC4643360B38382B /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				7792202C75429FB5D8B65770 /* HushNest */,
+				E11AEEE5AC8DCD645BDFA005 /* HushNestTests */,
+				2CA84A73F974BB55B6879C15 /* HushNestUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		AE70B0CD80D3E9778F227B6C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3EB79FF118A95A6F52EE3CEA /* Assets.xcassets in Resources */,
+				349A87D13D08AC21FE5DA75C /* PrivacyInfo.xcprivacy in Resources */,
+				D25B9468D0A9FE93BC23D014 /* bell.wav in Resources */,
+				DB8213BA193E09CBBD754310 /* brown.wav in Resources */,
+				038380C23C5705CEE92DEB17 /* dawn.wav in Resources */,
+				373A4456122D5B6B650A8FC2 /* ocean.wav in Resources */,
+				8E9C69E4F27906C7F4803C81 /* orbit.wav in Resources */,
+				DB52A24D2A0800B22E13C9DF /* rain.wav in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		4BA69815DFFB659FB09538E1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				622B58E5031EA70C82F5F195 /* HeadphoneAudio.swift in Sources */,
+				C9DC39025D35D8793451C9AC /* HistoryView.swift in Sources */,
+				948FDD9E356BE6BA62D70AC1 /* HushNestApp.swift in Sources */,
+				A015D2EF3CBCC1F92DA6029A /* RestStore.swift in Sources */,
+				DD311AE10A84D22C7FA021BE /* RootView.swift in Sources */,
+				1F4AB1F0850B671B5E18FADF /* Session.swift in Sources */,
+				5521C32BDCC57124FC5C9765 /* SettingsView.swift in Sources */,
+				BDCB18A1C8C6B45650F645DA /* Sheets.swift in Sources */,
+				7E03353193A66732F2EAABF3 /* Theme.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8E5FDFFBC38AE08299375420 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B0F4B9C672F2027E8614AA26 /* HushNestUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CEDC0F42D1EA9506A5811D84 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				12731B4383232E758BDFEF54 /* RestStoreTests.swift in Sources */,
+				564504FA74AC417735BC394B /* SessionTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		5C1912103C8C7D6A063F0FAB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7792202C75429FB5D8B65770 /* HushNest */;
+			targetProxy = CF26C8195BD90634C70F7D56 /* PBXContainerItemProxy */;
+		};
+		8A844FA337873D27CA41EF50 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7792202C75429FB5D8B65770 /* HushNest */;
+			targetProxy = C46DC48B2DE4DFCF15F241F8 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		22E6C4B59324DC95C397AC40 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 2Q2LMV7BR6;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		26FC042A3EF38DF0C338DD33 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/HushNest.app/HushNest";
+			};
+			name = Release;
+		};
+		41E7D57AB0ADDFAEFC2FB482 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = HushNest;
+			};
+			name = Release;
+		};
+		A1B04DDF2C330BCF2B96DB85 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = HushNest/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.zanwingmak.HushNest;
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		B8096B9771DDA7DFABB93B69 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/HushNest.app/HushNest";
+			};
+			name = Debug;
+		};
+		C376C7EACC5084EE3717209B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = HushNest;
+			};
+			name = Debug;
+		};
+		CDE3B76D12EA7838FBFB2EE5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = HushNest/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.zanwingmak.HushNest;
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		ED790A2E84022A3D25E46728 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 2Q2LMV7BR6;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		074FEAFB318FA0CB989ADA4B /* Build configuration list for PBXProject "HushNest" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				22E6C4B59324DC95C397AC40 /* Debug */,
+				ED790A2E84022A3D25E46728 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		07FFC9932E246645C81FE450 /* Build configuration list for PBXNativeTarget "HushNest" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CDE3B76D12EA7838FBFB2EE5 /* Debug */,
+				A1B04DDF2C330BCF2B96DB85 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		25E24852EED6FE6304D56073 /* Build configuration list for PBXNativeTarget "HushNestUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C376C7EACC5084EE3717209B /* Debug */,
+				41E7D57AB0ADDFAEFC2FB482 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		B0F021D15AA1A92C327A9013 /* Build configuration list for PBXNativeTarget "HushNestTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B8096B9771DDA7DFABB93B69 /* Debug */,
+				26FC042A3EF38DF0C338DD33 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 0E8B15E9C75C8E42150F03B7 /* Project object */;
+}
