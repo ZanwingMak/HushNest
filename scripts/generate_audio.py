@@ -145,7 +145,7 @@ def write_wave(name, values):
 
 
 def main():
-    """可重复生成八种音景和八种提醒，不下载第三方版权素材。"""
+    """可重复生成八种音景和十四种提醒，不下载第三方版权素材。"""
     ROOT.mkdir(parents=True, exist_ok=True)
     for name in ['rain', 'ocean', 'brown', 'pink', 'stream', 'forest', 'fireplace', 'night']:
         write_wave(name, ambience(name))

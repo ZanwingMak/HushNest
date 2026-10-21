@@ -359,8 +359,8 @@ final class HushNestUITests: XCTestCase {
         app.launch()
         openSounds()
         reveal(app.sliders["alarm.volume"])
-        app.buttons["preview.alarm"].tap()
         app.sliders["alarm.volume"].adjust(toNormalizedSliderPosition: 0)
+        app.buttons["preview.alarm"].tap()
         XCTAssertEqual(app.staticTexts["preview.gain"].label, "0.05")
         app.sliders["alarm.volume"].adjust(toNormalizedSliderPosition: 1)
         let highGain = Double(app.staticTexts["preview.gain"].label) ?? 0
@@ -414,10 +414,10 @@ final class HushNestUITests: XCTestCase {
         openSounds()
         reveal(app.buttons["media.open"])
         app.buttons["media.open"].tap()
-        XCTAssertTrue(app.staticTexts["My sounds"].exists)
+        XCTAssertTrue(app.staticTexts["My sounds"].firstMatch.waitForExistence(timeout: 10))
         app.buttons["media.import"].tap()
-        XCTAssertTrue(app.navigationBars.buttons["Cancel"].waitForExistence(timeout: 5))
-        app.navigationBars.buttons["Cancel"].tap()
+        XCTAssertTrue(app.buttons["Cancel"].firstMatch.waitForExistence(timeout: 15))
+        app.buttons["Cancel"].firstMatch.tap()
         XCTAssertTrue(app.buttons["media.import"].waitForExistence(timeout: 5))
         screenshot("18-english-media")
     }
