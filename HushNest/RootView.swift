@@ -146,7 +146,17 @@ struct RestView: View {
     /// 按会话状态展示进度、截止时间和可访问的剩余时间。
     private func activeTimer(_ session: RestSession) -> some View {
         VStack(spacing: 20) {
-            ZStack {
+            if typeSize.isAccessibilitySize {
+                VStack(spacing: 16) {
+                    Text(phaseTitle(session.phase)).font(.headline).accessibilityIdentifier("session.phase")
+                    Text(session.phase == .ringing ? "时间到了" : formattedRemaining)
+                        .font(.system(size: 52, weight: .light, design: .rounded)).monospacedDigit()
+                        .minimumScaleFactor(0.5).lineLimit(1).accessibilityIdentifier("session.remaining")
+                    Text("\(session.deadline.formatted(date: .omitted, time: .shortened)) 轻轻唤醒")
+                        .font(.subheadline).foregroundStyle(.secondary)
+                }.frame(maxWidth: .infinity).padding(.vertical, 24)
+            } else {
+                ZStack {
                 Circle().stroke(Palette.accent.opacity(0.08), lineWidth: 3)
                 Circle().trim(from: 0, to: max(0, min(1, store.remaining / session.duration)))
                     .stroke(Palette.accent, style: StrokeStyle(lineWidth: 3, lineCap: .round))
@@ -162,7 +172,8 @@ struct RestView: View {
                     Text(session.phase == .ringing ? "慢慢睁眼，带走这份轻松" : "\(session.deadline.formatted(date: .omitted, time: .shortened)) 轻轻唤醒")
                         .font(.caption).foregroundStyle(.secondary)
                 }.padding(30)
-            }.frame(maxWidth: 310).aspectRatio(1, contentMode: .fit).padding(.horizontal, 12)
+                }.frame(maxWidth: 310).aspectRatio(1, contentMode: .fit).padding(.horizontal, 12)
+            }
             if session.snoozeCount > 0 { Text("已稍后提醒 \(session.snoozeCount) 次").font(.caption).foregroundStyle(.secondary) }
         }.padding(.vertical, 8)
     }
@@ -208,18 +219,22 @@ struct RestView: View {
                     Button {
                         if session.phase == .resting { store.pause() } else { store.resume() }
                     } label: {
-                        Label(session.phase == .resting ? "暂停一下" : "确认耳机，继续休息", systemImage: session.phase == .resting ? "pause.fill" : "play.fill")
+                        Label(session.phase == .resting ? "暂停一下" : (typeSize.isAccessibilitySize ? "继续休息" : "确认耳机，继续休息"), systemImage: session.phase == .resting ? "pause.fill" : "play.fill")
                     }.buttonStyle(NestButtonStyle()).accessibilityIdentifier("session.toggle")
                     Button("结束这次休息") { cancelConfirmation = true }
                         .font(.subheadline).frame(minHeight: 44).accessibilityIdentifier("session.cancel")
                 }
             } else {
                 Button { store.start(duration: selectedDuration) } label: {
-                    Label("开始我的片刻安静", systemImage: "play.fill")
+                    Label(typeSize.isAccessibilitySize ? "开始休息" : "开始我的片刻安静", systemImage: "play.fill")
                 }.buttonStyle(NestButtonStyle()).accessibilityIdentifier("session.start")
                 Text("免费 · 无广告 · 无订阅 · 数据仅在本机").font(.caption2).foregroundStyle(.secondary)
             }
         }.padding(.horizontal, 24).padding(.top, 16).padding(.bottom, 12).background(Palette.background)
+            .transaction { transaction in
+                transaction.animation = nil
+                transaction.disablesAnimations = true
+            }
     }
 
     /// 为各状态提供明确的界面文案，不把中断误标为运行中。

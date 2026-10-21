@@ -22,7 +22,11 @@ struct NestButtonStyle: ButtonStyle {
     var secondary = false
     /// 保留系统按钮语义，同时为按下状态提供清晰的视觉反馈。
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label.font(.headline).frame(maxWidth: .infinity).frame(minHeight: 54)
+        configuration.label.font(.headline)
+            .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, 16).padding(.vertical, 16)
+            .frame(maxWidth: .infinity, minHeight: 54)
             .foregroundStyle(secondary ? Palette.accent : Palette.onAccent)
             .background(secondary ? Palette.accent.opacity(0.1) : Palette.accent, in: RoundedRectangle(cornerRadius: 18))
             .opacity(configuration.isPressed ? 0.72 : 1)

@@ -166,6 +166,9 @@ final class HushNestUITests: XCTestCase {
         XCTAssertTrue(app.buttons["session.toggle"].isHittable)
         app.buttons["session.toggle"].tap()
         XCTAssertTrue(app.buttons["session.cancel"].isHittable)
+        let settledAt = Date().addingTimeInterval(1)
+        let settled = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in Date() >= settledAt }, object: nil)
+        XCTAssertEqual(XCTWaiter.wait(for: [settled], timeout: 3), .completed)
         screenshot("07-accessibility")
     }
 
