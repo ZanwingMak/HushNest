@@ -7,6 +7,7 @@ final class RestStore: ObservableObject {
     @Published var preferences: Preferences { didSet { savePreferences() } }
     @Published private(set) var session: RestSession?
     @Published private(set) var records: [RestRecord]
+    @Published var theme: AppTheme { didSet { defaults.set(theme.rawValue, forKey: "theme") } }
     @Published var errorMessage: String?
     @Published private(set) var routeName = "尚未连接耳机"
     @Published private(set) var hasHeadphones = false
@@ -20,9 +21,12 @@ final class RestStore: ObservableObject {
     private var sessionPreferences: Preferences?
     private var previewTask: Task<Void, Never>?
     private let notificationsEnabled: Bool
+    private let vibrate: () -> Void
+    private var lastVibration: Date?
+    private var resumeAlarmOnReconnect = false
 
     var remaining: TimeInterval { session?.remaining(at: now) ?? 0 }
-    var totalMinutes: Int { records.filter(\.completed).reduce(0) { $0 + $1.minutes } }
+    var totalMinutes: Int { records.filter(\.completed).reduce(0) { $0 + ($1.seconds ?? $1.minutes * 60) } / 60 }
     var completedCount: Int { records.filter(\.completed).count }
     var isTesting: Bool {
         #if DEBUG
@@ -33,13 +37,16 @@ final class RestStore: ObservableObject {
     }
 
     /// 注入时钟、音频与本地存储，恢复被系统结束的会话时保持暂停。
-    init(audio: RestAudio, defaults: UserDefaults = .standard, clock: @escaping () -> Date = Date.init, runsTimer: Bool = true, notificationsEnabled: Bool = true) {
+    init(audio: RestAudio, defaults: UserDefaults = .standard, clock: @escaping () -> Date = Date.init, runsTimer: Bool = true, notificationsEnabled: Bool = true, vibrate: @escaping () -> Void = {}) {
+        self.theme = AppTheme(rawValue: defaults.string(forKey: "theme") ?? "") ?? .forest
+        self.vibrate = vibrate
         self.audio = audio
         self.defaults = defaults
         self.clock = clock
         self.notificationsEnabled = notificationsEnabled
         now = clock()
         var loaded = Self.decode(Preferences.self, key: "preferences", defaults: defaults) ?? Preferences()
+        if loaded.presets == [15, 25, 45, 90] { loaded.presets = [15, 30, 45, 60] }
         loaded.normalize()
         preferences = loaded
         records = Self.decode([RestRecord].self, key: "records", defaults: defaults) ?? []
@@ -54,14 +61,8 @@ final class RestStore: ObservableObject {
             sessionPreferences = Self.decode(Preferences.self, key: "sessionPreferences", defaults: defaults) ?? loaded
         }
         refreshRoute()
-        audio.onSafetyStop = { [weak self] reason in self?.block(reason) }
-        audio.onRouteUpdate = { [weak self] in self?.refreshRoute() }
-        audio.onPause = { [weak self] in
-            guard let self else { return }
-            if self.session?.phase == .resting { self.pause() }
-            else if self.session?.phase == .ringing { self.block("你已暂停唤醒铃声，请回到应用手动继续或结束休息。") }
-            else { self.stopPreview() }
-        }
+        audio.onSafetyStop = { [weak self] reason, disconnected in self?.block(reason, disconnected: disconnected) }
+        audio.onRouteUpdate = { [weak self] in self?.handleRouteUpdate() }
         if runsTimer {
             timer = Timer.publish(every: 0.25, on: .main, in: .common).autoconnect().sink { [weak self] _ in self?.tick() }
         }
@@ -73,7 +74,7 @@ final class RestStore: ObservableObject {
         guard session == nil else { return }
         stopPreview()
         now = clock()
-        let duration = duration ?? TimeInterval(preferences.minutes * 60)
+        let duration = duration ?? preferences.durationSeconds
         guard duration.isFinite, duration >= 1, duration <= 86400 else {
             errorMessage = "请选择有效的提醒时间。"
             return
@@ -84,7 +85,6 @@ final class RestStore: ObservableObject {
             sessionPreferences = preferences
             persistSession()
             scheduleNotification()
-            updateLockScreen()
         } catch { errorMessage = error.localizedDescription }
         refreshRoute()
     }
@@ -96,7 +96,14 @@ final class RestStore: ObservableObject {
         let oldPhase = current.phase
         let shouldEnd = current.tick(at: now)
         session = current
-        if current.phase == .ringing { (audio as? HeadphoneAudio)?.stopAmbienceIfRinging() }
+        if current.phase == .ringing {
+            (audio as? HeadphoneAudio)?.stopAmbienceIfRinging()
+            if (sessionPreferences ?? preferences).vibrationEnabled,
+               lastVibration.map({ now.timeIntervalSince($0) >= 2 }) ?? true {
+                vibrate()
+                lastVibration = now
+            }
+        }
         if oldPhase != current.phase { persistSession() }
         if shouldEnd { finish(completed: true) }
     }
@@ -112,7 +119,7 @@ final class RestStore: ObservableObject {
         cancelNotification()
     }
 
-    /// 用户明确继续时重新验证耳机，失败时保留原有暂停状态。
+    /// 恢复时重新验证耳机，失败时保留暂停状态；响铃重连由会话策略触发。
     func resume() {
         guard var current = session, [.paused, .blocked].contains(current.phase) else { return }
         now = clock()
@@ -120,9 +127,10 @@ final class RestStore: ObservableObject {
         do {
             try audio.start(preferences: sessionPreferences ?? preferences, remaining: current.remaining(at: now))
             session = current
+            resumeAlarmOnReconnect = false
+            lastVibration = nil
             persistSession()
             if current.phase == .resting { scheduleNotification() }
-            updateLockScreen()
         } catch { errorMessage = error.localizedDescription }
         refreshRoute()
     }
@@ -138,7 +146,6 @@ final class RestStore: ObservableObject {
             session = current
             persistSession()
             scheduleNotification()
-            updateLockScreen()
         } catch {
             block(error.localizedDescription)
         }
@@ -147,12 +154,15 @@ final class RestStore: ObservableObject {
     /// 结束会话仅写入一次记录，同时清除音频、预约和恢复快照。
     func finish(completed: Bool) {
         guard let current = session else { return }
+        resumeAlarmOnReconnect = false
+        lastVibration = nil
         audio.stop()
         cancelNotification()
         let end = clock()
         records.insert(RestRecord(id: current.id, startedAt: current.startedAt, endedAt: end,
                                   minutes: max(0, Int(current.restedSeconds(at: end) / 60)),
-                                  completed: completed, sound: (sessionPreferences ?? preferences).sleepSound), at: 0)
+                                  completed: completed, sound: (sessionPreferences ?? preferences).sleepSound,
+                                  seconds: max(0, Int(current.restedSeconds(at: end)))), at: 0)
         records = Array(records.prefix(365))
         encode(records, key: "records")
         session = nil
@@ -160,14 +170,15 @@ final class RestStore: ObservableObject {
         persistSession()
     }
 
-    /// 安全事件立即停止音轨，保留原截止时间且禁止重连自动恢复。
-    func block(_ reason: String) {
+    /// 安全事件立即停止音轨；仅响铃阶段断连允许限时自动续响。
+    func block(_ reason: String, disconnected: Bool = false) {
         previewTask?.cancel()
         previewing = nil
         audio.stop()
         guard var current = session else { return }
         now = clock()
-        current.pause(at: now, reason: reason)
+        resumeAlarmOnReconnect = (current.phase == .ringing || (current.phase == .resting && now >= current.deadline)) && disconnected
+        current.pause(at: now, reason: resumeAlarmOnReconnect ? "耳机已断开，响铃已停止。三分钟内重新连接后将尝试自动续响。" : reason)
         session = current
         persistSession()
         cancelNotification()
@@ -203,11 +214,37 @@ final class RestStore: ObservableObject {
         hasHeadphones = audio.isHeadphoneConnected
     }
 
+    /// 在用户操作后无声激活路由，并等待蓝牙路由通知刷新界面。
+    func reconnectHeadphones() {
+        do { try audio.refreshConnection() } catch { errorMessage = error.localizedDescription }
+        handleRouteUpdate()
+        Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(700))
+            self?.handleRouteUpdate()
+        }
+    }
+
+    /// 无助眠音不使用静音音轨保活；保留用户确认的尽力预约与无声通知。
+    func enteredBackground() {}
+
+    /// 响铃期间断连后仅在真实耳机重连时续响，休息阶段保持手动恢复。
+    private func handleRouteUpdate() {
+        refreshRoute()
+        if resumeAlarmOnReconnect && hasHeadphones {
+            if let session, clock().timeIntervalSince(session.deadline) < 180 { resume() }
+            else { resumeAlarmOnReconnect = false }
+        }
+    }
+
     /// 前台恢复时核对路由，避免界面仍显示已连接或运行状态。
     func becameActive() {
         refreshRoute()
         if let current = session, [.resting, .ringing].contains(current.phase), !hasHeadphones {
-            block("当前没有可用耳机，声音已停止。连接后请手动继续。")
+            block("当前没有可用耳机，声音已停止。连接后请手动继续。", disconnected: true)
+        }
+        if resumeAlarmOnReconnect && hasHeadphones {
+            if let session, clock().timeIntervalSince(session.deadline) < 180 { resume() }
+            else { resumeAlarmOnReconnect = false }
         }
         tick()
         if notificationsEnabled { refreshNotifications() }
@@ -218,6 +255,22 @@ final class RestStore: ObservableObject {
         guard (1...720).contains(minutes), !preferences.presets.contains(minutes) else { return }
         preferences.presets.append(minutes)
         preferences.presets.sort()
+    }
+
+    /// 保存精确到秒的自定义预设，整分钟沿用已有预设并保持去重。
+    func addDurationPreset(_ seconds: Int) {
+        guard (1...43200).contains(seconds) else { return }
+        if seconds % 60 == 0 { addPreset(seconds / 60) }
+        else if !preferences.precisePresets.contains(seconds) {
+            preferences.precisePresets.append(seconds)
+            preferences.precisePresets.sort()
+        }
+    }
+
+    /// 删除一个精确时长，不改变当前选中值。
+    func removeDurationPreset(_ seconds: Int) {
+        if seconds % 60 == 0 { removePreset(seconds / 60) }
+        else { preferences.precisePresets.removeAll { $0 == seconds } }
     }
 
     /// 删除指定预设，不改变已选时长。
@@ -250,8 +303,8 @@ final class RestStore: ObservableObject {
     private func scheduleNotification() {
         guard notificationsEnabled, let current = session, current.deadline > clock() else { return }
         let content = UNMutableNotificationContent()
-        content.title = "耳憩 · 休息时间到了"
-        content.body = "耳机提醒依赖仍在运行的助眠音频。打开耳憩查看当前状态。"
+        content.title = "休息好啦，慢慢醒来"
+        content.body = "伸个懒腰，给自己一点时间。打开耳憩，结束休息或再睡一会儿。"
         content.sound = nil
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(1, current.deadline.timeIntervalSince(clock())), repeats: false)
         UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: "rest-deadline", content: content, trigger: trigger))
@@ -262,12 +315,6 @@ final class RestStore: ObservableObject {
         guard notificationsEnabled else { return }
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["rest-deadline"])
         UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: ["rest-deadline"])
-    }
-
-    /// 更新锁屏元数据，让用户知道当前助眠会话的截止时间。
-    private func updateLockScreen() {
-        guard let session else { return }
-        audio.updateNowPlaying(deadline: session.deadline, duration: session.duration)
     }
 
     /// 保存完整配置，应用重启后恢复用户选择。

@@ -86,7 +86,7 @@ final class HushNestUITests: XCTestCase {
     func testSoundSelectionPersists() {
         app.launch()
         reveal(app.buttons["sound.open"])
-        app.buttons["sound.open"].tap()
+        openSounds()
         app.buttons["sound.ocean"].tap()
         app.buttons["sound.done"].tap()
         XCTAssertTrue(app.staticTexts["潮汐 → 晨光"].exists)
@@ -104,10 +104,9 @@ final class HushNestUITests: XCTestCase {
         XCTAssertTrue(stepper.waitForExistence(timeout: 5))
         stepper.buttons.element(boundBy: 1).tap()
         let presetSwitch = app.switches["duration.savePreset"]
-        presetSwitch.coordinate(withNormalizedOffset: CGVector(dx: 0.93, dy: 0.5)).tap()
         XCTAssertEqual(presetSwitch.value as? String, "1")
         app.buttons["duration.done"].tap()
-        XCTAssertTrue(app.buttons["preset.26"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["preset.31"].waitForExistence(timeout: 5))
         app.segmentedControls["schedule.mode"].buttons["指定时间"].tap()
         XCTAssertTrue(app.datePickers["clock.picker"].exists)
         app.buttons["session.start"].tap()
@@ -172,10 +171,19 @@ final class HushNestUITests: XCTestCase {
         screenshot("07-accessibility")
     }
 
+    /// 声音入口可通过滚动触达，避免点击被固定底部操作区遮挡的部分。
+    private func openSounds() {
+        reveal(app.buttons["sound.open"])
+        app.buttons["sound.open"].tap()
+        XCTAssertTrue(app.buttons["sound.done"].waitForExistence(timeout: 5))
+    }
+
     /// 滚动使目标控件可见，避免测试依赖固定屏幕坐标。
     private func reveal(_ element: XCUIElement) {
         for _ in 0..<5 {
-            if element.isHittable { return }
+            let start = app.buttons["session.start"]
+            let behindControls = start.exists && start.isHittable && element.exists && element.frame.intersects(start.frame)
+            if element.exists && element.isHittable && !behindControls { return }
             app.swipeUp()
         }
         XCTAssertTrue(element.isHittable, "目标控件应可通过滚动触达")
@@ -197,14 +205,14 @@ final class HushNestUITests: XCTestCase {
     /// 验证耳机内试听的开始、停止与配置页退出时的自动停止。
     func testPreviewInteractions() {
         app.launch()
-        app.buttons["sound.open"].tap()
+        openSounds()
         app.buttons["preview.rain"].tap()
         XCTAssertEqual(app.buttons["preview.rain"].label, "停止试听细雨")
         app.buttons["preview.rain"].tap()
         XCTAssertEqual(app.buttons["preview.rain"].label, "试听细雨")
         app.buttons["preview.ocean"].tap()
         app.buttons["sound.done"].tap()
-        app.buttons["sound.open"].tap()
+        openSounds()
         XCTAssertEqual(app.buttons["preview.ocean"].label, "试听潮汐")
     }
 
@@ -212,7 +220,7 @@ final class HushNestUITests: XCTestCase {
     func testPreviewWithoutHeadphonesExplainsFailure() {
         app.launchArguments.append("-no-headphones")
         app.launch()
-        app.buttons["sound.open"].tap()
+        openSounds()
         app.buttons["preview.rain"].tap()
         XCTAssertTrue(app.alerts["无法试听"].waitForExistence(timeout: 5))
         app.alerts.buttons["知道了"].tap()
@@ -259,7 +267,7 @@ final class HushNestUITests: XCTestCase {
         XCTAssertTrue(app.alerts["暂时无法开始"].waitForExistence(timeout: 5))
         app.alerts.buttons["知道了"].tap()
         reveal(app.buttons["sound.open"])
-        app.buttons["sound.open"].tap()
+        openSounds()
         screenshot("12-real-sounds")
         app.buttons["preview.rain"].tap()
         XCTAssertTrue(app.alerts["无法试听"].waitForExistence(timeout: 5))
@@ -268,4 +276,80 @@ final class HushNestUITests: XCTestCase {
         app.tabBars.buttons["足迹"].tap()
         XCTAssertTrue(app.staticTexts["从片刻安静开始"].waitForExistence(timeout: 5))
     }
+    /// 验证新预设、无助眠音选择与后台行为有明确可见的边界。
+    func testSilentRestAndNewPresets() {
+        app.launch()
+        for minutes in [15, 30, 45] { XCTAssertTrue(app.buttons["preset.\(minutes)"].exists) }
+        reveal(app.buttons["sound.open"])
+        openSounds()
+        app.buttons["sound.none"].tap()
+        app.buttons["sound.done"].tap()
+        app.buttons["session.start"].tap()
+        XCTAssertTrue(app.buttons["了解风险，仍然开始"].waitForExistence(timeout: 5))
+        app.buttons["了解风险，仍然开始"].firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["好好休息"].waitForExistence(timeout: 5))
+        XCUIDevice.shared.press(.home)
+        app.activate()
+        XCTAssertTrue(app.staticTexts["好好休息"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["session.toggle"].isEnabled)
+    }
+
+    /// 验证主题切换、赞助入口和关闭操作，任何情况下免费功能均可返回。
+    func testThemeAndSupportNavigation() {
+        app.launch()
+        app.buttons["route.status"].tap()
+        XCTAssertTrue(app.buttons["session.start"].exists)
+        app.tabBars.buttons["设置"].tap()
+        reveal(app.segmentedControls["settings.theme"].buttons["海湾"])
+        app.segmentedControls["settings.theme"].buttons["海湾"].tap()
+        screenshot("13-ocean-theme")
+        reveal(app.buttons["settings.support"])
+        app.buttons["settings.support"].tap()
+        XCTAssertTrue(app.staticTexts["让安静，继续生长。"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["support.done"].isHittable)
+        screenshot("14-support")
+        app.buttons["support.done"].tap()
+        app.tabBars.buttons["休息"].tap()
+        XCTAssertTrue(app.buttons["session.start"].isEnabled)
+    }
+
+    /// 从实际界面设置秒数预设、1% 助眠音量与震动开关。
+    func testSecondsVibrationAndMinimumVolume() {
+        app.launch()
+        app.buttons["duration.edit"].tap()
+        app.pickerWheels.element(boundBy: 1).adjust(toPickerWheelValue: "0 分")
+        app.pickerWheels.element(boundBy: 2).adjust(toPickerWheelValue: "15 秒")
+        XCTAssertEqual(app.switches["duration.savePreset"].value as? String, "1")
+        app.buttons["duration.done"].tap()
+        XCTAssertTrue(app.buttons["preset.seconds.15"].waitForExistence(timeout: 5))
+        openSounds()
+        reveal(app.sliders["助眠音量"])
+        app.sliders["助眠音量"].adjust(toNormalizedSliderPosition: 0)
+        XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "1%")).firstMatch.exists)
+        reveal(app.switches["alarm.vibration"])
+        app.switches["alarm.vibration"].coordinate(withNormalizedOffset: CGVector(dx: 0.93, dy: 0.5)).tap()
+        XCTAssertEqual(app.switches["alarm.vibration"].value as? String, "1")
+        app.buttons["sound.done"].tap()
+        app.buttons["session.start"].tap()
+        XCTAssertTrue(app.staticTexts["好好休息"].waitForExistence(timeout: 5))
+    }
+
+    /// 响铃时断连停止，重连后无需点击继续即可在界面中重新进入响铃。
+    func testRingingReconnectResumesAutomatically() {
+        app.launch()
+        reveal(app.buttons["test.quickStart"])
+        app.buttons["test.quickStart"].tap()
+        XCTAssertTrue(app.buttons["session.finish"].waitForExistence(timeout: 10))
+        app.tabBars.buttons["设置"].tap()
+        reveal(app.buttons["test.disconnect"])
+        app.buttons["test.disconnect"].tap()
+        app.tabBars.buttons["休息"].tap()
+        XCTAssertTrue(app.staticTexts["提醒已中断"].waitForExistence(timeout: 5))
+        app.tabBars.buttons["设置"].tap()
+        reveal(app.buttons["test.reconnect"])
+        app.buttons["test.reconnect"].tap()
+        app.tabBars.buttons["休息"].tap()
+        XCTAssertTrue(app.buttons["session.finish"].waitForExistence(timeout: 5))
+    }
+
 }

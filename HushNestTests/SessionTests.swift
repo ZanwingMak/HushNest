@@ -1,6 +1,7 @@
 import XCTest
 import AVFoundation
 import UIKit
+import SwiftUI
 @testable import HushNest
 
 final class SessionTests: XCTestCase {
@@ -82,11 +83,28 @@ final class SessionTests: XCTestCase {
         settings.snoozeMinutes = 0
         settings.presets = [0, 10, 10, 900]
         settings.normalize()
-        XCTAssertEqual(settings.minutes, 1)
+        XCTAssertEqual(settings.minutes, 0)
+        XCTAssertEqual(settings.seconds, 1)
         XCTAssertEqual(settings.sleepVolume, 0.18)
         XCTAssertEqual(settings.alarmVolume, 1)
         XCTAssertEqual(settings.snoozeMinutes, 1)
         XCTAssertEqual(settings.presets, [10])
+    }
+
+    /// 新增字段兼容旧配置，同时允许最低 1% 助眠音量与秒级计时。
+    func testPrecisePreferencesAndLegacyMigration() throws {
+        let legacy = Data("{\"minutes\":25,\"sleepSound\":\"ocean\",\"sleepVolume\":0.12,\"presets\":[15,25,45,90]}".utf8)
+        let decoded = try JSONDecoder().decode(Preferences.self, from: legacy)
+        XCTAssertEqual(decoded.minutes, 25)
+        XCTAssertEqual(decoded.sleepSound, .ocean)
+        XCTAssertFalse(decoded.vibrationEnabled)
+        var settings = Preferences()
+        settings.minutes = 0
+        settings.seconds = 15
+        settings.sleepVolume = 0
+        settings.normalize()
+        XCTAssertEqual(settings.durationSeconds, 15)
+        XCTAssertEqual(settings.sleepVolume, 0.01)
     }
 
     /// 验证路由白名单拒绝空路由、扬声器、车载、AirPlay 和混合输出。
@@ -102,7 +120,7 @@ final class SessionTests: XCTestCase {
 
     /// 验证每条正式音频资源可解码，且具有非零时长和可听数据。
     @MainActor func testAllBundledAudioDecodes() throws {
-        for name in SleepSound.allCases.map(\.rawValue) + AlarmSound.allCases.map(\.rawValue) {
+        for name in SleepSound.allCases.filter { $0 != .none }.map(\.rawValue) + AlarmSound.allCases.map(\.rawValue) {
             let url = try XCTUnwrap(Bundle.main.url(forResource: name, withExtension: "wav"))
             let file = try AVAudioFile(forReading: url)
             XCTAssertGreaterThan(file.length, 200_000)
@@ -148,6 +166,31 @@ final class SessionTests: XCTestCase {
             let b = luminance(background)
             XCTAssertGreaterThanOrEqual((max(a, b) + 0.05) / (min(a, b) + 0.05), 4.5)
         }
+    }
+
+    /// 所有主题在浅色和深色外观下都维持主按钮文字对比度。
+    @MainActor func testEveryThemeMeetsButtonContrast() throws {
+        for theme in AppTheme.allCases {
+            for style in [UIUserInterfaceStyle.light, .dark] {
+                let traits = UITraitCollection(userInterfaceStyle: style)
+                let foreground = try XCTUnwrap(UIColor(named: "OnAccent")).resolvedColor(with: traits)
+                let background = UIColor(theme.accent).resolvedColor(with: traits)
+                let a = luminance(foreground), b = luminance(background)
+                XCTAssertGreaterThanOrEqual((max(a, b) + 0.05) / (min(a, b) + 0.05), 4.5, theme.rawValue)
+            }
+        }
+    }
+
+    /// 检查打包后的图标具有实际颜色内容，防止再次发布全黑图标。
+    @MainActor func testCompiledAppIconContainsArtwork() throws {
+        let urls = Bundle.main.urls(forResourcesWithExtension: "png", subdirectory: nil) ?? []
+        let iconURL = try XCTUnwrap(urls.first { $0.lastPathComponent.hasPrefix("AppIcon") })
+        let image = try XCTUnwrap(UIImage(contentsOfFile: iconURL.path)?.cgImage)
+        let bytes = try XCTUnwrap(image.dataProvider?.data)
+        let data = CFDataGetBytePtr(bytes)!
+        let count = CFDataGetLength(bytes)
+        let distinct = Set(stride(from: 0, to: count, by: 4).map { data[$0] })
+        XCTAssertGreaterThan(distinct.count, 10)
     }
 
     /// 将 sRGB 色彩转换为相对亮度，用于验证可读性而非仅比对配置文本。

@@ -3,8 +3,11 @@ import AppKit
 /// 绘制原创耳机与月牙标志，输出不含透明度的 App Store 图标。
 func generateIcon(at path: String) throws {
     let size = NSSize(width: 1024, height: 1024)
-    let image = NSImage(size: size)
-    image.lockFocus()
+    let cg = CGContext(data: nil, width: 1024, height: 1024, bitsPerComponent: 8, bytesPerRow: 4096,
+                       space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue)!
+    NSGraphicsContext.saveGraphicsState()
+    let context = NSGraphicsContext(cgContext: cg, flipped: false)
+    NSGraphicsContext.current = context
     NSColor(calibratedRed: 0.08, green: 0.30, blue: 0.27, alpha: 1).setFill()
     NSBezierPath(rect: NSRect(origin: .zero, size: size)).fill()
     let glow = NSGradient(starting: NSColor(calibratedRed: 0.20, green: 0.48, blue: 0.40, alpha: 1), ending: NSColor(calibratedRed: 0.06, green: 0.23, blue: 0.23, alpha: 1))!
@@ -23,12 +26,9 @@ func generateIcon(at path: String) throws {
     NSBezierPath(ovalIn: NSRect(x: 391, y: 350, width: 242, height: 242)).fill()
     NSColor(calibratedRed: 0.12, green: 0.33, blue: 0.29, alpha: 1).setFill()
     NSBezierPath(ovalIn: NSRect(x: 455, y: 408, width: 214, height: 214)).fill()
-    image.unlockFocus()
-    let bitmap = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 1024, pixelsHigh: 1024, bitsPerSample: 8, samplesPerPixel: 3, hasAlpha: false, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
-    NSGraphicsContext.saveGraphicsState()
-    NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: bitmap)
-    image.draw(in: NSRect(origin: .zero, size: size))
+    context.cgContext.flush()
     NSGraphicsContext.restoreGraphicsState()
+    let bitmap = NSBitmapImageRep(cgImage: cg.makeImage()!)
     try bitmap.representation(using: .png, properties: [:])!.write(to: URL(fileURLWithPath: path))
 }
 

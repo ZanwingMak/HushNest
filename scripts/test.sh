@@ -13,7 +13,7 @@ run_tests() {
         -destination "platform=iOS Simulator,id=$test_device" \
         -derivedDataPath build/DerivedData \
         -resultBundlePath "build/Tests-$(date +%Y%m%d-%H%M%S).xcresult" \
-        -parallel-testing-enabled NO -retry-tests-on-failure -test-iterations 2 CODE_SIGNING_ALLOWED=NO "$@"
+        -parallel-testing-enabled NO -retry-tests-on-failure -test-iterations 2 CODE_SIGN_IDENTITY=- CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=NO "$@"
 }
 
 run_tests "$@"

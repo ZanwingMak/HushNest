@@ -1,0 +1,41 @@
+{
+  "identifier": "fb89d158-17ba-4df0-8b80-d295e789fdd9",
+  "nonRenewingSubscriptions": [],
+  "products": [
+    {
+      "displayPrice": "0.99",
+      "familyShareable": false,
+      "internalID": "01c51a08-206b-4937-94b2-db4a4cd00616",
+      "localizations": [
+        {
+          "displayName": "一杯茶，支持耳憩",
+          "description": "自愿一次性赞助开发，不解锁功能，没有订阅。",
+          "locale": "zh_CN"
+        },
+        {
+          "displayName": "A cup of tea",
+          "description": "Optional tip. All features remain free.",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.zanwingmak.HushNest.tip.tea",
+      "referenceName": "HushNest Tip Tea",
+      "type": "Consumable"
+    }
+  ],
+  "settings": {
+    "_askToBuyEnabled": false,
+    "_billingGracePeriodEnabled": false,
+    "_billingIssuesEnabled": false,
+    "_disableDialogs": false,
+    "_failTransactionsEnabled": false,
+    "_locale": "en_US",
+    "_storefront": "USA",
+    "_storeKitErrors": []
+  },
+  "subscriptionGroups": [],
+  "version": {
+    "major": 3,
+    "minor": 0
+  }
+}

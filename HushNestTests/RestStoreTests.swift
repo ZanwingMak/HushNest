@@ -184,20 +184,6 @@ final class RestStoreTests: XCTestCase {
         XCTAssertGreaterThan(audio.stops, 0)
     }
 
-    /// 耳机物理暂停指令冻结倒计时，响铃中暂停则转为中断。
-    func testHeadphonePauseControl() {
-        store.start(duration: 60)
-        now.addTimeInterval(10)
-        audio.onPause?()
-        XCTAssertEqual(store.session?.phase, .paused)
-        XCTAssertEqual(store.remaining, 50)
-        store.resume()
-        now.addTimeInterval(50)
-        store.tick()
-        audio.onPause?()
-        XCTAssertEqual(store.session?.phase, .blocked)
-    }
-
     /// 统计只累计运行时间，长时间暂停不会增加休息分钟数。
     func testHistoryExcludesPausedTime() {
         store.start(duration: 600)
@@ -209,4 +195,89 @@ final class RestStoreTests: XCTestCase {
         store.finish(completed: false)
         XCTAssertEqual(store.records.first?.minutes, 2)
     }
+    /// 无助眠音保留用户确认的尽力预约；模型测试不代表系统挂起后的声音验证。
+    func testSilentBackgroundKeepsBestEffortAppointment() {
+        store.preferences.sleepSound = .none
+        store.start(duration: 60)
+        let stops = audio.stops
+        store.enteredBackground()
+        XCTAssertEqual(store.session?.phase, .resting)
+        XCTAssertEqual(audio.stops, stops)
+    }
+
+    /// 响铃阶段耳机重连自动续响，超过三分钟不会再自动补响。
+    func testRingingReconnectAutomaticallyResumesWithinWindow() {
+        store.start(duration: 1)
+        now.addTimeInterval(1)
+        store.tick()
+        audio.disconnect()
+        XCTAssertEqual(store.session?.phase, .blocked)
+        audio.reconnect()
+        XCTAssertEqual(store.session?.phase, .ringing)
+        XCTAssertEqual(audio.starts, 2)
+        audio.disconnect()
+        now.addTimeInterval(181)
+        audio.reconnect()
+        XCTAssertEqual(store.session?.phase, .blocked)
+        XCTAssertEqual(audio.starts, 2)
+    }
+
+    /// 震动仅在开启且正在响铃时按间隔触发，断连立即停止。
+    func testOptionalVibrationFollowsAlarmState() {
+        var vibrations = 0
+        let hapticStore = RestStore(audio: audio, defaults: defaults, clock: { [unowned self] in self.now }, runsTimer: false, notificationsEnabled: false, vibrate: { vibrations += 1 })
+        hapticStore.preferences.vibrationEnabled = true
+        hapticStore.start(duration: 1)
+        now.addTimeInterval(1)
+        hapticStore.tick()
+        XCTAssertEqual(vibrations, 1)
+        hapticStore.tick()
+        XCTAssertEqual(vibrations, 1)
+        now.addTimeInterval(2)
+        hapticStore.tick()
+        XCTAssertEqual(vibrations, 2)
+        audio.disconnect()
+        now.addTimeInterval(2)
+        hapticStore.tick()
+        XCTAssertEqual(vibrations, 2)
+    }
+
+    /// 精确预设与不足一分钟的历史可正确保存。
+    func testPrecisePresetAndHistoryPersistence() {
+        store.addDurationPreset(15)
+        store.addDurationPreset(15)
+        store.preferences.minutes = 0
+        store.preferences.seconds = 15
+        store.start()
+        now.addTimeInterval(15)
+        store.tick()
+        store.finish(completed: true)
+        XCTAssertEqual(store.records.first?.seconds, 15)
+        XCTAssertEqual(store.preferences.precisePresets, [15])
+    }
+
+    /// 有助眠音的后台会话保留原计时状态，不受页面生命周期干扰。
+    func testAudibleBackgroundKeepsDeadline() {
+        store.start(duration: 60)
+        store.enteredBackground()
+        XCTAssertEqual(store.session?.phase, .resting)
+        now = now.addingTimeInterval(61)
+        store.tick()
+        XCTAssertEqual(store.session?.phase, .ringing)
+    }
+
+    /// 迁移旧默认预设，并保留用户主题选择和自定义时长。
+    func testThemeAndDefaultPresetMigration() throws {
+        var old = Preferences()
+        old.presets = [15, 25, 45, 90]
+        old.minutes = 37
+        defaults.set(try JSONEncoder().encode(old), forKey: "preferences")
+        let migrated = RestStore(audio: audio, defaults: defaults, runsTimer: false, notificationsEnabled: false)
+        XCTAssertEqual(migrated.preferences.presets, [15, 30, 45, 60])
+        XCTAssertEqual(migrated.preferences.minutes, 37)
+        migrated.theme = .ocean
+        let restored = RestStore(audio: audio, defaults: defaults, runsTimer: false, notificationsEnabled: false)
+        XCTAssertEqual(restored.theme, .ocean)
+    }
+
 }

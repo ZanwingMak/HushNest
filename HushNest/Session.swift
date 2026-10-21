@@ -1,32 +1,83 @@
 import Foundation
 
 enum SleepSound: String, Codable, CaseIterable, Identifiable {
-    case rain, ocean, brown
+    case none, rain, ocean, brown, pink, stream, forest, fireplace, night
     var id: String { rawValue }
-    var title: String { switch self { case .rain: "细雨"; case .ocean: "潮汐"; case .brown: "棕噪音" } }
-    var symbol: String { switch self { case .rain: "cloud.rain"; case .ocean: "water.waves"; case .brown: "waveform" } }
-    var subtitle: String { switch self { case .rain: "把喧嚣留在窗外"; case .ocean: "随着海浪慢慢放松"; case .brown: "柔和、低沉的陪伴" } }
+    var title: String { switch self {
+    case .none: "不播放助眠音"; case .rain: "细雨"; case .ocean: "潮汐"; case .brown: "棕噪音"
+    case .pink: "粉红噪音"; case .stream: "溪流"; case .forest: "林间"; case .fireplace: "炉火"; case .night: "夏夜"
+    } }
+    var symbol: String { switch self {
+    case .none: "speaker.slash"; case .rain: "cloud.rain"; case .ocean: "water.waves"; case .brown, .pink: "waveform"
+    case .stream: "drop"; case .forest: "tree"; case .fireplace: "flame"; case .night: "moon.stars"
+    } }
+    var subtitle: String { switch self {
+    case .none: "安静休息 · 后台仅有无声通知"; case .rain: "温润雨幕，柔化高频"; case .ocean: "缓慢起落的海浪"
+    case .brown: "深沉平稳，减轻沙沙声"; case .pink: "均衡柔和的声音毯"; case .stream: "细水流淌，轻盈起伏"
+    case .forest: "风过树梢，远处鸟鸣"; case .fireplace: "温暖炉火，轻微噼啪"; case .night: "远处虫鸣，宁静夜色"
+    } }
 }
 
 enum AlarmSound: String, Codable, CaseIterable, Identifiable {
-    case dawn, bell, orbit
+    case dawn, bell, orbit, piano, marimba, harp, bamboo, aurora
     var id: String { rawValue }
-    var title: String { switch self { case .dawn: "晨光"; case .bell: "风铃"; case .orbit: "星轨" } }
+    var title: String { switch self {
+    case .dawn: "晨光"; case .bell: "风铃"; case .orbit: "星轨"; case .piano: "柔钢琴"
+    case .marimba: "木琴"; case .harp: "竖琴"; case .bamboo: "竹语"; case .aurora: "极光"
+    } }
+}
+
+enum AppTheme: String, Codable, CaseIterable, Identifiable {
+    case forest, ocean, dusk, rose
+    var id: String { rawValue }
+    var title: String { switch self { case .forest: "松林"; case .ocean: "海湾"; case .dusk: "暮紫"; case .rose: "玫瑰" } }
 }
 
 struct Preferences: Codable, Equatable {
-    var minutes = 25
+    var minutes = 30
+    var seconds = 0
+    var vibrationEnabled = false
+    var precisePresets: [Int] = []
     var sleepSound: SleepSound = .rain
     var alarmSound: AlarmSound = .dawn
     var sleepVolume: Float = 0.18
     var alarmVolume: Float = 0.55
     var snoozeMinutes = 5
-    var presets = [15, 25, 45, 90]
+    var presets = [15, 30, 45, 60]
+
+    var durationSeconds: TimeInterval { TimeInterval(minutes * 60 + seconds) }
+    var presetDurations: [Int] { Array(Set(presets.map { $0 * 60 } + precisePresets)).sorted() }
+
+    private enum CodingKeys: String, CodingKey {
+        case minutes, seconds, vibrationEnabled, precisePresets, sleepSound, alarmSound, sleepVolume, alarmVolume, snoozeMinutes, presets
+    }
+
+    /// 新安装使用统一默认值。
+    init() {}
+
+    /// 为新增秒数和震动提供迁移默认值，保留旧版本的声音、时长与预设。
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        minutes = try values.decodeIfPresent(Int.self, forKey: .minutes) ?? 30
+        seconds = try values.decodeIfPresent(Int.self, forKey: .seconds) ?? 0
+        vibrationEnabled = try values.decodeIfPresent(Bool.self, forKey: .vibrationEnabled) ?? false
+        precisePresets = try values.decodeIfPresent([Int].self, forKey: .precisePresets) ?? []
+        sleepSound = try values.decodeIfPresent(SleepSound.self, forKey: .sleepSound) ?? .rain
+        alarmSound = try values.decodeIfPresent(AlarmSound.self, forKey: .alarmSound) ?? .dawn
+        sleepVolume = try values.decodeIfPresent(Float.self, forKey: .sleepVolume) ?? 0.18
+        alarmVolume = try values.decodeIfPresent(Float.self, forKey: .alarmVolume) ?? 0.55
+        snoozeMinutes = try values.decodeIfPresent(Int.self, forKey: .snoozeMinutes) ?? 5
+        presets = try values.decodeIfPresent([Int].self, forKey: .presets) ?? [15, 30, 45, 60]
+    }
 
     /// 限制持久化或迁移后的数据，避免无效音量、时长和预设。
     mutating func normalize() {
-        minutes = min(720, max(1, minutes))
-        sleepVolume = sleepVolume.isFinite ? min(0.6, max(0.05, sleepVolume)) : 0.18
+        minutes = min(720, max(0, minutes))
+        seconds = min(59, max(0, seconds))
+        if minutes == 720 { seconds = 0 }
+        if minutes == 0 && seconds == 0 { seconds = 1 }
+        precisePresets = Array(Set(precisePresets.filter { (1...43200).contains($0) && $0 % 60 != 0 })).sorted()
+        sleepVolume = sleepVolume.isFinite ? min(0.6, max(0.01, sleepVolume)) : 0.18
         alarmVolume = alarmVolume.isFinite ? min(1, max(0.05, alarmVolume)) : 0.55
         snoozeMinutes = min(30, max(1, snoozeMinutes))
         presets = Array(Set(presets.filter { (1...720).contains($0) })).sorted()
@@ -82,7 +133,7 @@ struct RestSession: Codable, Equatable {
         self.reason = reason
     }
 
-    /// 仅在用户明确恢复后继续，已到期的中断会话直接进入响铃。
+    /// 恢复暂停会话，已到期时重新建立完整的响铃窗口。
     mutating func resume(at now: Date) {
         guard phase == .paused || phase == .blocked else { return }
         if let pausedRemaining { deadline = now.addingTimeInterval(pausedRemaining) }
@@ -127,6 +178,7 @@ struct RestRecord: Codable, Identifiable, Equatable {
     let minutes: Int
     let completed: Bool
     let sound: SleepSound
+    var seconds: Int? = nil
 }
 
 enum Schedule {
