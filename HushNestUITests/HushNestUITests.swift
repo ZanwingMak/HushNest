@@ -248,4 +248,24 @@ final class HushNestUITests: XCTestCase {
         app.buttons["session.finish"].tap()
         XCTAssertTrue(app.buttons["session.start"].waitForExistence(timeout: 5))
     }
+
+    /// 不使用耳机替身，验证真实音频路由在扬声器环境阻止开始和试听。
+    func testRealSpeakerRouteBlocksPlaybackThroughUI() {
+        app.launchArguments = ["-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh_CN"]
+        app.launch()
+        XCTAssertTrue(app.buttons["route.status"].label.contains("连接耳机"))
+        screenshot("11-real-home")
+        app.buttons["session.start"].tap()
+        XCTAssertTrue(app.alerts["暂时无法开始"].waitForExistence(timeout: 5))
+        app.alerts.buttons["知道了"].tap()
+        reveal(app.buttons["sound.open"])
+        app.buttons["sound.open"].tap()
+        screenshot("12-real-sounds")
+        app.buttons["preview.rain"].tap()
+        XCTAssertTrue(app.alerts["无法试听"].waitForExistence(timeout: 5))
+        app.alerts.buttons["知道了"].tap()
+        app.buttons["sound.done"].tap()
+        app.tabBars.buttons["足迹"].tap()
+        XCTAssertTrue(app.staticTexts["从片刻安静开始"].waitForExistence(timeout: 5))
+    }
 }

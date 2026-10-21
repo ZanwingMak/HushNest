@@ -10,7 +10,7 @@ package_unsigned() {
         -archivePath build/Unsigned.xcarchive CODE_SIGNING_ALLOWED=NO
     mkdir -p build/unsigned/Payload
     ditto build/Unsigned.xcarchive/Products/Applications/HushNest.app build/unsigned/Payload/HushNest.app
-    ditto -c -k --keepParent build/unsigned/Payload build/HushNest-unsigned.ipa
+    ditto -c -k --norsrc --noextattr --keepParent build/unsigned/Payload build/HushNest-unsigned.ipa
 }
 
 package_unsigned
