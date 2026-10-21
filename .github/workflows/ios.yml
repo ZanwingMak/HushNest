@@ -6,6 +6,9 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   test:
     runs-on: macos-latest

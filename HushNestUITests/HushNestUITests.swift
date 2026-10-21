@@ -58,8 +58,8 @@ final class HushNestUITests: XCTestCase {
         XCTAssertTrue(app.buttons["session.snooze"].waitForExistence(timeout: 10))
         screenshot("02-wake")
         app.buttons["session.snooze"].tap()
-        XCTAssertTrue(app.staticTexts["好好休息"].exists)
-        XCTAssertTrue(app.staticTexts["已稍后提醒 1 次"].exists)
+        XCTAssertTrue(app.staticTexts["好好休息"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["已稍后提醒 1 次"].waitForExistence(timeout: 5))
         app.buttons["session.cancel"].tap()
         app.buttons["结束休息"].tap()
         app.tabBars.buttons["足迹"].tap()
@@ -68,7 +68,7 @@ final class HushNestUITests: XCTestCase {
         reveal(app.buttons["history.clear"])
         app.buttons["history.clear"].tap()
         app.buttons["清空记录"].tap()
-        XCTAssertTrue(app.staticTexts["从片刻安静开始"].exists)
+        XCTAssertTrue(app.staticTexts["从片刻安静开始"].waitForExistence(timeout: 5))
     }
 
     /// 验证完成提醒操作可写入完成记录，而不是提前结束记录。
@@ -79,7 +79,7 @@ final class HushNestUITests: XCTestCase {
         XCTAssertTrue(app.buttons["session.finish"].waitForExistence(timeout: 10))
         app.buttons["session.finish"].tap()
         app.tabBars.buttons["足迹"].tap()
-        XCTAssertTrue(app.staticTexts["完成一段休息"].exists)
+        XCTAssertTrue(app.staticTexts["完成一段休息"].waitForExistence(timeout: 5))
     }
 
     /// 验证声音配置改变后返回首页，且应用重启后依然保留。

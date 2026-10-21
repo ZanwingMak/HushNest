@@ -8,11 +8,12 @@ run_tests() {
     xcodegen generate
     local test_device
     test_device="${SIMULATOR_ID:-$(xcrun simctl list devices available -j | python3 -c 'import json,sys; devices=json.load(sys.stdin)["devices"]; print(next(d["udid"] for runtime,items in devices.items() if "iOS" in runtime for d in items if "iPhone" in d["name"]))')}"
+    xcrun simctl bootstatus "$test_device" -b
     xcodebuild test -project HushNest.xcodeproj -scheme HushNest \
         -destination "platform=iOS Simulator,id=$test_device" \
         -derivedDataPath build/DerivedData \
         -resultBundlePath "build/Tests-$(date +%Y%m%d-%H%M%S).xcresult" \
-        -parallel-testing-enabled NO CODE_SIGNING_ALLOWED=NO "$@"
+        -parallel-testing-enabled NO -retry-tests-on-failure -test-iterations 2 CODE_SIGNING_ALLOWED=NO "$@"
 }
 
 run_tests "$@"

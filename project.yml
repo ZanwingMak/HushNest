@@ -20,6 +20,8 @@ targets:
       path: HushNest/Resources/Info.plist
       properties:
         CFBundleDisplayName: 耳憩
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         UILaunchScreen:
           UIColorName: LaunchBackground
         UIBackgroundModes: [audio]
