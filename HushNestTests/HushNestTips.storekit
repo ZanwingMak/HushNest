@@ -9,13 +9,33 @@
       "localizations": [
         {
           "displayName": "一杯茶，支持耳憩",
-          "description": "自愿一次性赞助开发，不解锁功能，没有订阅。",
+          "description": "自愿一次性赞助开发，所有功能免费，没有订阅。",
           "locale": "zh_CN"
         },
         {
+          "displayName": "一杯茶，支持耳憩",
+          "description": "自願一次性贊助開發，所有功能免費，沒有訂閱。",
+          "locale": "zh_TW"
+        },
+        {
           "displayName": "A cup of tea",
-          "description": "Optional tip. All features remain free.",
+          "description": "Optional tip. Free features, no subscription.",
           "locale": "en_US"
+        },
+        {
+          "displayName": "お茶で応援",
+          "description": "任意の1回きりの支援です。全機能無料、サブスクなし。",
+          "locale": "ja"
+        },
+        {
+          "displayName": "차 한 잔으로 응원",
+          "description": "선택하는 일회성 후원입니다. 모든 기능 무료, 구독 없음.",
+          "locale": "ko"
+        },
+        {
+          "displayName": "Una taza de té",
+          "description": "Apoyo opcional. Todo gratis, sin suscripción.",
+          "locale": "es_ES"
         }
       ],
       "productID": "com.zanwingmak.HushNest.tip.tea",
@@ -29,13 +49,33 @@
       "localizations": [
         {
           "displayName": "一杯咖啡，支持耳憩",
-          "description": "自愿一次性赞助开发，不解锁功能，没有订阅。",
+          "description": "自愿一次性赞助开发，所有功能免费，没有订阅。",
           "locale": "zh_CN"
         },
         {
+          "displayName": "一杯咖啡，支持耳憩",
+          "description": "自願一次性贊助開發，所有功能免費，沒有訂閱。",
+          "locale": "zh_TW"
+        },
+        {
           "displayName": "A cup of coffee",
-          "description": "Optional tip. All features remain free.",
+          "description": "Optional tip. Free features, no subscription.",
           "locale": "en_US"
+        },
+        {
+          "displayName": "コーヒーで応援",
+          "description": "任意の1回きりの支援です。全機能無料、サブスクなし。",
+          "locale": "ja"
+        },
+        {
+          "displayName": "커피 한 잔으로 응원",
+          "description": "선택하는 일회성 후원입니다. 모든 기능 무료, 구독 없음.",
+          "locale": "ko"
+        },
+        {
+          "displayName": "Una taza de café",
+          "description": "Apoyo opcional. Todo gratis, sin suscripción.",
+          "locale": "es_ES"
         }
       ],
       "productID": "com.zanwingmak.HushNest.tip.coffee",
@@ -49,13 +89,33 @@
       "localizations": [
         {
           "displayName": "一份甜点，支持耳憩",
-          "description": "自愿一次性赞助开发，不解锁功能，没有订阅。",
+          "description": "自愿一次性赞助开发，所有功能免费，没有订阅。",
           "locale": "zh_CN"
         },
         {
+          "displayName": "一份甜點，支持耳憩",
+          "description": "自願一次性贊助開發，所有功能免費，沒有訂閱。",
+          "locale": "zh_TW"
+        },
+        {
           "displayName": "A little dessert",
-          "description": "Optional tip. All features remain free.",
+          "description": "Optional tip. Free features, no subscription.",
           "locale": "en_US"
+        },
+        {
+          "displayName": "スイーツで応援",
+          "description": "任意の1回きりの支援です。全機能無料、サブスクなし。",
+          "locale": "ja"
+        },
+        {
+          "displayName": "디저트로 응원",
+          "description": "선택하는 일회성 후원입니다. 모든 기능 무료, 구독 없음.",
+          "locale": "ko"
+        },
+        {
+          "displayName": "Un pequeño postre",
+          "description": "Apoyo opcional. Todo gratis, sin suscripción.",
+          "locale": "es_ES"
         }
       ],
       "productID": "com.zanwingmak.HushNest.tip.dessert",
@@ -69,13 +129,33 @@
       "localizations": [
         {
           "displayName": "一座小花园，支持耳憩",
-          "description": "自愿一次性赞助开发，不解锁功能，没有订阅。",
+          "description": "自愿一次性赞助开发，所有功能免费，没有订阅。",
           "locale": "zh_CN"
         },
         {
+          "displayName": "一座小花園，支持耳憩",
+          "description": "自願一次性贊助開發，所有功能免費，沒有訂閱。",
+          "locale": "zh_TW"
+        },
+        {
           "displayName": "A little garden",
-          "description": "Optional tip. All features remain free.",
+          "description": "Optional tip. Free features, no subscription.",
           "locale": "en_US"
+        },
+        {
+          "displayName": "小さな庭で応援",
+          "description": "任意の1回きりの支援です。全機能無料、サブスクなし。",
+          "locale": "ja"
+        },
+        {
+          "displayName": "작은 정원으로 응원",
+          "description": "선택하는 일회성 후원입니다. 모든 기능 무료, 구독 없음.",
+          "locale": "ko"
+        },
+        {
+          "displayName": "Un pequeño jardín",
+          "description": "Apoyo opcional. Todo gratis, sin suscripción.",
+          "locale": "es_ES"
         }
       ],
       "productID": "com.zanwingmak.HushNest.tip.garden",

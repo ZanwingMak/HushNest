@@ -45,6 +45,25 @@ final class SupportStoreTests: XCTestCase {
         XCTAssertEqual(session.allTransactions().count, 4)
     }
 
+    /// 切换六种商店语言，验证四档商品的名称和说明均由 StoreKit 正确本地化。
+    func testEveryTipTierHasSixLocalizations() async throws {
+        let cases: [(String, [String], String)] = [
+            ("zh_CN", ["一杯茶，支持耳憩", "一杯咖啡，支持耳憩", "一份甜点，支持耳憩", "一座小花园，支持耳憩"], "自愿一次性赞助开发，所有功能免费，没有订阅。"),
+            ("zh_TW", ["一杯茶，支持耳憩", "一杯咖啡，支持耳憩", "一份甜點，支持耳憩", "一座小花園，支持耳憩"], "自願一次性贊助開發，所有功能免費，沒有訂閱。"),
+            ("en_US", ["A cup of tea", "A cup of coffee", "A little dessert", "A little garden"], "Optional tip. Free features, no subscription."),
+            ("ja", ["お茶で応援", "コーヒーで応援", "スイーツで応援", "小さな庭で応援"], "任意の1回きりの支援です。全機能無料、サブスクなし。"),
+            ("ko", ["차 한 잔으로 응원", "커피 한 잔으로 응원", "디저트로 응원", "작은 정원으로 응원"], "선택하는 일회성 후원입니다. 모든 기능 무료, 구독 없음."),
+            ("es_ES", ["Una taza de té", "Una taza de café", "Un pequeño postre", "Un pequeño jardín"], "Apoyo opcional. Todo gratis, sin suscripción.")
+        ]
+        for (locale, names, description) in cases {
+            session.locale = Locale(identifier: locale)
+            let store = SupportStore()
+            await store.load()
+            XCTAssertEqual(store.products.map(\.displayName), names, locale)
+            XCTAssertEqual(store.products.map(\.description), Array(repeating: description, count: 4), locale)
+        }
+    }
+
     /// 验证 Apple 待批准购买与用户取消均不会被显示为赞助成功。
     func testPendingAndCancelledPurchase() async throws {
         let store = SupportStore()
