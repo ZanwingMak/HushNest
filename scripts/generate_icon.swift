@@ -1,10 +1,11 @@
 import AppKit
 
 /// 绘制原创耳机与月牙标志，输出不含透明度的 App Store 图标。
-func generateIcon(at path: String) throws {
+func generateIcon(at path: String, pixels: Int = 1024) throws {
     let size = NSSize(width: 1024, height: 1024)
-    let cg = CGContext(data: nil, width: 1024, height: 1024, bitsPerComponent: 8, bytesPerRow: 4096,
+    let cg = CGContext(data: nil, width: pixels, height: pixels, bitsPerComponent: 8, bytesPerRow: pixels * 4,
                        space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue)!
+    cg.scaleBy(x: CGFloat(pixels) / 1024, y: CGFloat(pixels) / 1024)
     NSGraphicsContext.saveGraphicsState()
     let context = NSGraphicsContext(cgContext: cg, flipped: false)
     NSGraphicsContext.current = context
@@ -32,4 +33,10 @@ func generateIcon(at path: String) throws {
     try bitmap.representation(using: .png, properties: [:])!.write(to: URL(fileURLWithPath: path))
 }
 
-try generateIcon(at: CommandLine.arguments[1])
+let output = URL(fileURLWithPath: CommandLine.arguments[1])
+try generateIcon(at: output.path)
+for points in [20, 29, 40, 60] {
+    for scale in [2, 3] {
+        try generateIcon(at: output.deletingLastPathComponent().appendingPathComponent("AppIcon-\(points)@\(scale)x.png").path, pixels: points * scale)
+    }
+}

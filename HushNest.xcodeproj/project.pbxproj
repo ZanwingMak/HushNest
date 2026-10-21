@@ -8,34 +8,46 @@
 
 /* Begin PBXBuildFile section */
 		03124F4982BC19A8B4330731 /* night.wav in Resources */ = {isa = PBXBuildFile; fileRef = 0980A464133A9AF4E8BC2B3B /* night.wav */; };
+		0347ADD81800FABB2DE0F3E8 /* MediaSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0012DBA836BBAACAB633949D /* MediaSheet.swift */; };
 		038380C23C5705CEE92DEB17 /* dawn.wav in Resources */ = {isa = PBXBuildFile; fileRef = C91A332CBE94B768403825BD /* dawn.wav */; };
+		0780A6ABC55FD5E9F9BDC01D /* MediaLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD9496FA4748B12BBCEADA71 /* MediaLibrary.swift */; };
 		12731B4383232E758BDFEF54 /* RestStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A684E97D3B30375F50F1E0C /* RestStoreTests.swift */; };
 		1294AA842D9002D9EF68F27C /* SupportStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C44A1A81C39A9E75F8734A61 /* SupportStoreTests.swift */; };
 		1506E2BAC40C925C7BEC327A /* fireplace.wav in Resources */ = {isa = PBXBuildFile; fileRef = 948ADA567CEF6765C2EF891B /* fireplace.wav */; };
 		1F4AB1F0850B671B5E18FADF /* Session.swift in Sources */ = {isa = PBXBuildFile; fileRef = 602B11B4E85471419E669091 /* Session.swift */; };
+		215EF47EB3F0D00C2594FFA8 /* pulse.wav in Resources */ = {isa = PBXBuildFile; fileRef = 9F48220F7849EACC190CE26E /* pulse.wav */; };
 		217C196B20A0CB504CB4BA7B /* stream.wav in Resources */ = {isa = PBXBuildFile; fileRef = 6C10D1D5B7E556DCCA9FB088 /* stream.wav */; };
+		2567894807597D565D3F6510 /* Localization.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79DFC97E213A502D58AAE92B /* Localization.swift */; };
 		27245DAEE8FF778166929BAB /* aurora.wav in Resources */ = {isa = PBXBuildFile; fileRef = 3266A800715259C6A7D18D6F /* aurora.wav */; };
 		2B14F569268A4E9C2C915F91 /* harp.wav in Resources */ = {isa = PBXBuildFile; fileRef = 27278DC96821F7E4A91FDFA6 /* harp.wav */; };
 		34373B788FA2B0718D325119 /* HushNestTips.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 77CA885AA3AD8B89C2EC186C /* HushNestTips.storekit */; };
 		349A87D13D08AC21FE5DA75C /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = F99B5AE81E0A2B16A8C193B8 /* PrivacyInfo.xcprivacy */; };
 		373A4456122D5B6B650A8FC2 /* ocean.wav in Resources */ = {isa = PBXBuildFile; fileRef = 7FA305CE3F1E678B6FF5BABD /* ocean.wav */; };
+		38526F41961925674962A35D /* reveille.wav in Resources */ = {isa = PBXBuildFile; fileRef = 699BA63C37350AADCEE937F0 /* reveille.wav */; };
 		3EB79FF118A95A6F52EE3CEA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DDB5E92EDC2B7DE1805FC9EE /* Assets.xcassets */; };
 		40C763EAD40D71278EA72888 /* SupportStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572618E5D88EA551E1D1903A /* SupportStore.swift */; };
+		4243E411EAD42CE935758FC6 /* digital.wav in Resources */ = {isa = PBXBuildFile; fileRef = 9CCFE6891A5E2B7E35676B0A /* digital.wav */; };
+		533A9C2BC4732D689D60AD77 /* twinbell.wav in Resources */ = {isa = PBXBuildFile; fileRef = A8D155D7357CE423FCC12DA7 /* twinbell.wav */; };
 		5521C32BDCC57124FC5C9765 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB9C9561E37A17915DC53542 /* SettingsView.swift */; };
 		564504FA74AC417735BC394B /* SessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C5E78FC0FA3999BED11280E /* SessionTests.swift */; };
 		622B58E5031EA70C82F5F195 /* HeadphoneAudio.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB7FC083FAA1FF6B3DABD0D /* HeadphoneAudio.swift */; };
+		7734C7C239BE5137954A951D /* MediaTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EAA003A46A9109AE6E23038 /* MediaTests.swift */; };
 		7C68D5AD4D1B36409BC58596 /* pink.wav in Resources */ = {isa = PBXBuildFile; fileRef = C5FA0540E5CD5A5B85D894CE /* pink.wav */; };
 		7E03353193A66732F2EAABF3 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65A8B5AEDF7D737E6BF01E93 /* Theme.swift */; };
+		7F523FDD1624A7DD9B5254B9 /* classic.wav in Resources */ = {isa = PBXBuildFile; fileRef = 04B3D10D541B1BF49076B0EE /* classic.wav */; };
 		8E9C69E4F27906C7F4803C81 /* orbit.wav in Resources */ = {isa = PBXBuildFile; fileRef = D3DEACE88C79D54A68DE4923 /* orbit.wav */; };
 		948FDD9E356BE6BA62D70AC1 /* HushNestApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6A8FB9868CA065770C28A24 /* HushNestApp.swift */; };
 		A015D2EF3CBCC1F92DA6029A /* RestStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD39DB714B595AB9DDD770E8 /* RestStore.swift */; };
 		A1D58F6C7BC79E82488B54AF /* marimba.wav in Resources */ = {isa = PBXBuildFile; fileRef = A2EBF8D698D2F9BE67DAA51F /* marimba.wav */; };
+		A29EE21DC7B5DBFFE2F4E1EA /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = B82B962D92D43727755466AE /* Localizable.strings */; };
 		B0F4B9C672F2027E8614AA26 /* HushNestUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1B227642A3BE259EC9C1DFB /* HushNestUITests.swift */; };
 		BC8839BA7F5473D927B405CB /* bamboo.wav in Resources */ = {isa = PBXBuildFile; fileRef = D61E3D42EADE735BB32146B6 /* bamboo.wav */; };
 		BDCB18A1C8C6B45650F645DA /* Sheets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32FE2BC123CE8D582C3F1955 /* Sheets.swift */; };
 		BF869C3BE012A412F9C773C8 /* forest.wav in Resources */ = {isa = PBXBuildFile; fileRef = 8A3670F4870E9F0AF72119D2 /* forest.wav */; };
 		C9DC39025D35D8793451C9AC /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F1A3672678A888B7C1AECD8 /* HistoryView.swift */; };
 		D25B9468D0A9FE93BC23D014 /* bell.wav in Resources */ = {isa = PBXBuildFile; fileRef = 974620F62057B9AA5BE7C29E /* bell.wav */; };
+		D34F363DEFCFAB84A19539D3 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 25CF99F5C41DE6B72EFF0110 /* InfoPlist.strings */; };
+		D4BC4105F919720EFF434572 /* beacon.wav in Resources */ = {isa = PBXBuildFile; fileRef = 54599398E450A75E82A263EE /* beacon.wav */; };
 		DB52A24D2A0800B22E13C9DF /* rain.wav in Resources */ = {isa = PBXBuildFile; fileRef = 8F355B85D2F4BB532F4E17F3 /* rain.wav */; };
 		DB8213BA193E09CBBD754310 /* brown.wav in Resources */ = {isa = PBXBuildFile; fileRef = 27940971758A483C5BC39478 /* brown.wav */; };
 		DD311AE10A84D22C7FA021BE /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C52300501992275C026E6850 /* RootView.swift */; };
@@ -61,7 +73,11 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0012DBA836BBAACAB633949D /* MediaSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaSheet.swift; sourceTree = "<group>"; };
+		04B3D10D541B1BF49076B0EE /* classic.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = classic.wav; sourceTree = "<group>"; };
+		08B09C897B2BBB1F66D971AC /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		0980A464133A9AF4E8BC2B3B /* night.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = night.wav; sourceTree = "<group>"; };
+		18CC3CB3F42FDBB744B049F4 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		27278DC96821F7E4A91FDFA6 /* harp.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = harp.wav; sourceTree = "<group>"; };
 		27940971758A483C5BC39478 /* brown.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = brown.wav; sourceTree = "<group>"; };
 		3266A800715259C6A7D18D6F /* aurora.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = aurora.wav; sourceTree = "<group>"; };
@@ -69,23 +85,39 @@
 		387DC4D6B42F810C3F3BEEEA /* RoutePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutePicker.swift; sourceTree = "<group>"; };
 		3C5E78FC0FA3999BED11280E /* SessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionTests.swift; sourceTree = "<group>"; };
 		3F1A3672678A888B7C1AECD8 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
+		4122FCB4F53AE0358B22CB45 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		49B952420605328BE186F37D /* piano.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = piano.wav; sourceTree = "<group>"; };
+		50880DA2A65423BF91500244 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
+		541207C99614D9FFB4342DBD /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
+		54599398E450A75E82A263EE /* beacon.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = beacon.wav; sourceTree = "<group>"; };
 		572618E5D88EA551E1D1903A /* SupportStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportStore.swift; sourceTree = "<group>"; };
+		5C22DF20B2C5A004FABA6016 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		5FB7FC083FAA1FF6B3DABD0D /* HeadphoneAudio.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeadphoneAudio.swift; sourceTree = "<group>"; };
 		602B11B4E85471419E669091 /* Session.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Session.swift; sourceTree = "<group>"; };
 		65A8B5AEDF7D737E6BF01E93 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		6968CCDFD685960CBC039AAB /* Debug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Debug.entitlements; sourceTree = "<group>"; };
+		699BA63C37350AADCEE937F0 /* reveille.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = reveille.wav; sourceTree = "<group>"; };
 		6A684E97D3B30375F50F1E0C /* RestStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestStoreTests.swift; sourceTree = "<group>"; };
 		6C10D1D5B7E556DCCA9FB088 /* stream.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = stream.wav; sourceTree = "<group>"; };
 		77CA885AA3AD8B89C2EC186C /* HushNestTips.storekit */ = {isa = PBXFileReference; path = HushNestTips.storekit; sourceTree = "<group>"; };
+		79DFC97E213A502D58AAE92B /* Localization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Localization.swift; sourceTree = "<group>"; };
 		7FA305CE3F1E678B6FF5BABD /* ocean.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = ocean.wav; sourceTree = "<group>"; };
+		87D2D8F0057B31316D9BBAC4 /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/Localizable.strings"; sourceTree = "<group>"; };
+		8858B8BFC051AD761F3ECFEE /* ko */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ko; path = ko.lproj/Localizable.strings; sourceTree = "<group>"; };
 		8A3670F4870E9F0AF72119D2 /* forest.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = forest.wav; sourceTree = "<group>"; };
+		8C857010CF789286EB8BDEFD /* ko */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ko; path = ko.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		8EAA003A46A9109AE6E23038 /* MediaTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaTests.swift; sourceTree = "<group>"; };
 		8F355B85D2F4BB532F4E17F3 /* rain.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = rain.wav; sourceTree = "<group>"; };
+		8FB9D26F3FD4D52230063622 /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		948ADA567CEF6765C2EF891B /* fireplace.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = fireplace.wav; sourceTree = "<group>"; };
 		974620F62057B9AA5BE7C29E /* bell.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = bell.wav; sourceTree = "<group>"; };
+		9CCFE6891A5E2B7E35676B0A /* digital.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = digital.wav; sourceTree = "<group>"; };
+		9F48220F7849EACC190CE26E /* pulse.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = pulse.wav; sourceTree = "<group>"; };
 		A2EBF8D698D2F9BE67DAA51F /* marimba.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = marimba.wav; sourceTree = "<group>"; };
+		A8D155D7357CE423FCC12DA7 /* twinbell.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = twinbell.wav; sourceTree = "<group>"; };
 		B58425BDB02461CDAB43030C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		BD39DB714B595AB9DDD770E8 /* RestStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestStore.swift; sourceTree = "<group>"; };
+		BD9496FA4748B12BBCEADA71 /* MediaLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaLibrary.swift; sourceTree = "<group>"; };
 		BF98D30F0A19E9A0C6350843 /* HushNestUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = HushNestUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C44A1A81C39A9E75F8734A61 /* SupportStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportStoreTests.swift; sourceTree = "<group>"; };
 		C52300501992275C026E6850 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
@@ -99,7 +131,9 @@
 		DDB5E92EDC2B7DE1805FC9EE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		E6A8FB9868CA065770C28A24 /* HushNestApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HushNestApp.swift; sourceTree = "<group>"; };
 		E731D60A8592B80479D15A2F /* HushNestTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = HushNestTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		F24588B22FDFAC556710D099 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		F99B5AE81E0A2B16A8C193B8 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		FB4F5895803161F3E72BDE5D /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -109,6 +143,9 @@
 				5FB7FC083FAA1FF6B3DABD0D /* HeadphoneAudio.swift */,
 				3F1A3672678A888B7C1AECD8 /* HistoryView.swift */,
 				E6A8FB9868CA065770C28A24 /* HushNestApp.swift */,
+				79DFC97E213A502D58AAE92B /* Localization.swift */,
+				BD9496FA4748B12BBCEADA71 /* MediaLibrary.swift */,
+				0012DBA836BBAACAB633949D /* MediaSheet.swift */,
 				BD39DB714B595AB9DDD770E8 /* RestStore.swift */,
 				C52300501992275C026E6850 /* RootView.swift */,
 				387DC4D6B42F810C3F3BEEEA /* RoutePicker.swift */,
@@ -136,10 +173,13 @@
 				DDB5E92EDC2B7DE1805FC9EE /* Assets.xcassets */,
 				3266A800715259C6A7D18D6F /* aurora.wav */,
 				D61E3D42EADE735BB32146B6 /* bamboo.wav */,
+				54599398E450A75E82A263EE /* beacon.wav */,
 				974620F62057B9AA5BE7C29E /* bell.wav */,
 				27940971758A483C5BC39478 /* brown.wav */,
+				04B3D10D541B1BF49076B0EE /* classic.wav */,
 				C91A332CBE94B768403825BD /* dawn.wav */,
 				6968CCDFD685960CBC039AAB /* Debug.entitlements */,
+				9CCFE6891A5E2B7E35676B0A /* digital.wav */,
 				948ADA567CEF6765C2EF891B /* fireplace.wav */,
 				8A3670F4870E9F0AF72119D2 /* forest.wav */,
 				27278DC96821F7E4A91FDFA6 /* harp.wav */,
@@ -151,8 +191,13 @@
 				49B952420605328BE186F37D /* piano.wav */,
 				C5FA0540E5CD5A5B85D894CE /* pink.wav */,
 				F99B5AE81E0A2B16A8C193B8 /* PrivacyInfo.xcprivacy */,
+				9F48220F7849EACC190CE26E /* pulse.wav */,
 				8F355B85D2F4BB532F4E17F3 /* rain.wav */,
+				699BA63C37350AADCEE937F0 /* reveille.wav */,
 				6C10D1D5B7E556DCCA9FB088 /* stream.wav */,
+				A8D155D7357CE423FCC12DA7 /* twinbell.wav */,
+				25CF99F5C41DE6B72EFF0110 /* InfoPlist.strings */,
+				B82B962D92D43727755466AE /* Localizable.strings */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -171,6 +216,7 @@
 			isa = PBXGroup;
 			children = (
 				77CA885AA3AD8B89C2EC186C /* HushNestTips.storekit */,
+				8EAA003A46A9109AE6E23038 /* MediaTests.swift */,
 				6A684E97D3B30375F50F1E0C /* RestStoreTests.swift */,
 				3C5E78FC0FA3999BED11280E /* SessionTests.swift */,
 				C44A1A81C39A9E75F8734A61 /* SupportStoreTests.swift */,
@@ -275,7 +321,12 @@
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				Base,
+				en,
+				es,
+				ja,
+				ko,
 				"zh-Hans",
+				"zh-Hant",
 			);
 			mainGroup = 79063892199B49D2CB892C00;
 			minimizedProjectReferenceProxies = 1;
@@ -305,12 +356,17 @@
 			buildActionMask = 2147483647;
 			files = (
 				3EB79FF118A95A6F52EE3CEA /* Assets.xcassets in Resources */,
+				D34F363DEFCFAB84A19539D3 /* InfoPlist.strings in Resources */,
+				A29EE21DC7B5DBFFE2F4E1EA /* Localizable.strings in Resources */,
 				349A87D13D08AC21FE5DA75C /* PrivacyInfo.xcprivacy in Resources */,
 				27245DAEE8FF778166929BAB /* aurora.wav in Resources */,
 				BC8839BA7F5473D927B405CB /* bamboo.wav in Resources */,
+				D4BC4105F919720EFF434572 /* beacon.wav in Resources */,
 				D25B9468D0A9FE93BC23D014 /* bell.wav in Resources */,
 				DB8213BA193E09CBBD754310 /* brown.wav in Resources */,
+				7F523FDD1624A7DD9B5254B9 /* classic.wav in Resources */,
 				038380C23C5705CEE92DEB17 /* dawn.wav in Resources */,
+				4243E411EAD42CE935758FC6 /* digital.wav in Resources */,
 				1506E2BAC40C925C7BEC327A /* fireplace.wav in Resources */,
 				BF869C3BE012A412F9C773C8 /* forest.wav in Resources */,
 				2B14F569268A4E9C2C915F91 /* harp.wav in Resources */,
@@ -320,8 +376,11 @@
 				8E9C69E4F27906C7F4803C81 /* orbit.wav in Resources */,
 				EED198B49D8EE21D043EEA73 /* piano.wav in Resources */,
 				7C68D5AD4D1B36409BC58596 /* pink.wav in Resources */,
+				215EF47EB3F0D00C2594FFA8 /* pulse.wav in Resources */,
 				DB52A24D2A0800B22E13C9DF /* rain.wav in Resources */,
+				38526F41961925674962A35D /* reveille.wav in Resources */,
 				217C196B20A0CB504CB4BA7B /* stream.wav in Resources */,
+				533A9C2BC4732D689D60AD77 /* twinbell.wav in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -335,6 +394,9 @@
 				622B58E5031EA70C82F5F195 /* HeadphoneAudio.swift in Sources */,
 				C9DC39025D35D8793451C9AC /* HistoryView.swift in Sources */,
 				948FDD9E356BE6BA62D70AC1 /* HushNestApp.swift in Sources */,
+				2567894807597D565D3F6510 /* Localization.swift in Sources */,
+				0780A6ABC55FD5E9F9BDC01D /* MediaLibrary.swift in Sources */,
+				0347ADD81800FABB2DE0F3E8 /* MediaSheet.swift in Sources */,
 				A015D2EF3CBCC1F92DA6029A /* RestStore.swift in Sources */,
 				DD311AE10A84D22C7FA021BE /* RootView.swift in Sources */,
 				F21DB21F4848F56A5A250B17 /* RoutePicker.swift in Sources */,
@@ -358,6 +420,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7734C7C239BE5137954A951D /* MediaTests.swift in Sources */,
 				12731B4383232E758BDFEF54 /* RestStoreTests.swift in Sources */,
 				564504FA74AC417735BC394B /* SessionTests.swift in Sources */,
 				1294AA842D9002D9EF68F27C /* SupportStoreTests.swift in Sources */,
@@ -378,6 +441,35 @@
 			targetProxy = C46DC48B2DE4DFCF15F241F8 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		25CF99F5C41DE6B72EFF0110 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				FB4F5895803161F3E72BDE5D /* en */,
+				5C22DF20B2C5A004FABA6016 /* es */,
+				18CC3CB3F42FDBB744B049F4 /* ja */,
+				8C857010CF789286EB8BDEFD /* ko */,
+				4122FCB4F53AE0358B22CB45 /* zh-Hans */,
+				8FB9D26F3FD4D52230063622 /* zh-Hant */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		B82B962D92D43727755466AE /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				F24588B22FDFAC556710D099 /* en */,
+				50880DA2A65423BF91500244 /* es */,
+				541207C99614D9FFB4342DBD /* ja */,
+				8858B8BFC051AD761F3ECFEE /* ko */,
+				08B09C897B2BBB1F66D971AC /* zh-Hans */,
+				87D2D8F0057B31316D9BBAC4 /* zh-Hant */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		22E6C4B59324DC95C397AC40 /* Debug */ = {
@@ -415,7 +507,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 2Q2LMV7BR6;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -435,7 +527,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.1.0;
+				MARKETING_VERSION = 1.2.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -585,7 +677,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 2Q2LMV7BR6;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -599,7 +691,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.1.0;
+				MARKETING_VERSION = 1.2.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";

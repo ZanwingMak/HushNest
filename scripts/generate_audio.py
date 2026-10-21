@@ -105,6 +105,37 @@ def alarm(name):
     return values
 
 
+def strong_alarm(name):
+    """用鲜明节奏及带限谐波合成六种起床提醒，峰值留出安全余量。"""
+    t = np.arange(RATE * 60) / RATE
+    period = {'classic': 1.2, 'twinbell': .22, 'digital': .8, 'pulse': .48, 'beacon': 1.0, 'reveille': .38}[name]
+    phase = np.mod(t, period)
+    if name == 'classic':
+        gate = ((phase < .18) | ((phase > .28) & (phase < .46))).astype(float)
+        frequency = np.full_like(t, 880)
+    elif name == 'twinbell':
+        gate = (phase < .16).astype(float)
+        frequency = np.where(np.mod(t, .44) < .22, 1350, 1720)
+    elif name == 'digital':
+        gate = (phase < .12).astype(float) + ((phase > .2) & (phase < .32)).astype(float) + ((phase > .4) & (phase < .52)).astype(float)
+        frequency = np.full_like(t, 1046.5)
+    elif name == 'pulse':
+        gate = (phase < .26).astype(float)
+        frequency = np.where(np.mod(t, .96) < .48, 660, 990)
+    elif name == 'beacon':
+        gate = (phase < .75).astype(float)
+        frequency = np.where(np.mod(t, 2) < 1, 740, 1110)
+    else:
+        gate = (phase < .3).astype(float)
+        frequency = np.take([523.25, 659.25, 783.99, 1046.5, 783.99, 659.25], (t / period).astype(int) % 6)
+    # 十毫秒包络平滑，避免矩形门限造成点击声。
+    gate = np.convolve(gate, np.ones(441) / 441, mode='same')
+    angle = 2 * np.pi * np.cumsum(frequency) / RATE
+    values = (np.sin(angle) + .25 * np.sin(3 * angle) + .10 * np.sin(5 * angle)) * gate
+    values *= np.minimum(1, .22 + t / 6) * np.minimum(1, (60 - t) / .15)
+    return values * (.78 / max(np.max(np.abs(values)), 1e-8))
+
+
 def write_wave(name, values):
     """保存无削波的 16 位 PCM，保持循环样本与精确时长。"""
     samples = (np.clip(values, -.95, .95) * 32767).astype('<i2')
@@ -120,7 +151,9 @@ def main():
         write_wave(name, ambience(name))
     for name in ['dawn', 'bell', 'orbit', 'piano', 'marimba', 'harp', 'bamboo', 'aurora']:
         write_wave(name, alarm(name))
-    print('Generated 16 original 44.1kHz soundscapes and melodies.')
+    for name in ['classic', 'twinbell', 'digital', 'pulse', 'beacon', 'reveille']:
+        write_wave(name, strong_alarm(name))
+    print('Generated 22 original 44.1kHz soundscapes and melodies.')
 
 
 if __name__ == '__main__':

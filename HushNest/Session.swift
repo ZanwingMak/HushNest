@@ -1,36 +1,38 @@
 import Foundation
 
 enum SleepSound: String, Codable, CaseIterable, Identifiable {
-    case none, rain, ocean, brown, pink, stream, forest, fireplace, night
+    case none, rain, ocean, brown, pink, stream, forest, fireplace, night, custom
     var id: String { rawValue }
     var title: String { switch self {
-    case .none: "不播放助眠音"; case .rain: "细雨"; case .ocean: "潮汐"; case .brown: "棕噪音"
-    case .pink: "粉红噪音"; case .stream: "溪流"; case .forest: "林间"; case .fireplace: "炉火"; case .night: "夏夜"
+    case .custom: L("自定义声音"); case .none: L("不播放助眠音"); case .rain: L("细雨"); case .ocean: L("潮汐"); case .brown: L("棕噪音")
+    case .pink: L("粉红噪音"); case .stream: L("溪流"); case .forest: L("林间"); case .fireplace: L("炉火"); case .night: L("夏夜")
     } }
     var symbol: String { switch self {
-    case .none: "speaker.slash"; case .rain: "cloud.rain"; case .ocean: "water.waves"; case .brown, .pink: "waveform"
+    case .custom: "music.note"; case .none: "speaker.slash"; case .rain: "cloud.rain"; case .ocean: "water.waves"; case .brown, .pink: "waveform"
     case .stream: "drop"; case .forest: "tree"; case .fireplace: "flame"; case .night: "moon.stars"
     } }
     var subtitle: String { switch self {
-    case .none: "安静休息 · 后台仅有无声通知"; case .rain: "温润雨幕，柔化高频"; case .ocean: "缓慢起落的海浪"
-    case .brown: "深沉平稳，减轻沙沙声"; case .pink: "均衡柔和的声音毯"; case .stream: "细水流淌，轻盈起伏"
-    case .forest: "风过树梢，远处鸟鸣"; case .fireplace: "温暖炉火，轻微噼啪"; case .night: "远处虫鸣，宁静夜色"
+    case .custom: L("仅保存在本机的音轨"); case .none: L("安静休息 · 后台仅有无声通知"); case .rain: L("温润雨幕，柔化高频"); case .ocean: L("缓慢起落的海浪")
+    case .brown: L("深沉平稳，减轻沙沙声"); case .pink: L("均衡柔和的声音毯"); case .stream: L("细水流淌，轻盈起伏")
+    case .forest: L("风过树梢，远处鸟鸣"); case .fireplace: L("温暖炉火，轻微噼啪"); case .night: L("远处虫鸣，宁静夜色")
     } }
 }
 
 enum AlarmSound: String, Codable, CaseIterable, Identifiable {
-    case dawn, bell, orbit, piano, marimba, harp, bamboo, aurora
+    case dawn, bell, orbit, piano, marimba, harp, bamboo, aurora, classic, twinbell, digital, pulse, beacon, reveille, custom
     var id: String { rawValue }
     var title: String { switch self {
-    case .dawn: "晨光"; case .bell: "风铃"; case .orbit: "星轨"; case .piano: "柔钢琴"
-    case .marimba: "木琴"; case .harp: "竖琴"; case .bamboo: "竹语"; case .aurora: "极光"
+    case .custom: L("自定义声音"); case .classic: L("经典滴滴"); case .twinbell: L("机械双铃"); case .digital: L("数字闹钟")
+    case .pulse: L("急促脉冲"); case .beacon: L("交替信号"); case .reveille: L("起床号角")
+    case .dawn: L("晨光"); case .bell: L("风铃"); case .orbit: L("星轨"); case .piano: L("柔钢琴")
+    case .marimba: L("木琴"); case .harp: L("竖琴"); case .bamboo: L("竹语"); case .aurora: L("极光")
     } }
 }
 
 enum AppTheme: String, Codable, CaseIterable, Identifiable {
     case forest, ocean, dusk, rose
     var id: String { rawValue }
-    var title: String { switch self { case .forest: "松林"; case .ocean: "海湾"; case .dusk: "暮紫"; case .rose: "玫瑰" } }
+    var title: String { switch self { case .forest: L("松林"); case .ocean: L("海湾"); case .dusk: L("暮紫"); case .rose: L("玫瑰") } }
 }
 
 struct Preferences: Codable, Equatable {
@@ -38,6 +40,8 @@ struct Preferences: Codable, Equatable {
     var seconds = 0
     var vibrationEnabled = false
     var precisePresets: [Int] = []
+    var customSleepID: UUID?
+    var customAlarmID: UUID?
     var sleepSound: SleepSound = .rain
     var alarmSound: AlarmSound = .dawn
     var sleepVolume: Float = 0.18
@@ -49,7 +53,7 @@ struct Preferences: Codable, Equatable {
     var presetDurations: [Int] { Array(Set(presets.map { $0 * 60 } + precisePresets)).sorted() }
 
     private enum CodingKeys: String, CodingKey {
-        case minutes, seconds, vibrationEnabled, precisePresets, sleepSound, alarmSound, sleepVolume, alarmVolume, snoozeMinutes, presets
+        case customSleepID, customAlarmID, minutes, seconds, vibrationEnabled, precisePresets, sleepSound, alarmSound, sleepVolume, alarmVolume, snoozeMinutes, presets
     }
 
     /// 新安装使用统一默认值。
@@ -58,6 +62,8 @@ struct Preferences: Codable, Equatable {
     /// 为新增秒数和震动提供迁移默认值，保留旧版本的声音、时长与预设。
     init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
+        customSleepID = try values.decodeIfPresent(UUID.self, forKey: .customSleepID)
+        customAlarmID = try values.decodeIfPresent(UUID.self, forKey: .customAlarmID)
         minutes = try values.decodeIfPresent(Int.self, forKey: .minutes) ?? 30
         seconds = try values.decodeIfPresent(Int.self, forKey: .seconds) ?? 0
         vibrationEnabled = try values.decodeIfPresent(Bool.self, forKey: .vibrationEnabled) ?? false

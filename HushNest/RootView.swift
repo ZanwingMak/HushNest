@@ -5,18 +5,19 @@ struct RootView: View {
     @EnvironmentObject private var store: RestStore
     var body: some View {
         TabView {
-            RestView().tabItem { Label("休息", systemImage: "moon.zzz") }.accessibilityIdentifier("tab.rest")
-            HistoryView().tabItem { Label("足迹", systemImage: "leaf") }.accessibilityIdentifier("tab.history")
-            SettingsView().tabItem { Label("设置", systemImage: "slider.horizontal.3") }.accessibilityIdentifier("tab.settings")
+            RestView().tabItem { Label(L("休息"), systemImage: "moon.zzz") }.accessibilityIdentifier("tab.rest")
+            HistoryView().tabItem { Label(L("足迹"), systemImage: "leaf") }.accessibilityIdentifier("tab.history")
+            SettingsView().tabItem { Label(L("设置"), systemImage: "slider.horizontal.3") }.accessibilityIdentifier("tab.settings")
         }
         .onAppear { store.reconnectHeadphones() }
-        .alert("暂时无法开始", isPresented: Binding(get: { store.errorMessage != nil }, set: { if !$0 { store.errorMessage = nil } })) {
-            Button("知道了", role: .cancel) { store.errorMessage = nil }
+        .alert(L("暂时无法开始"), isPresented: Binding(get: { store.errorMessage != nil }, set: { if !$0 { store.errorMessage = nil } })) {
+            Button(L("知道了"), role: .cancel) { store.errorMessage = nil }
         } message: { Text(store.errorMessage ?? "") }
     }
 }
 
 struct RestView: View {
+    @EnvironmentObject private var library: MediaLibrary
     @Environment(\.nestTheme) private var theme
     @EnvironmentObject private var store: RestStore
     @Environment(\.dynamicTypeSize) private var typeSize
@@ -45,14 +46,14 @@ struct RestView: View {
                     routeCard
                     #if DEBUG
                     if store.isTesting && store.session == nil {
-                        Button("3 秒无声测试") { store.start(duration: 3) }
+                        Button(L("3 秒无声测试")) { store.start(duration: 3) }
                             .frame(minHeight: 44).accessibilityIdentifier("test.quickStart")
                     }
                     #endif
                     if let session = store.session { activeTimer(session) } else { idleTimer }
                     if store.session == nil { configuration }
                     if let session = store.session, session.phase == .blocked {
-                        Label(session.reason ?? "请检查耳机后手动恢复。", systemImage: "pause.circle")
+                        Label(session.reason ?? L("请检查耳机后手动恢复。"), systemImage: "pause.circle")
                             .font(.subheadline).foregroundStyle(.orange).frame(maxWidth: .infinity, alignment: .leading)
                             .padding(20).background(.orange.opacity(0.08), in: RoundedRectangle(cornerRadius: 20))
                     }
@@ -65,17 +66,17 @@ struct RestView: View {
             .sheet(isPresented: $showDuration) { DurationSheet().presentationDetents([.large]) }
             .sheet(isPresented: $showSound) { SoundSheet() }
             .sheet(isPresented: $showGuide) { GuideSheet() }
-            .confirmationDialog("无助眠音：锁屏提醒无法保证", isPresented: $confirmSilent, titleVisibility: .visible) {
-                Button("了解风险，仍然开始") { store.start(duration: selectedDuration) }.accessibilityIdentifier("silent.confirm")
-                Button("返回选择助眠音") { showSound = true }
-                Button("取消", role: .cancel) {}
+            .confirmationDialog(L("无助眠音：锁屏提醒无法保证"), isPresented: $confirmSilent, titleVisibility: .visible) {
+                Button(L("了解风险，仍然开始")) { store.start(duration: selectedDuration) }.accessibilityIdentifier("silent.confirm")
+                Button(L("返回选择助眠音")) { showSound = true }
+                Button(L("取消"), role: .cancel) {}
             } message: {
-                Text("没有持续播放的助眠音，iOS 可能在锁屏或切换应用后挂起耳憩。我们会保留耳机铃声预约和可选无声通知，但无法保证响铃或震动。重要提醒请选助眠音并先进行短时测试。")
+                Text(L("没有持续播放的助眠音，iOS 可能在锁屏或切换应用后挂起耳憩。我们会保留耳机铃声预约和可选无声通知，但无法保证响铃或震动。重要提醒请选助眠音并先进行短时测试。"))
             }
-            .confirmationDialog("结束这次休息？", isPresented: $cancelConfirmation, titleVisibility: .visible) {
-                Button("结束休息", role: .destructive) { store.finish(completed: false) }
-                Button("继续休息", role: .cancel) {}
-            } message: { Text("计时和耳机内的声音都会停止。") }
+            .confirmationDialog(L("结束这次休息？"), isPresented: $cancelConfirmation, titleVisibility: .visible) {
+                Button(L("结束休息"), role: .destructive) { store.finish(completed: false) }.accessibilityIdentifier("session.confirmEnd")
+                Button(L("继续休息"), role: .cancel) {}
+            } message: { Text(L("计时和耳机内的声音都会停止。")) }
         }
     }
 
@@ -83,13 +84,13 @@ struct RestView: View {
         HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 8) {
                 Text("HUSHNEST").font(.caption.weight(.semibold)).tracking(3).foregroundStyle(theme.accent)
-                Text(store.session == nil ? "给自己，片刻安静。" : "安心休息，慢慢来。")
+                Text(store.session == nil ? L("给自己，片刻安静。") : L("安心休息，慢慢来。"))
                     .font(.title2.weight(.semibold)).fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 8)
             Button { showGuide = true } label: {
                 Image(systemName: "questionmark.circle").font(.title3).frame(width: 44, height: 44)
-            }.accessibilityLabel("使用指南").accessibilityIdentifier("guide.open")
+            }.accessibilityLabel(L("使用指南")).accessibilityIdentifier("guide.open")
         }
     }
 
@@ -100,23 +101,23 @@ struct RestView: View {
                     Image(systemName: store.hasHeadphones ? "headphones" : "headphones.slash")
                         .font(.title2).foregroundStyle(theme.accent).frame(width: 30)
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(store.hasHeadphones ? "耳机已就绪" : "连接耳机，再安心休息").font(.subheadline.weight(.semibold))
-                        Text(store.routeName + " · 点按刷新").font(.caption).foregroundStyle(.secondary)
+                        Text(store.hasHeadphones ? L("耳机已就绪") : L("连接耳机，再安心休息")).font(.subheadline.weight(.semibold))
+                        Text(store.routeName + L(" · 点按刷新")).font(.caption).foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     Spacer(minLength: 0)
                 }.frame(minHeight: 44)
             }.buttonStyle(.plain).accessibilityIdentifier("route.status")
-            RoutePicker().frame(width: 44, height: 44).accessibilityLabel("选择耳机输出")
+            RoutePicker().frame(width: 44, height: 44).accessibilityLabel(L("选择耳机输出"))
         }.padding(16).background(theme.card, in: RoundedRectangle(cornerRadius: 20))
     }
 
     private var idleTimer: some View {
         VStack(spacing: 14) {
-            Text(clockMode ? "在这个时间轻轻醒来" : "这一刻，只属于你")
+            Text(clockMode ? L("在这个时间轻轻醒来") : L("这一刻，只属于你"))
                 .font(.subheadline).foregroundStyle(.secondary)
             if clockMode {
-                        DatePicker("唤醒时间", selection: $targetTime, displayedComponents: .hourAndMinute)
+                        DatePicker(L("唤醒时间"), selection: $targetTime, displayedComponents: .hourAndMinute)
                             .labelsHidden().datePickerStyle(.wheel).frame(maxHeight: 150).accessibilityIdentifier("clock.picker")
             } else {
                 Button { showDuration = true } label: {
@@ -127,25 +128,25 @@ struct RestView: View {
                             .animation(reduceMotion ? nil : .snappy(duration: 0.25), value: store.preferences.durationSeconds)
                             .foregroundStyle(Palette.ink)
                         HStack(spacing: 5) {
-                            Text(store.preferences.seconds == 0 ? "分钟" : "分 : 秒").font(.subheadline)
+                            Text(store.preferences.seconds == 0 ? L("分钟") : L("分 : 秒")).font(.subheadline)
                             Image(systemName: "pencil").font(.caption)
                         }.foregroundStyle(.secondary)
                     }.frame(maxWidth: .infinity).padding(.vertical, 12)
                 }.buttonStyle(.plain).accessibilityIdentifier("duration.edit")
             }
-            Picker("提醒方式", selection: $clockMode) {
-                Text("倒计时").tag(false)
-                Text("指定时间").tag(true)
+            Picker(L("提醒方式"), selection: $clockMode) {
+                Text(L("倒计时")).tag(false)
+                Text(L("指定时间")).tag(true)
             }.pickerStyle(.segmented).accessibilityIdentifier("schedule.mode")
             if clockMode {
-                Text("下一次 \(targetTime.formatted(date: .omitted, time: .shortened)) · \(Int(ceil(selectedDuration / 60))) 分钟后")
+                Text(LF("下一次 %@ · %@ 分钟后", String(describing: targetTime.formatted(date: .omitted, time: .shortened)), String(describing: Int(ceil(selectedDuration / 60)))))
                     .font(.caption).foregroundStyle(.secondary)
             } else {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 10) {
                         ForEach(store.preferences.presetDurations, id: \.self) { seconds in
                             Button { store.preferences.minutes = seconds / 60; store.preferences.seconds = seconds % 60 } label: {
-                                Text(seconds % 60 == 0 ? "\(seconds / 60) 分" : "\(seconds / 60)分\(seconds % 60)秒").font(.subheadline.weight(.medium)).padding(.horizontal, 18).frame(minHeight: 44)
+                                Text(seconds % 60 == 0 ? LF("%@ 分", String(describing: seconds / 60)) : LF("%@分%@秒", String(describing: seconds / 60), String(describing: seconds % 60))).font(.subheadline.weight(.medium)).padding(.horizontal, 18).frame(minHeight: 44)
                                     .foregroundStyle(Int(store.preferences.durationSeconds) == seconds ? Palette.onAccent : theme.accent)
                                     .background(Int(store.preferences.durationSeconds) == seconds ? theme.accent : theme.accent.opacity(0.08), in: Capsule())
                             }.accessibilityIdentifier(seconds % 60 == 0 ? "preset.\(seconds / 60)" : "preset.seconds.\(seconds)")
@@ -153,7 +154,7 @@ struct RestView: View {
                         Button { showDuration = true } label: {
                             Image(systemName: "plus").frame(width: 44, height: 44)
                                 .background(theme.accent.opacity(0.08), in: Circle())
-                        }.accessibilityLabel("自定义时长和预设")
+                        }.accessibilityLabel(L("自定义时长和预设"))
                     }
                 }
             }
@@ -166,10 +167,10 @@ struct RestView: View {
             if typeSize.isAccessibilitySize {
                 VStack(spacing: 16) {
                     Text(phaseTitle(session.phase)).font(.headline).accessibilityIdentifier("session.phase")
-                    Text(session.phase == .ringing ? "时间到了" : formattedRemaining)
+                    Text(session.phase == .ringing ? L("时间到了") : formattedRemaining)
                         .font(.system(size: 52, weight: .light, design: .rounded)).monospacedDigit()
                         .minimumScaleFactor(0.5).lineLimit(1).accessibilityIdentifier("session.remaining")
-                    Text("\(session.deadline.formatted(date: .omitted, time: .shortened)) 轻轻唤醒")
+                    Text(LF("%@ 轻轻唤醒", String(describing: session.deadline.formatted(date: .omitted, time: .shortened))))
                         .font(.subheadline).foregroundStyle(.secondary)
                 }.frame(maxWidth: .infinity).padding(.vertical, 24)
             } else {
@@ -181,16 +182,16 @@ struct RestView: View {
                 VStack(spacing: 14) {
                     BreathingMark(symbol: session.phase == .ringing ? "sunrise" : "moon.zzz")
                     Text(phaseTitle(session.phase)).font(.headline).accessibilityIdentifier("session.phase")
-                    Text(session.phase == .ringing ? "时间到了" : formattedRemaining)
+                    Text(session.phase == .ringing ? L("时间到了") : formattedRemaining)
                         .font(.system(size: session.phase == .ringing ? 36 : 52, weight: .light, design: .rounded))
                         .monospacedDigit().minimumScaleFactor(0.4).lineLimit(1)
                         .accessibilityIdentifier("session.remaining")
-                    Text(session.phase == .ringing ? "慢慢睁眼，带走这份轻松" : "\(session.deadline.formatted(date: .omitted, time: .shortened)) 轻轻唤醒")
+                    Text(session.phase == .ringing ? L("慢慢睁眼，带走这份轻松") : LF("%@ 轻轻唤醒", String(describing: session.deadline.formatted(date: .omitted, time: .shortened))))
                         .font(.caption).foregroundStyle(.secondary)
                 }.padding(30)
                 }.frame(maxWidth: 310).aspectRatio(1, contentMode: .fit).padding(.horizontal, 12)
             }
-            if session.snoozeCount > 0 { Text("已稍后提醒 \(session.snoozeCount) 次").font(.caption).foregroundStyle(.secondary) }
+            if session.snoozeCount > 0 { Text(LF("已稍后提醒 %@ 次", String(describing: session.snoozeCount))).font(.caption).foregroundStyle(.secondary) }
         }.padding(.vertical, 8)
     }
 
@@ -205,8 +206,8 @@ struct RestView: View {
                 HStack(spacing: 16) {
                     Image(systemName: store.preferences.sleepSound.symbol).font(.title2).foregroundStyle(theme.accent)
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("\(store.preferences.sleepSound.title) → \(store.preferences.alarmSound.title)").font(.headline)
-                        Text("助眠声音 · 渐强唤醒").font(.caption).foregroundStyle(.secondary)
+                        Text("\(sleepTitle) → \(alarmTitle)").font(.headline)
+                        Text(L("助眠声音 · 渐强唤醒")).font(.caption).foregroundStyle(.secondary)
                     }
                     Spacer()
                     Image(systemName: "slider.horizontal.3").foregroundStyle(.secondary)
@@ -215,10 +216,13 @@ struct RestView: View {
         }.buttonStyle(.plain).accessibilityIdentifier("sound.open")
     }
 
+    private var sleepTitle: String { store.preferences.sleepSound == .custom ? library.sounds.first { $0.id == store.preferences.customSleepID }?.name ?? L("自定义声音") : store.preferences.sleepSound.title }
+    private var alarmTitle: String { store.preferences.alarmSound == .custom ? library.sounds.first { $0.id == store.preferences.customAlarmID }?.name ?? L("自定义声音") : store.preferences.alarmSound.title }
+
     private var reassurance: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label("手机不外放，断连即停止", systemImage: "speaker.slash").font(.subheadline.weight(.medium))
-            Text("选择助眠音可锁屏休息，并与音乐混音；其他应用仍可能中断播放。无助眠音需确认锁屏风险，后台响铃和震动无法保证。不要强制关闭应用。")
+            Label(L("手机不外放，断连即停止"), systemImage: "speaker.slash").font(.subheadline.weight(.medium))
+            Text(L("选择助眠音可锁屏休息，并与音乐混音；其他应用仍可能中断播放。无助眠音需确认锁屏风险，后台响铃和震动无法保证。不要强制关闭应用。"))
                 .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
         }.frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -227,17 +231,17 @@ struct RestView: View {
         VStack(spacing: 12) {
             if let session = store.session {
                 if session.phase == .ringing {
-                    Button("我醒了，结束休息") { store.finish(completed: true) }
+                    Button(L("我醒了，结束休息")) { store.finish(completed: true) }
                         .buttonStyle(NestButtonStyle()).accessibilityIdentifier("session.finish")
-                    Button("再休息 \(store.preferences.snoozeMinutes) 分钟") { store.snooze() }
+                    Button(LF("再休息 %@ 分钟", String(describing: store.preferences.snoozeMinutes))) { store.snooze() }
                         .buttonStyle(NestButtonStyle(secondary: true)).accessibilityIdentifier("session.snooze")
                 } else {
                     Button {
                         if session.phase == .resting { store.pause() } else { store.resume() }
                     } label: {
-                        Label(session.phase == .resting ? "暂停一下" : (typeSize.isAccessibilitySize ? "继续休息" : "确认耳机，继续休息"), systemImage: session.phase == .resting ? "pause.fill" : "play.fill")
+                        Label(session.phase == .resting ? L("暂停一下") : (typeSize.isAccessibilitySize ? L("继续休息") : L("确认耳机，继续休息")), systemImage: session.phase == .resting ? "pause.fill" : "play.fill")
                     }.buttonStyle(NestButtonStyle()).accessibilityIdentifier("session.toggle")
-                    Button("结束这次休息") { cancelConfirmation = true }
+                    Button(L("结束这次休息")) { cancelConfirmation = true }
                         .font(.subheadline).frame(minHeight: 44).accessibilityIdentifier("session.cancel")
                 }
             } else {
@@ -245,9 +249,9 @@ struct RestView: View {
                     if store.preferences.sleepSound == .none { confirmSilent = true }
                     else { store.start(duration: selectedDuration) }
                 } label: {
-                    Label(typeSize.isAccessibilitySize ? "开始休息" : "开始我的片刻安静", systemImage: "play.fill")
+                    Label(typeSize.isAccessibilitySize ? L("开始休息") : L("开始我的片刻安静"), systemImage: "play.fill")
                 }.buttonStyle(NestButtonStyle()).accessibilityIdentifier("session.start")
-                Text("免费 · 无广告 · 无订阅 · 数据仅在本机").font(.caption2).foregroundStyle(.secondary)
+                Text(L("免费 · 无广告 · 无订阅 · 数据仅在本机")).font(.caption2).foregroundStyle(.secondary)
             }
         }.padding(.horizontal, 24).padding(.top, 16).padding(.bottom, 12).background(theme.background)
             .transaction { transaction in
@@ -258,6 +262,6 @@ struct RestView: View {
 
     /// 为各状态提供明确的界面文案，不把中断误标为运行中。
     private func phaseTitle(_ phase: SessionPhase) -> String {
-        switch phase { case .resting: "好好休息"; case .paused: "休息已暂停"; case .ringing: "轻轻唤醒"; case .blocked: "提醒已中断" }
+        switch phase { case .resting: L("好好休息"); case .paused: L("休息已暂停"); case .ringing: L("轻轻唤醒"); case .blocked: L("提醒已中断") }
     }
 }

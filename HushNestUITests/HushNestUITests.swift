@@ -180,7 +180,7 @@ final class HushNestUITests: XCTestCase {
 
     /// 滚动使目标控件可见，避免测试依赖固定屏幕坐标。
     private func reveal(_ element: XCUIElement) {
-        for _ in 0..<5 {
+        for _ in 0..<8 {
             let start = app.buttons["session.start"]
             let behindControls = start.exists && start.isHittable && element.exists && element.frame.intersects(start.frame)
             if element.exists && element.isHittable && !behindControls { return }
@@ -350,6 +350,84 @@ final class HushNestUITests: XCTestCase {
         app.buttons["test.reconnect"].tap()
         app.tabBars.buttons["休息"].tap()
         XCTAssertTrue(app.buttons["session.finish"].waitForExistence(timeout: 5))
+    }
+
+    /// 真实 UI 滑动提醒音量后，试听音频替身接收到新的增益。
+    func testAlarmPreviewVolumeChangesImmediately() {
+        app.launch()
+        openSounds()
+        reveal(app.sliders["alarm.volume"])
+        app.buttons["preview.alarm"].tap()
+        app.sliders["alarm.volume"].adjust(toNormalizedSliderPosition: 0)
+        XCTAssertEqual(app.staticTexts["preview.gain"].label, "0.05")
+        app.sliders["alarm.volume"].adjust(toNormalizedSliderPosition: 1)
+        XCTAssertEqual(app.staticTexts["preview.gain"].label, "1.00")
+        XCTAssertEqual(app.buttons["preview.alarm"].label, "停止试听")
+        screenshot("16-live-volume")
+    }
+
+    /// 在实际导入样本上选择两种用途，退出、重启后保持，并通过确认删除恢复内置声音。
+    func testImportedMediaSelectionPersistenceAndDeletion() {
+        app.launchArguments.append("-seed-media")
+        app.launch()
+        openSounds()
+        reveal(app.buttons["media.open"])
+        app.buttons["media.open"].tap()
+        XCTAssertTrue(app.staticTexts["My test sound"].waitForExistence(timeout: 10))
+        app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "media.sleep.")).firstMatch.tap()
+        app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "media.alarm.")).firstMatch.tap()
+        screenshot("17-personal-sounds")
+        app.navigationBars.buttons["声音与唤醒"].tap()
+        app.buttons["sound.done"].tap()
+        XCTAssertTrue(app.staticTexts["My test sound → My test sound"].exists)
+        app.terminate()
+        app.launchArguments.append("-keep-data")
+        app.launch()
+        XCTAssertTrue(app.staticTexts["My test sound → My test sound"].exists)
+        openSounds()
+        reveal(app.buttons["media.open"])
+        app.buttons["media.open"].tap()
+        app.buttons["删除 My test sound"].tap()
+        app.buttons["删除声音"].tap()
+        let deleted = XCTNSPredicateExpectation(predicate: NSPredicate(format: "count == 0"), object: app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "media.sleep.")))
+        XCTAssertEqual(XCTWaiter.wait(for: [deleted], timeout: 5), .completed)
+        app.navigationBars.buttons["声音与唤醒"].tap()
+        app.buttons["sound.done"].tap()
+        XCTAssertTrue(app.staticTexts["细雨 → 晨光"].exists)
+    }
+
+    /// 英语覆盖首页、状态、声音和媒体库，检查译文与交互。
+    func testEnglishInterfaceAndMediaImportCancellation() {
+        app.launchArguments = ["-ui-testing", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launch()
+        XCTAssertTrue(app.tabBars.buttons["Rest"].exists)
+        XCTAssertTrue(app.buttons["session.start"].label.contains("quiet moment"))
+        app.buttons["session.start"].tap()
+        XCTAssertTrue(app.staticTexts["Rest well"].exists)
+        app.buttons["session.cancel"].tap()
+        app.buttons["session.confirmEnd"].firstMatch.tap()
+        XCTAssertTrue(app.buttons["session.start"].waitForExistence(timeout: 5))
+        openSounds()
+        reveal(app.buttons["media.open"])
+        app.buttons["media.open"].tap()
+        XCTAssertTrue(app.staticTexts["My sounds"].exists)
+        app.buttons["media.import"].tap()
+        XCTAssertTrue(app.navigationBars.buttons["Cancel"].waitForExistence(timeout: 5))
+        app.navigationBars.buttons["Cancel"].tap()
+        XCTAssertTrue(app.buttons["media.import"].waitForExistence(timeout: 5))
+        screenshot("18-english-media")
+    }
+
+    /// 西班牙语长文案可浏览，主按钮可点击，指南包含通透模式操作说明。
+    func testSpanishLayoutAndGuide() {
+        app.launchArguments = ["-ui-testing", "-AppleLanguages", "(es)", "-AppleLocale", "es_ES"]
+        app.launch()
+        XCTAssertTrue(app.buttons["session.start"].isHittable)
+        screenshot("19-spanish-home")
+        app.buttons["guide.open"].tap()
+        reveal(app.staticTexts["Modos de escucha de AirPods"])
+        XCTAssertTrue(app.staticTexts["Modos de escucha de AirPods"].exists)
+        screenshot("20-spanish-guide")
     }
 
 }

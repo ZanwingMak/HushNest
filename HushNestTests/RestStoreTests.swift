@@ -280,4 +280,19 @@ final class RestStoreTests: XCTestCase {
         XCTAssertEqual(restored.theme, .ocean)
     }
 
+    /// 两类试听各自响应对应音量，不创建会话也不重启试听。
+    func testVolumeAdjustmentsReachCurrentPreview() throws {
+        try store.preview(name: "classic", volume: 0.55)
+        store.preferences.alarmVolume = 0.85
+        XCTAssertEqual(audio.previewVolume, 0.85, accuracy: 0.001)
+        store.preferences.sleepVolume = 0.1
+        XCTAssertEqual(audio.previewVolume, 0.85, accuracy: 0.001)
+        XCTAssertEqual(audio.previews, 1)
+        store.stopPreview()
+        try store.preview(name: "custom-sleep." + UUID().uuidString, volume: 0.1)
+        store.preferences.sleepVolume = 0.01
+        XCTAssertEqual(audio.previewVolume, 0.01, accuracy: 0.001)
+        XCTAssertNil(store.session)
+    }
+
 }

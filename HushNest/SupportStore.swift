@@ -27,7 +27,7 @@ final class SupportStore: ObservableObject {
         guard case .verified(let transaction) = result,
               Self.productIDs.contains(transaction.productID) else { return }
         await transaction.finish()
-        message = "谢谢你的支持，让片刻安静继续生长。"
+        message = L("谢谢你的支持，让片刻安静继续生长。")
     }
 
     /// 从 Apple 获取本地化价格，不展示虚构价格或未配置的商品。
@@ -38,8 +38,8 @@ final class SupportStore: ObservableObject {
         defer { busy = false }
         do {
             products = try await Product.products(for: Self.productIDs).sorted { $0.price < $1.price }
-            if products.isEmpty { message = "赞助暂未开放或商店暂不可用。所有功能仍可免费使用，请稍后重试。" }
-        } catch { message = "无法连接 App Store，请检查网络后重试。" }
+            if products.isEmpty { message = L("赞助暂未开放或商店暂不可用。所有功能仍可免费使用，请稍后重试。") }
+        } catch { message = L("无法连接 App Store，请检查网络后重试。") }
     }
 
     /// 仅在用户选中真实商品后打开 Apple 支付确认，并分别处理待批准、取消和验证失败。
@@ -54,15 +54,15 @@ final class SupportStore: ObservableObject {
                 switch result {
                 case .verified(let transaction):
                     await transaction.finish()
-                    message = "谢谢你的支持，让片刻安静继续生长。"
+                    message = L("谢谢你的支持，让片刻安静继续生长。")
                 case .unverified:
-                    message = "交易暂未通过验证，请稍后查看 Apple 购买记录。"
+                    message = L("交易暂未通过验证，请稍后查看 Apple 购买记录。")
                 }
-            case .pending: message = "购买正在等待批准，批准后会自动完成。"
-            case .userCancelled: message = "已取消，本次未完成赞助。"
-            @unknown default: message = "请稍后查看 Apple 购买记录确认交易状态。"
+            case .pending: message = L("购买正在等待批准，批准后会自动完成。")
+            case .userCancelled: message = L("已取消，本次未完成赞助。")
+            @unknown default: message = L("请稍后查看 Apple 购买记录确认交易状态。")
             }
-        } catch { message = "购买未完成：\(error.localizedDescription)" }
+        } catch { message = LF("购买未完成：%@", String(describing: error.localizedDescription)) }
     }
 
     deinit { updates?.cancel() }
@@ -80,11 +80,11 @@ struct SupportSheet: View {
                 Section {
                     VStack(alignment: .leading, spacing: 12) {
                         Image(systemName: "heart").font(.largeTitle)
-                        Text("让安静，继续生长。").font(.title2.weight(.semibold))
-                        Text("如果耳憩帮到了你，可以请开发者喝杯茶。赞助完全自愿，每次都是一次性内购；没有订阅，也不会解锁额外功能。")
+                        Text(L("让安静，继续生长。")).font(.title2.weight(.semibold))
+                        Text(L("如果耳憩帮到了你，可以请开发者喝杯茶。赞助完全自愿，每次都是一次性内购；没有订阅，也不会解锁额外功能。"))
                     }.padding(.vertical, 12)
                 }
-                Section("自愿赞助") {
+                Section(L("自愿赞助")) {
                     ForEach(support.products) { product in
                         Button {
                             Task { await support.purchase(product) }
@@ -99,19 +99,19 @@ struct SupportSheet: View {
                             }.frame(minHeight: 48)
                         }.disabled(support.busy).accessibilityIdentifier("support.\(product.id)")
                     }
-                    if support.busy { ProgressView("正在连接 App Store…") }
+                    if support.busy { ProgressView(L("正在连接 App Store…")) }
                     if let message = support.message { Text(message).font(.subheadline).accessibilityIdentifier("support.message") }
                     if support.products.isEmpty && !support.busy {
-                        Button("重新加载") { Task { await support.load() } }.accessibilityIdentifier("support.reload")
+                        Button(L("重新加载")) { Task { await support.load() } }.accessibilityIdentifier("support.reload")
                     }
                 }
                 Section {
-                    Text("赞助为可重复购买的消耗型内购，没有需恢复的功能或权益。交易由 Apple 处理；我们不接收你的支付信息。退款请通过 Apple 的“报告问题”申请。")
+                    Text(L("赞助为可重复购买的消耗型内购，没有需恢复的功能或权益。交易由 Apple 处理；我们不接收你的支付信息。退款请通过 Apple 的“报告问题”申请。"))
                         .font(.footnote).foregroundStyle(.secondary)
-                    Link("Apple 购买与退款", destination: URL(string: "https://reportaproblem.apple.com/")!)
+                    Link(L("Apple 购买与退款"), destination: URL(string: "https://reportaproblem.apple.com/")!)
                 }
-            }.navigationTitle("支持耳憩").navigationBarTitleDisplayMode(.inline)
-                .toolbar { ToolbarItem(placement: .confirmationAction) { Button("完成") { dismiss() }.accessibilityIdentifier("support.done") } }
+            }.navigationTitle(L("支持耳憩")).navigationBarTitleDisplayMode(.inline)
+                .toolbar { ToolbarItem(placement: .confirmationAction) { Button(L("完成")) { dismiss() }.accessibilityIdentifier("support.done") } }
                 .task { await support.load() }
         }
     }

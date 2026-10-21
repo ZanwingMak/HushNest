@@ -12,17 +12,20 @@ protocol RestAudio: AnyObject {
     func start(preferences: Preferences, remaining: TimeInterval) throws
     /// 在耳机内短暂试听指定音轨，不创建计时会话。
     func preview(name: String, volume: Float) throws
+    /// 即时修改试听播放器音量，不重启或重置进度。
+    func updatePreviewVolume(_ volume: Float)
     /// 立即停止两条音轨并释放音频会话。
     func stop()
 }
 
 enum AudioFailure: LocalizedError {
-    case noHeadphones, missingResource, playbackFailed
+    case noHeadphones, missingResource, playbackFailed, customMissing
     var errorDescription: String? {
         switch self {
-        case .noHeadphones: "请先连接有线耳机或蓝牙耳机。手机扬声器不会用于提醒。"
-        case .missingResource: "声音资源无法读取，请重新安装应用。"
-        case .playbackFailed: "音频会话未能启动，请检查耳机连接后重试。"
+        case .customMissing: L("自定义音轨无法读取，请重新导入或选择内置声音。")
+        case .noHeadphones: L("请先连接有线耳机或蓝牙耳机。手机扬声器不会用于提醒。")
+        case .missingResource: L("声音资源无法读取，请重新安装应用。")
+        case .playbackFailed: L("音频会话未能启动，请检查耳机连接后重试。")
         }
     }
 }
@@ -38,7 +41,7 @@ final class HeadphoneAudio: NSObject, RestAudio {
     var onRouteUpdate: (() -> Void)?
 
     var isHeadphoneConnected: Bool { Self.allOutputsArePrivate(session.currentRoute.outputs.map(\.portType)) }
-    var routeName: String { isHeadphoneConnected ? session.currentRoute.outputs.map(\.portName).joined(separator: "、") : "尚未连接耳机" }
+    var routeName: String { isHeadphoneConnected ? session.currentRoute.outputs.map(\.portName).joined(separator: "、") : L("尚未连接耳机") }
 
     /// 只接受明确的耳机输出，并拒绝任何包含扬声器、车载或 AirPlay 的混合路由。
     static func allOutputsArePrivate(_ outputs: [AVAudioSession.Port]) -> Bool {
@@ -57,12 +60,12 @@ final class HeadphoneAudio: NSObject, RestAudio {
                 let reason = note.userInfo?[AVAudioSessionInterruptionReasonKey] as? UInt
                 let disconnected = reason == AVAudioSession.InterruptionReason.routeDisconnected.rawValue
                 MainActor.assumeIsolated {
-                    self?.safetyStop(disconnected ? "耳机已断开，声音已停止。" : "音频被来电或其他应用中断，请确认耳机后手动继续。", disconnected: disconnected)
+                    self?.safetyStop(disconnected ? L("耳机已断开，声音已停止。") : L("音频被来电或其他应用中断，请确认耳机后手动继续。"), disconnected: disconnected)
                 }
             }
         })
         observers.append(NotificationCenter.default.addObserver(forName: AVAudioSession.mediaServicesWereResetNotification, object: nil, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated { self?.safetyStop("系统音频服务已重置，请重新连接耳机并继续。") }
+            MainActor.assumeIsolated { self?.safetyStop(L("系统音频服务已重置，请重新连接耳机并继续。")) }
         })
 
     }
@@ -72,8 +75,8 @@ final class HeadphoneAudio: NSObject, RestAudio {
         stop()
         do {
             try activateHeadphones()
-            let sleepPlayer = preferences.sleepSound == .none ? nil : try player(named: preferences.sleepSound.rawValue)
-            let alarmPlayer = try player(named: preferences.alarmSound.rawValue)
+            let sleepPlayer = preferences.sleepSound == .none ? nil : try player(named: preferences.sleepSound == .custom ? "custom-sleep.\(preferences.customSleepID?.uuidString ?? "")" : preferences.sleepSound.rawValue)
+            let alarmPlayer = try player(named: preferences.alarmSound == .custom ? "custom-alarm.\(preferences.customAlarmID?.uuidString ?? "")" : preferences.alarmSound.rawValue)
             sleepPlayer?.numberOfLoops = -1
             sleepPlayer?.volume = preferences.sleepVolume
             alarmPlayer.numberOfLoops = 2
@@ -98,9 +101,7 @@ final class HeadphoneAudio: NSObject, RestAudio {
         stop()
         do {
             try activateHeadphones()
-            let preview = try player(named: name)
-            preview.volume = min(1, max(0.01, volume))
-            ambience = preview
+            let preview = try preparePreview(name: name, volume: volume)
             active = true
             guard isHeadphoneConnected else { throw AudioFailure.noHeadphones }
             guard preview.play() else { throw AudioFailure.playbackFailed }
@@ -109,6 +110,17 @@ final class HeadphoneAudio: NSObject, RestAudio {
             throw error
         }
     }
+
+    /// 准备试听播放器但不播放，用于先加载资源再执行耳机门禁。
+    func preparePreview(name: String, volume: Float) throws -> AVAudioPlayer {
+        let preview = try player(named: name)
+        preview.volume = min(1, max(0.01, volume))
+        ambience = preview
+        return preview
+    }
+
+    /// 调整现有播放器增益，滑动时立即生效且不从头播放。
+    func updatePreviewVolume(_ volume: Float) { ambience?.volume = min(1, max(0.01, volume)) }
 
     /// 手动刷新时只激活混音会话，不播放探测音，也不申请麦克风权限。
     func refreshConnection() throws {
@@ -141,7 +153,16 @@ final class HeadphoneAudio: NSObject, RestAudio {
 
     /// 从应用内读取原创合成音频，不需要网络或麦克风权限。
     private func player(named name: String) throws -> AVAudioPlayer {
-        guard let url = Bundle.main.url(forResource: name, withExtension: "wav") else { throw AudioFailure.missingResource }
+        let url: URL
+        if name.hasPrefix("custom-") {
+            let parts = name.split(separator: ".", maxSplits: 1)
+            guard parts.count == 2, let id = UUID(uuidString: String(parts[1])) else { throw AudioFailure.customMissing }
+            url = MediaLibrary.directory.appendingPathComponent(id.uuidString + (parts[0] == "custom-alarm" ? "-alarm.m4a" : ".m4a"))
+            guard FileManager.default.fileExists(atPath: url.path) else { throw AudioFailure.customMissing }
+        } else {
+            guard let resource = Bundle.main.url(forResource: name, withExtension: "wav") else { throw AudioFailure.missingResource }
+            url = resource
+        }
         let player = try AVAudioPlayer(contentsOf: url)
         player.prepareToPlay()
         return player
@@ -149,7 +170,7 @@ final class HeadphoneAudio: NSObject, RestAudio {
 
     /// 输出变化时立即关闭非耳机播放，并通知会话层判断重连续响。
     private func routeChanged() {
-        if active && !isHeadphoneConnected { safetyStop("耳机已断开，声音已停止。重新连接后请手动继续。", disconnected: true) }
+        if active && !isHeadphoneConnected { safetyStop(L("耳机已断开，声音已停止。重新连接后请手动继续。"), disconnected: true) }
         onRouteUpdate?()
     }
 
@@ -169,12 +190,13 @@ final class HeadphoneAudio: NSObject, RestAudio {
 @MainActor
 final class PreviewAudio: RestAudio {
     var isHeadphoneConnected = true
-    var routeName: String { isHeadphoneConnected ? "测试耳机（无声模拟）" : "尚未连接耳机" }
+    var routeName: String { isHeadphoneConnected ? L("测试耳机（无声模拟）") : L("尚未连接耳机") }
     var onSafetyStop: ((String, Bool) -> Void)?
     var onRouteUpdate: (() -> Void)?
     var starts = 0
     var previews = 0
     var stops = 0
+    var previewVolume: Float = 0
     var failure: Error?
 
     /// 无声替身只刷新可观察连接状态。
@@ -190,13 +212,16 @@ final class PreviewAudio: RestAudio {
         guard isHeadphoneConnected else { throw AudioFailure.noHeadphones }
         if let failure { throw failure }
         previews += 1
+        previewVolume = volume
     }
+    /// 记录实时增益，验证 UI 调节确实传递至音频层。
+    func updatePreviewVolume(_ volume: Float) { previewVolume = volume }
     /// 记录停止次数以验证断连和暂停的行为。
     func stop() { stops += 1 }
     /// 注入断连事件，验证会话立即阻止播放。
     func disconnect() {
         isHeadphoneConnected = false
-        onSafetyStop?("耳机已断开，声音已停止。重新连接后请手动继续。", true)
+        onSafetyStop?(L("耳机已断开，声音已停止。重新连接后请手动继续。"), true)
         onRouteUpdate?()
     }
     /// 注入重连事件，由会话层根据阶段决定是否续响。

@@ -120,7 +120,7 @@ final class SessionTests: XCTestCase {
 
     /// 验证每条正式音频资源可解码，且具有非零时长和可听数据。
     @MainActor func testAllBundledAudioDecodes() throws {
-        for name in SleepSound.allCases.filter { $0 != .none }.map(\.rawValue) + AlarmSound.allCases.map(\.rawValue) {
+        for name in SleepSound.allCases.filter { $0 != .none && $0 != .custom }.map(\.rawValue) + AlarmSound.allCases.filter { $0 != .custom }.map(\.rawValue) {
             let url = try XCTUnwrap(Bundle.main.url(forResource: name, withExtension: "wav"))
             let file = try AVAudioFile(forReading: url)
             XCTAssertGreaterThan(file.length, 200_000)
@@ -191,6 +191,35 @@ final class SessionTests: XCTestCase {
         let count = CFDataGetLength(bytes)
         let distinct = Set(stride(from: 0, to: count, by: 4).map { data[$0] })
         XCTAssertGreaterThan(distinct.count, 10)
+    }
+
+    /// 操作真实 AVAudioPlayer 的增益，确认试听音量即时改变且不重置进度，不启动播放。
+    @MainActor func testLivePreviewGainChangesActualPlayer() throws {
+        let audio = HeadphoneAudio()
+        let player = try audio.preparePreview(name: "classic", volume: 0.55)
+        player.currentTime = 4
+        audio.updatePreviewVolume(0.1)
+        XCTAssertEqual(player.volume, 0.1, accuracy: 0.001)
+        XCTAssertEqual(player.currentTime, 4, accuracy: 0.1)
+        audio.updatePreviewVolume(0.9)
+        XCTAssertEqual(player.volume, 0.9, accuracy: 0.001)
+        XCTAssertFalse(player.isPlaying)
+        audio.stop()
+    }
+
+    /// 六种语言资源完整覆盖相同文案，并保留动态占位符。
+    func testLocalizationsHaveMatchingKeysAndPlaceholders() throws {
+        var baseline: [String: String] = [:]
+        for language in ["zh-Hans", "zh-Hant", "en", "ja", "ko", "es"] {
+            let path = try XCTUnwrap(Bundle.main.path(forResource: "Localizable", ofType: "strings", inDirectory: nil, forLocalization: language))
+            let values = try XCTUnwrap(NSDictionary(contentsOfFile: path) as? [String: String])
+            if baseline.isEmpty { baseline = values }
+            XCTAssertEqual(Set(values.keys), Set(baseline.keys))
+            for (key, value) in values {
+                XCTAssertEqual(key.components(separatedBy: "%@").count, value.components(separatedBy: "%@").count, key)
+            }
+            if language == "en" { XCTAssertEqual(values["休息"], "Rest") }
+        }
     }
 
     /// 将 sRGB 色彩转换为相对亮度，用于验证可读性而非仅比对配置文本。

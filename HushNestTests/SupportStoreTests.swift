@@ -24,9 +24,9 @@ final class SupportStoreTests: XCTestCase {
         let product = try XCTUnwrap(store.products.first)
         XCTAssertEqual(product.type, .consumable)
         await store.purchase(product)
-        XCTAssertTrue(store.message?.contains("谢谢") == true)
+        XCTAssertTrue(store.message == L("谢谢你的支持，让片刻安静继续生长。"))
         await store.purchase(product)
-        XCTAssertTrue(store.message?.contains("谢谢") == true)
+        XCTAssertTrue(store.message == L("谢谢你的支持，让片刻安静继续生长。"))
         XCTAssertFalse(store.busy)
         XCTAssertEqual(session.allTransactions().count, 2)
     }
@@ -38,15 +38,15 @@ final class SupportStoreTests: XCTestCase {
         let product = try XCTUnwrap(store.products.first)
         session.askToBuyEnabled = true
         await store.purchase(product)
-        XCTAssertTrue(store.message?.contains("等待批准") == true)
+        XCTAssertTrue(store.message == L("购买正在等待批准，批准后会自动完成。"))
         let pending = try XCTUnwrap(session.allTransactions().last(where: \.pendingAskToBuyConfirmation))
         try session.approveAskToBuyTransaction(identifier: pending.identifier)
-        for _ in 0..<30 where store.message?.contains("谢谢") != true { try await Task.sleep(for: .milliseconds(100)) }
-        XCTAssertTrue(store.message?.contains("谢谢") == true)
+        for _ in 0..<30 where store.message != L("谢谢你的支持，让片刻安静继续生长。") { try await Task.sleep(for: .milliseconds(100)) }
+        XCTAssertTrue(store.message == L("谢谢你的支持，让片刻安静继续生长。"))
         session.askToBuyEnabled = false
         try await session.setSimulatedError(.generic(.userCancelled), forAPI: .purchase)
         await store.purchase(product)
-        XCTAssertTrue(store.message?.contains("取消") == true)
+        XCTAssertTrue(store.message == L("已取消，本次未完成赞助。"))
         XCTAssertFalse(store.busy)
     }
 
