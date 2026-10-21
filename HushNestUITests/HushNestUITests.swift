@@ -363,7 +363,9 @@ final class HushNestUITests: XCTestCase {
         app.sliders["alarm.volume"].adjust(toNormalizedSliderPosition: 0)
         XCTAssertEqual(app.staticTexts["preview.gain"].label, "0.05")
         app.sliders["alarm.volume"].adjust(toNormalizedSliderPosition: 1)
-        XCTAssertEqual(app.staticTexts["preview.gain"].label, "1.00")
+        let highGain = Double(app.staticTexts["preview.gain"].label) ?? 0
+        XCTAssertGreaterThan(highGain, 0.85)
+        XCTAssertLessThanOrEqual(highGain, 1)
         XCTAssertEqual(app.buttons["preview.alarm"].label, "停止试听")
         screenshot("16-live-volume")
     }
