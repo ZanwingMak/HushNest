@@ -54,15 +54,15 @@ struct SoundSheet: View {
                     ForEach(SleepSound.allCases.filter { $0 != .custom }) { sound in
                         HStack(spacing: 12) {
                             Button { store.stopPreview(); store.preferences.sleepSound = sound } label: {
-                                HStack(spacing: 16) {
+                                HStack(spacing: 12) {
                                 Image(systemName: sound.symbol).font(.title3).frame(width: 28)
-                                VStack(alignment: .leading, spacing: 5) {
+                                VStack(alignment: .leading, spacing: 2) {
                                     Text(sound.title).foregroundStyle(.primary)
                                     Text(sound.subtitle).font(.caption).foregroundStyle(.secondary)
                                 }
                                 Spacer()
                                 if store.preferences.sleepSound == sound { Image(systemName: "checkmark.circle.fill") }
-                                }.frame(minHeight: 48)
+                                }.frame(minHeight: 44)
                             }.buttonStyle(.borderless).accessibilityIdentifier("sound.\(sound.rawValue)")
                                 .accessibilityAddTraits(store.preferences.sleepSound == sound ? .isSelected : [])
                             if sound != .none { Button { preview(sound.rawValue, volume: store.preferences.sleepVolume) } label: {
@@ -70,7 +70,7 @@ struct SoundSheet: View {
                                     .font(.title2).frame(width: 44, height: 44)
                             }.buttonStyle(.borderless).accessibilityLabel(store.previewing == sound.rawValue ? LF("停止试听%@", String(describing: sound.title)) : LF("试听%@", String(describing: sound.title)))
                                 .accessibilityIdentifier("preview.\(sound.rawValue)") }
-                        }
+                        }.listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
                     }
                     if store.preferences.sleepSound == .custom {
                         Label(library.sounds.first { $0.id == store.preferences.customSleepID }?.name ?? L("自定义声音"), systemImage: "checkmark.circle.fill")
@@ -95,13 +95,16 @@ struct SoundSheet: View {
                         Text(String(format: "%.2f", audio.previewVolume)).accessibilityIdentifier("preview.gain")
                     }
                     #endif
+                    Toggle(L("持续响铃，直到手动停止"), isOn: $store.preferences.repeatAlarm).accessibilityIdentifier("alarm.repeat")
+                    Text(L("开启后铃声会一直重复，直到结束或稍后提醒。耳机断开或音频中断时停止；关闭时最多提醒 3 分钟。"))
+                        .font(.caption).foregroundStyle(.secondary)
                     Toggle(L("唤醒时震动"), isOn: $store.preferences.vibrationEnabled).accessibilityIdentifier("alarm.vibration")
                     Text(L("震动由 iPhone 提供，受系统触感设置影响；锁屏及无助眠音挂起时不能保证震动。"))
                         .font(.caption).foregroundStyle(.secondary)
                     Stepper(LF("稍后提醒 %@ 分钟", String(describing: store.preferences.snoozeMinutes)), value: $store.preferences.snoozeMinutes, in: 1...30)
                         .accessibilityIdentifier("snooze.stepper")
                 } header: { Text(L("到点时，按你的方式醒来")) } footer: {
-                    Text(L("内置铃声逐渐增强，经典与强力铃声更鲜明。最多提醒 3 分钟。实际响度也受 iPhone 媒体音量影响；初次使用请先用短计时确认。"))
+                    Text(L("内置铃声逐渐增强，经典与强力铃声更鲜明。可选择持续重复响铃。实际响度也受 iPhone 媒体音量影响；初次使用请先用短计时确认。"))
                 }
             }.navigationTitle(L("声音与唤醒")).navigationBarTitleDisplayMode(.inline)
                 .toolbar { ToolbarItem(placement: .confirmationAction) { Button(L("完成")) { dismiss() }.accessibilityIdentifier("sound.done") } }

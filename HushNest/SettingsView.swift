@@ -60,8 +60,9 @@ struct SettingsView: View {
                     Link(L("服务条款"), destination: URL(string: "https://zanwingmak.github.io/HushNest/terms.html")!)
                     Link(L("查看开源代码"), destination: URL(string: "https://github.com/ZanwingMak/HushNest")!)
                     Link(L("反馈问题与建议"), destination: URL(string: "https://github.com/ZanwingMak/HushNest/issues")!)
-                    LabeledContent(L("版本"), value: "1.2.0 (\(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"))")
+                    LabeledContent(L("版本"), value: "\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.4.0") (\(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"))")
                 } header: { Text(L("自由，也透明")) } footer: {
+                    Text("© 2026 ZHENYING MAI")
                     Text(L("MIT 开源 · 无广告 · 无订阅 · 可自愿一次性赞助。\n不收集个人数据，不使用麦克风。仅赞助时通过 Apple StoreKit 联网处理交易。配置和最多 365 条休息记录仅保存在本机，卸载后删除。访问 GitHub 链接时适用 GitHub 的隐私政策。"))
                 }
                 #if DEBUG

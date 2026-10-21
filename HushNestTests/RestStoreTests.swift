@@ -360,5 +360,44 @@ final class RestStoreTests: XCTestCase {
         XCTAssertFalse(store.hasHeadphones)
         XCTAssertNil(store.session)
     }
+    /// 本轮持续响铃配置固定，超过一小时仍提醒，手动完成后立即停止且只记录一次。
+    func testContinuousAlarmUsesSessionSnapshotUntilStopped() {
+        store.preferences.repeatAlarm = true
+        store.start(duration: 1)
+        store.preferences.repeatAlarm = false
+        now.addTimeInterval(3601)
+        store.tick()
+        XCTAssertEqual(store.session?.phase, .ringing)
+        XCTAssertTrue(store.records.isEmpty)
+        let stops = audio.stops
+        store.finish(completed: true)
+        XCTAssertNil(store.session)
+        XCTAssertEqual(audio.stops, stops + 1)
+        XCTAssertEqual(store.records.count, 1)
+    }
+
+    /// 持续响铃断连时停止，超过三分钟重连仍可续响；稍后提醒与后台保留同一策略。
+    func testContinuousAlarmReconnectAndSnooze() {
+        store.preferences.repeatAlarm = true
+        store.start(duration: 1)
+        now.addTimeInterval(1)
+        store.tick()
+        audio.disconnect()
+        XCTAssertEqual(store.session?.phase, .blocked)
+        now.addTimeInterval(600)
+        audio.reconnect()
+        XCTAssertEqual(store.session?.phase, .ringing)
+        store.snooze()
+        XCTAssertEqual(store.session?.phase, .resting)
+        store.enteredBackground()
+        now.addTimeInterval(4000)
+        store.tick()
+        XCTAssertEqual(store.session?.phase, .ringing)
+        store.block("系统中断")
+        XCTAssertEqual(store.session?.phase, .blocked)
+        audio.reconnect()
+        XCTAssertEqual(store.session?.phase, .blocked)
+    }
+
 
 }

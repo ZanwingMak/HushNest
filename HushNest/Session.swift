@@ -39,6 +39,7 @@ struct Preferences: Codable, Equatable {
     var minutes = 30
     var seconds = 0
     var vibrationEnabled = false
+    var repeatAlarm = false
     var precisePresets: [Int] = []
     var customSleepID: UUID?
     var customAlarmID: UUID?
@@ -53,7 +54,7 @@ struct Preferences: Codable, Equatable {
     var presetDurations: [Int] { Array(Set(presets.map { $0 * 60 } + precisePresets)).sorted() }
 
     private enum CodingKeys: String, CodingKey {
-        case customSleepID, customAlarmID, minutes, seconds, vibrationEnabled, precisePresets, sleepSound, alarmSound, sleepVolume, alarmVolume, snoozeMinutes, presets
+        case repeatAlarm, customSleepID, customAlarmID, minutes, seconds, vibrationEnabled, precisePresets, sleepSound, alarmSound, sleepVolume, alarmVolume, snoozeMinutes, presets
     }
 
     /// 新安装使用统一默认值。
@@ -66,6 +67,7 @@ struct Preferences: Codable, Equatable {
         customAlarmID = try values.decodeIfPresent(UUID.self, forKey: .customAlarmID)
         minutes = try values.decodeIfPresent(Int.self, forKey: .minutes) ?? 30
         seconds = try values.decodeIfPresent(Int.self, forKey: .seconds) ?? 0
+        repeatAlarm = try values.decodeIfPresent(Bool.self, forKey: .repeatAlarm) ?? false
         vibrationEnabled = try values.decodeIfPresent(Bool.self, forKey: .vibrationEnabled) ?? false
         precisePresets = try values.decodeIfPresent([Int].self, forKey: .precisePresets) ?? []
         sleepSound = try values.decodeIfPresent(SleepSound.self, forKey: .sleepSound) ?? .rain
@@ -121,13 +123,13 @@ struct RestSession: Codable, Equatable {
         max(0, pausedRemaining ?? deadline.timeIntervalSince(now))
     }
 
-    /// 根据绝对时间切换到响铃状态，并在三分钟后返回自动结束信号。
-    mutating func tick(at now: Date) -> Bool {
+    /// 根据截止时间进入响铃；持续响铃模式仅由用户或安全事件停止。
+    mutating func tick(at now: Date, repeatAlarm: Bool = false) -> Bool {
         if phase == .resting && now >= deadline {
             settleRest(at: now)
             phase = .ringing
         }
-        return phase == .ringing && now.timeIntervalSince(deadline) >= 180
+        return phase == .ringing && !repeatAlarm && now.timeIntervalSince(deadline) >= 180
     }
 
     /// 手动暂停冻结剩余时间；中断暂停保留原截止时间，避免误报仍在运行。

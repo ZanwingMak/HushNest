@@ -46,7 +46,7 @@ struct MediaSheet: View {
                         }.buttonStyle(.borderless)
                     }.padding(.vertical, 8)
                 }
-            } header: { Text(L("我的声音")) } footer: { Text(L("助眠音循环播放；自定义铃声使用前 60 秒并重复，最长提醒 3 分钟。请确认声音清晰可闻，首次先用短计时测试。")) }
+            } header: { Text(L("我的声音")) } footer: { Text(L("助眠音循环播放；自定义铃声使用前 60 秒。开启持续响铃后会重复到手动停止，关闭时最多提醒 3 分钟。首次请先用短计时测试。")) }
         }
         .navigationTitle(L("我的声音")).navigationBarTitleDisplayMode(.inline)
         .fileImporter(isPresented: $showImporter, allowedContentTypes: [.audio, .movie]) { result in

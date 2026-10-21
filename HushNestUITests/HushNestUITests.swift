@@ -119,6 +119,49 @@ final class HushNestUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["完成一段休息"].waitForExistence(timeout: 5))
     }
 
+    /// 紧凑音景行仍可选择及试听，持续响铃开关保存后重启可恢复。
+    func testCompactSoundsAndRepeatAlarmPersistence() {
+        app.launch()
+        openSounds()
+        XCTAssertTrue(app.buttons["sound.rain"].isHittable)
+        XCTAssertTrue(app.buttons["preview.rain"].isHittable)
+        let distance = app.buttons["sound.ocean"].frame.midY - app.buttons["sound.rain"].frame.midY
+        XCTAssertLessThan(distance, 66)
+        screenshot("26-compact-sounds")
+        let toggle = app.switches["alarm.repeat"]
+        reveal(toggle)
+        XCTAssertEqual(toggle.value as? String, "0")
+        toggle.switches.firstMatch.tap()
+        XCTAssertEqual(toggle.value as? String, "1")
+        screenshot("25-continuous-alarm")
+        app.buttons["sound.done"].tap()
+        app.terminate()
+        app.launchArguments.append("-keep-data")
+        app.launch()
+        openSounds()
+        reveal(toggle)
+        XCTAssertEqual(toggle.value as? String, "1")
+        toggle.switches.firstMatch.tap()
+        XCTAssertEqual(toggle.value as? String, "0")
+    }
+
+    /// 使用真实扬声器路由拍摄正式商店截图，只操作界面且不启动播放。
+    func testAppStoreScreenshotsWithoutAudio() {
+        app.launchArguments = ["-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh_CN"]
+        app.launch()
+        XCTAssertTrue(app.buttons["route.status"].waitForExistence(timeout: 5))
+        screenshot("store-01-rest")
+        openSounds()
+        screenshot("store-02-sounds")
+        let toggle = app.switches["alarm.repeat"]
+        reveal(toggle)
+        if toggle.value as? String == "0" { toggle.switches.firstMatch.tap() }
+        screenshot("store-03-alarm")
+        app.buttons["sound.done"].tap()
+        app.tabBars.buttons["足迹"].tap()
+        screenshot("store-04-history")
+    }
+
     /// 验证声音配置改变后返回首页，且应用重启后依然保留。
     func testSoundSelectionPersists() {
         app.launch()

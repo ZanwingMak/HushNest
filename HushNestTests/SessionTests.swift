@@ -55,6 +55,37 @@ final class SessionTests: XCTestCase {
         XCTAssertTrue(session.tick(at: start.addingTimeInterval(240)))
     }
 
+    /// 持续模式超过三分钟和多轮音轨时仍保持响铃，稍后提醒可重新计时。
+    func testRepeatingAlarmHasNoAutomaticTimeout() {
+        var session = RestSession(now: start, duration: 1)
+        XCTAssertFalse(session.tick(at: start.addingTimeInterval(3601), repeatAlarm: true))
+        XCTAssertEqual(session.phase, .ringing)
+        session.snooze(at: start.addingTimeInterval(3601), minutes: 5)
+        XCTAssertEqual(session.phase, .resting)
+        XCTAssertEqual(session.remaining(at: start.addingTimeInterval(3601)), 300)
+    }
+
+    /// 从旧配置迁移时保留限时模式，新选择可以持久化。
+    func testRepeatAlarmPreferenceMigration() throws {
+        let old = try JSONDecoder().decode(Preferences.self, from: Data("{}".utf8))
+        XCTAssertFalse(old.repeatAlarm)
+        var settings = old
+        settings.repeatAlarm = true
+        XCTAssertTrue(try JSONDecoder().decode(Preferences.self, from: JSONEncoder().encode(settings)).repeatAlarm)
+    }
+
+    /// 不播放音频，直接确认真实播放器使用无限循环且限时模式保持三轮。
+    @MainActor func testAlarmPlayerLoopPolicyWithoutPlayback() throws {
+        let audio = HeadphoneAudio()
+        defer { audio.stop() }
+        var settings = Preferences()
+        XCTAssertEqual(try audio.prepareAlarm(preferences: settings).numberOfLoops, 2)
+        settings.repeatAlarm = true
+        let player = try audio.prepareAlarm(preferences: settings)
+        XCTAssertEqual(player.numberOfLoops, -1)
+        XCTAssertFalse(player.isPlaying)
+    }
+
     /// 验证跨午夜预约使用下一天的本地时间。
     func testClockScheduleAcrossMidnight() {
         var calendar = Calendar(identifier: .gregorian)

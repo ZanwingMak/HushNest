@@ -160,7 +160,6 @@
 "唤醒铃声" = "Sonido de alarma";
 "删除 %@" = "Eliminar %@";
 "我的声音" = "Mis sonidos";
-"助眠音循环播放；自定义铃声使用前 60 秒并重复，最长提醒 3 分钟。请确认声音清晰可闻，首次先用短计时测试。" = "El audio de descanso se repite. Las alarmas personales repiten los primeros 60 segundos durante un máximo de 3 minutos. Comprueba que se oyen bien con un temporizador corto.";
 "相册视频" = "Vídeo de Fotos";
 "导入失败" = "Error de importación";
 "删除这个声音？" = "¿Eliminar este sonido?";
@@ -215,7 +214,6 @@
 "震动由 iPhone 提供，受系统触感设置影响；锁屏及无助眠音挂起时不能保证震动。" = "La vibración proviene del iPhone y sigue sus ajustes hápticos. No se garantiza con la pantalla bloqueada o la app suspendida sin audio de descanso.";
 "稍后提醒 %@ 分钟" = "Posponer %@ min";
 "到点时，按你的方式醒来" = "Despierta a tu manera";
-"内置铃声逐渐增强，经典与强力铃声更鲜明。最多提醒 3 分钟。实际响度也受 iPhone 媒体音量影响；初次使用请先用短计时确认。" = "Las alarmas incluidas aumentan gradualmente; las clásicas e intensas son más marcadas. Duran hasta 3 minutos. El volumen multimedia del iPhone también influye. Haz una prueba breve antes del primer uso.";
 "无法试听" = "No se puede probar";
 "把安静留给周围，\n把提醒留给自己。" = "Calma para todos.\nEl aviso, solo para ti.";
 "连接你的耳机" = "Conecta tus auriculares";
@@ -238,3 +236,8 @@
 "暂未切换成功。请点右侧输出按钮重新选择 AirPods，或在控制中心选择耳机后再试。" = "No se ha completado el cambio. Usa el botón de salida de la derecha para volver a elegir los AirPods, o selecciona los auriculares en el Centro de control e inténtalo de nuevo.";
 "取消连接" = "Cancelar conexión";
 "已戴上耳机？尝试连接" = "¿Ya los llevas puestos? Intentar conectar";
+"持续响铃，直到手动停止" = "Repetir hasta detenerla";
+"开启后铃声会一直重复，直到结束或稍后提醒。耳机断开或音频中断时停止；关闭时最多提醒 3 分钟。" = "Al activarlo, se repite hasta finalizar o posponer. Se detiene si se desconectan los auriculares o se interrumpe el audio. Desactivado, dura hasta 3 minutos.";
+"耳机已断开，响铃已停止。重新连接后将尝试继续重复响铃。" = "Auriculares desconectados. La alarma repetida se detuvo. Al reconectarlos se intentará reanudar.";
+"内置铃声逐渐增强，经典与强力铃声更鲜明。可选择持续重复响铃。实际响度也受 iPhone 媒体音量影响；初次使用请先用短计时确认。" = "Las alarmas incluidas aumentan gradualmente; las clásicas e intensas son más marcadas. Puedes activar la repetición continua. El volumen multimedia del iPhone también influye. Haz una prueba breve primero.";
+"助眠音循环播放；自定义铃声使用前 60 秒。开启持续响铃后会重复到手动停止，关闭时最多提醒 3 分钟。首次请先用短计时测试。" = "El audio de descanso se repite. Las alarmas personales usan los primeros 60 segundos. Con repetición continua suenan hasta detenerlas; si no, hasta 3 minutos. Prueba con un temporizador corto.";

@@ -81,11 +81,9 @@ final class HeadphoneAudio: NSObject, RestAudio {
         do {
             try activateHeadphones()
             let sleepPlayer = preferences.sleepSound == .none ? nil : try player(named: preferences.sleepSound == .custom ? "custom-sleep.\(preferences.customSleepID?.uuidString ?? "")" : preferences.sleepSound.rawValue)
-            let alarmPlayer = try player(named: preferences.alarmSound == .custom ? "custom-alarm.\(preferences.customAlarmID?.uuidString ?? "")" : preferences.alarmSound.rawValue)
+            let alarmPlayer = try prepareAlarm(preferences: preferences)
             sleepPlayer?.numberOfLoops = -1
             sleepPlayer?.volume = preferences.sleepVolume
-            alarmPlayer.numberOfLoops = 2
-            alarmPlayer.volume = preferences.alarmVolume
             ambience = sleepPlayer
             alarm = alarmPlayer
             active = true
@@ -99,6 +97,16 @@ final class HeadphoneAudio: NSObject, RestAudio {
             stop()
             throw error
         }
+    }
+
+    /// 准备真实铃声播放器但不播放，持续提醒对内置及自定义音轨都使用无限循环。
+    func prepareAlarm(preferences: Preferences) throws -> AVAudioPlayer {
+        let name = preferences.alarmSound == .custom ? "custom-alarm.\(preferences.customAlarmID?.uuidString ?? "")" : preferences.alarmSound.rawValue
+        let player = try player(named: name)
+        player.numberOfLoops = preferences.repeatAlarm ? -1 : 2
+        player.volume = preferences.alarmVolume
+        alarm = player
+        return player
     }
 
     /// 试听沿用同一耳机门禁和断连保护，任何启动错误均停止音频。

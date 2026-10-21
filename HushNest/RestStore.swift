@@ -94,12 +94,12 @@ final class RestStore: ObservableObject {
         refreshRoute()
     }
 
-    /// 使用绝对时间刷新倒计时，响铃三分钟后自动结束，防止持续占用耳机。
+    /// 使用本轮固定的响铃配置刷新倒计时，只有限时提醒会自动结束。
     func tick() {
         guard var current = session else { return }
         now = clock()
         let oldPhase = current.phase
-        let shouldEnd = current.tick(at: now)
+        let shouldEnd = current.tick(at: now, repeatAlarm: (sessionPreferences ?? preferences).repeatAlarm)
         session = current
         if current.phase == .ringing {
             (audio as? HeadphoneAudio)?.stopAmbienceIfRinging()
@@ -187,7 +187,10 @@ final class RestStore: ObservableObject {
         guard var current = session else { return }
         now = clock()
         resumeAlarmOnReconnect = (current.phase == .ringing || (current.phase == .resting && now >= current.deadline)) && disconnected
-        current.pause(at: now, reason: resumeAlarmOnReconnect ? L("耳机已断开，响铃已停止。三分钟内重新连接后将尝试自动续响。") : reason)
+        let reconnectReason = (sessionPreferences ?? preferences).repeatAlarm
+            ? L("耳机已断开，响铃已停止。重新连接后将尝试继续重复响铃。")
+            : L("耳机已断开，响铃已停止。三分钟内重新连接后将尝试自动续响。")
+        current.pause(at: now, reason: resumeAlarmOnReconnect ? reconnectReason : reason)
         session = current
         persistSession()
         cancelNotification()
@@ -304,11 +307,17 @@ final class RestStore: ObservableObject {
     /// 连接探测仅限前台；真实助眠播放和提醒沿用后台音频会话。
     func enteredBackground() { cancelConnectionAttempt() }
 
+    /// 持续响铃没有三分钟续响上限，限时模式保留原有恢复窗口。
+    private var canResumeAlarm: Bool {
+        guard let session else { return false }
+        return (sessionPreferences ?? preferences).repeatAlarm || clock().timeIntervalSince(session.deadline) < 180
+    }
+
     /// 响铃期间断连后仅在真实耳机重连时续响，休息阶段保持手动恢复。
     private func handleRouteUpdate() {
         refreshRoute()
         if resumeAlarmOnReconnect && hasHeadphones {
-            if let session, clock().timeIntervalSince(session.deadline) < 180 { resume() }
+            if canResumeAlarm { resume() }
             else { resumeAlarmOnReconnect = false }
         }
     }
@@ -320,7 +329,7 @@ final class RestStore: ObservableObject {
             block(L("当前没有可用耳机，声音已停止。连接后请手动继续。"), disconnected: true)
         }
         if resumeAlarmOnReconnect && hasHeadphones {
-            if let session, clock().timeIntervalSince(session.deadline) < 180 { resume() }
+            if canResumeAlarm { resume() }
             else { resumeAlarmOnReconnect = false }
         }
         tick()
