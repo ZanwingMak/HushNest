@@ -229,3 +229,12 @@
 "请了解系统限制" = "Understand system limits";
 "这不是系统闹钟。强制关闭应用、手机重启、耳机没电、来电或其他音频中断都可能使提醒停止。静默通知只是文字提示，不会外放铃声，也不能替代耳机提醒。" = "This is not a system alarm. Force-closing, restarting, low headphone battery, calls or other audio interruptions may stop reminders. Silent notifications are text only, never play a ringtone aloud and cannot replace headphone reminders.";
 "自定义音轨无法读取，请重新导入或选择内置声音。" = "The custom audio could not be read. Import it again or choose a built-in sound.";
+"尝试将耳机切到 iPhone？" = "Try switching headphones to iPhone?";
+"我已戴上耳机，尝试播放音频触发连接" = "I’m wearing headphones. Try audio to connect";
+"如果 AirPods 仍在 Mac 上播放，可尝试唤起 iPhone 音频。这可能暂停其他媒体；确认实际耳机路由前保持无声，成功后仅在耳机内播放两秒轻柔音乐。最多等待 12 秒，可随时取消。iOS 决定是否切换，无法保证成功。" = "If AirPods are still playing from your Mac, try activating iPhone audio. This may pause other media. Audio stays silent until the actual headphone route is confirmed, then plays two seconds of soft music only in headphones. Waits up to 12 seconds; cancel anytime. iOS controls switching, so success is not guaranteed.";
+"正在尝试连接耳机…" = "Trying to connect headphones…";
+"已连接，正在耳机内播放轻柔提示音。" = "Connected. Playing a soft cue in headphones.";
+"耳机已连接，可以开始休息。" = "Headphones connected. Ready to rest.";
+"暂未切换成功。请点右侧输出按钮重新选择 AirPods，或在控制中心选择耳机后再试。" = "Switching did not complete. Use the output button on the right to select AirPods again, or select headphones in Control Center and retry.";
+"取消连接" = "Cancel connection";
+"已戴上耳机？尝试连接" = "Wearing headphones? Try connecting";

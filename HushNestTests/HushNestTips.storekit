@@ -21,6 +21,66 @@
       "productID": "com.zanwingmak.HushNest.tip.tea",
       "referenceName": "HushNest Tip Tea",
       "type": "Consumable"
+    },
+    {
+      "displayPrice": "2.99",
+      "familyShareable": false,
+      "internalID": "b3676d35-582c-4a1a-91d4-0292c3e13437",
+      "localizations": [
+        {
+          "displayName": "一杯咖啡，支持耳憩",
+          "description": "自愿一次性赞助开发，不解锁功能，没有订阅。",
+          "locale": "zh_CN"
+        },
+        {
+          "displayName": "A cup of coffee",
+          "description": "Optional tip. All features remain free.",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.zanwingmak.HushNest.tip.coffee",
+      "referenceName": "HushNest Tip Coffee",
+      "type": "Consumable"
+    },
+    {
+      "displayPrice": "5.99",
+      "familyShareable": false,
+      "internalID": "a016e9ff-d56c-4bfe-b36f-0fb47bb5a2a5",
+      "localizations": [
+        {
+          "displayName": "一份甜点，支持耳憩",
+          "description": "自愿一次性赞助开发，不解锁功能，没有订阅。",
+          "locale": "zh_CN"
+        },
+        {
+          "displayName": "A little dessert",
+          "description": "Optional tip. All features remain free.",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.zanwingmak.HushNest.tip.dessert",
+      "referenceName": "HushNest Tip Dessert",
+      "type": "Consumable"
+    },
+    {
+      "displayPrice": "9.99",
+      "familyShareable": false,
+      "internalID": "334a703d-b91e-4e08-984e-1aa8d9feebd6",
+      "localizations": [
+        {
+          "displayName": "一座小花园，支持耳憩",
+          "description": "自愿一次性赞助开发，不解锁功能，没有订阅。",
+          "locale": "zh_CN"
+        },
+        {
+          "displayName": "A little garden",
+          "description": "Optional tip. All features remain free.",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.zanwingmak.HushNest.tip.garden",
+      "referenceName": "HushNest Tip Garden",
+      "type": "Consumable"
     }
   ],
   "settings": {

@@ -295,4 +295,70 @@ final class RestStoreTests: XCTestCase {
         XCTAssertNil(store.session)
     }
 
+    /// 路由未切换时不播放确认音，超时后停止探测且允许重试。
+    func testConnectionAttemptTimesOutWithoutFalseSuccess() async throws {
+        audio.isHeadphoneConnected = false
+        store.attemptHeadphoneConnection(timeout: 0.05)
+        XCTAssertTrue(store.isConnecting)
+        XCTAssertEqual(audio.connectionAttempts, 1)
+        try await Task.sleep(for: .milliseconds(300))
+        XCTAssertFalse(store.isConnecting)
+        XCTAssertFalse(store.hasHeadphones)
+        XCTAssertEqual(audio.connectionConfirmations, 0)
+        XCTAssertEqual(audio.previews, 0)
+        XCTAssertTrue(store.connectionMessage?.contains("AirPods") == true)
+        XCTAssertNil(store.session)
+    }
+
+    /// 只有路由切到耳机后才播放确认音，随后释放探测会话。
+    func testConnectionAttemptConfirmsActualRoute() async throws {
+        audio.isHeadphoneConnected = false
+        store.attemptHeadphoneConnection(confirmationDuration: 0.05)
+        XCTAssertEqual(audio.connectionConfirmations, 0)
+        audio.reconnect()
+        try await Task.sleep(for: .milliseconds(350))
+        XCTAssertEqual(audio.connectionConfirmations, 1)
+        XCTAssertFalse(store.isConnecting)
+        XCTAssertTrue(store.hasHeadphones)
+        XCTAssertEqual(store.connectionMessage, L("耳机已连接，可以开始休息。"))
+        XCTAssertNil(store.session)
+    }
+
+    /// 取消及转入后台都会停止探测，旧任务不能误停新开始的休息。
+    func testConnectionCancellationAndBackgroundCleanup() async throws {
+        audio.isHeadphoneConnected = false
+        store.attemptHeadphoneConnection()
+        store.cancelConnectionAttempt()
+        audio.reconnect()
+        store.start(duration: 30)
+        let stops = audio.stops
+        try await Task.sleep(for: .milliseconds(250))
+        XCTAssertEqual(audio.stops, stops)
+        XCTAssertEqual(audio.connectionConfirmations, 0)
+        XCTAssertEqual(store.session?.phase, .resting)
+        store.finish(completed: false)
+        audio.isHeadphoneConnected = false
+        store.attemptHeadphoneConnection()
+        store.enteredBackground()
+        XCTAssertFalse(store.isConnecting)
+        XCTAssertNil(store.connectionMessage)
+    }
+
+    /// 中断、启动失败及确认音期间拔出耳机均会结束尝试，不创建闹钟。
+    func testConnectionFailureAndDisconnectionStopAttempt() async throws {
+        audio.failure = AudioFailure.playbackFailed
+        store.attemptHeadphoneConnection()
+        XCTAssertFalse(store.isConnecting)
+        XCTAssertNotNil(store.connectionMessage)
+        audio.failure = nil
+        store.attemptHeadphoneConnection()
+        try await Task.sleep(for: .milliseconds(50))
+        XCTAssertEqual(audio.connectionConfirmations, 1)
+        audio.disconnect()
+        try await Task.sleep(for: .milliseconds(250))
+        XCTAssertFalse(store.isConnecting)
+        XCTAssertFalse(store.hasHeadphones)
+        XCTAssertNil(store.session)
+    }
+
 }

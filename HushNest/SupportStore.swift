@@ -3,7 +3,7 @@ import SwiftUI
 
 @MainActor
 final class SupportStore: ObservableObject {
-    static let productIDs = ["com.zanwingmak.HushNest.tip.tea"]
+    static let productIDs = ["tea", "coffee", "dessert", "garden"].map { "com.zanwingmak.HushNest.tip." + $0 }
     @Published private(set) var products: [Product] = []
     @Published private(set) var busy = false
     @Published private(set) var message: String?

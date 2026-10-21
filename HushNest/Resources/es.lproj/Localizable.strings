@@ -229,3 +229,12 @@
 "请了解系统限制" = "Conoce los límites del sistema";
 "这不是系统闹钟。强制关闭应用、手机重启、耳机没电、来电或其他音频中断都可能使提醒停止。静默通知只是文字提示，不会外放铃声，也不能替代耳机提醒。" = "No es una alarma del sistema. El cierre forzado, reinicio, poca batería en auriculares, llamadas u otras interrupciones pueden detenerla. Los avisos silenciosos solo muestran texto, nunca suenan por el altavoz y no sustituyen la alarma en auriculares.";
 "自定义音轨无法读取，请重新导入或选择内置声音。" = "No se pudo leer el audio personal. Impórtalo de nuevo o elige un sonido incluido.";
+"尝试将耳机切到 iPhone？" = "¿Intentar cambiar los auriculares al iPhone?";
+"我已戴上耳机，尝试播放音频触发连接" = "Ya los llevo puestos. Intentar conectar con audio";
+"如果 AirPods 仍在 Mac 上播放，可尝试唤起 iPhone 音频。这可能暂停其他媒体；确认实际耳机路由前保持无声，成功后仅在耳机内播放两秒轻柔音乐。最多等待 12 秒，可随时取消。iOS 决定是否切换，无法保证成功。" = "Si los AirPods siguen reproduciendo desde el Mac, intenta activar el audio del iPhone. Esto puede pausar otros medios. Se mantiene el silencio hasta confirmar la salida real por auriculares y luego se reproducen dos segundos de música suave solo en ellos. Espera hasta 12 segundos; puedes cancelar cuando quieras. iOS controla el cambio y no se garantiza el éxito.";
+"正在尝试连接耳机…" = "Intentando conectar los auriculares…";
+"已连接，正在耳机内播放轻柔提示音。" = "Conectados. Reproduciendo un sonido suave en los auriculares.";
+"耳机已连接，可以开始休息。" = "Auriculares conectados. Ya puedes descansar.";
+"暂未切换成功。请点右侧输出按钮重新选择 AirPods，或在控制中心选择耳机后再试。" = "No se ha completado el cambio. Usa el botón de salida de la derecha para volver a elegir los AirPods, o selecciona los auriculares en el Centro de control e inténtalo de nuevo.";
+"取消连接" = "Cancelar conexión";
+"已戴上耳机？尝试连接" = "¿Ya los llevas puestos? Intentar conectar";

@@ -14,6 +14,10 @@ final class RestStore: ObservableObject {
     @Published private(set) var now: Date
     @Published private(set) var notificationStatus = L("未开启")
     @Published private(set) var previewing: String?
+    @Published private(set) var isConnecting = false
+    @Published private(set) var connectionMessage: String?
+    private var connectionTask: Task<Void, Never>?
+    private var connectionAttemptID: UUID?
     let audio: RestAudio
     private let defaults: UserDefaults
     private let clock: () -> Date
@@ -72,6 +76,7 @@ final class RestStore: ObservableObject {
     /// 仅在耳机可用且无会话时启动，音频成功后才提交计时状态。
     func start(duration: TimeInterval? = nil) {
         guard session == nil else { return }
+        cancelConnectionAttempt()
         stopPreview()
         now = clock()
         let duration = duration ?? preferences.durationSeconds
@@ -172,6 +177,10 @@ final class RestStore: ObservableObject {
 
     /// 安全事件立即停止音轨；仅响铃阶段断连允许限时自动续响。
     func block(_ reason: String, disconnected: Bool = false) {
+        if isConnecting {
+            cancelConnectionAttempt()
+            connectionMessage = reason
+        }
         previewTask?.cancel()
         previewing = nil
         audio.stop()
@@ -188,6 +197,7 @@ final class RestStore: ObservableObject {
     /// 耳机内试听十五秒；再次点击同一声音停止，不创建闹钟或通知。
     func preview(name: String, volume: Float) throws {
         guard session == nil else { return }
+        cancelConnectionAttempt()
         if previewing == name { stopPreview(); return }
         stopPreview()
         try audio.preview(name: name, volume: volume)
@@ -223,6 +233,7 @@ final class RestStore: ObservableObject {
 
     /// 在用户操作后无声激活路由，并等待蓝牙路由通知刷新界面。
     func reconnectHeadphones() {
+        guard !isConnecting else { return }
         do { try audio.refreshConnection() } catch { errorMessage = error.localizedDescription }
         handleRouteUpdate()
         Task { [weak self] in
@@ -231,8 +242,67 @@ final class RestStore: ObservableObject {
         }
     }
 
-    /// 无助眠音不使用静音音轨保活；保留用户确认的尽力预约与无声通知。
-    func enteredBackground() {}
+    /// 最多十二秒尝试系统自动切换，只有真实耳机路由才允许播放确认音。
+    func attemptHeadphoneConnection(timeout: TimeInterval = 12, confirmationDuration: TimeInterval = 2) {
+        guard session == nil, !isConnecting else { return }
+        stopPreview()
+        let id = UUID()
+        connectionAttemptID = id
+        isConnecting = true
+        connectionMessage = L("正在尝试连接耳机…")
+        do { try audio.beginConnectionAttempt() }
+        catch {
+            cancelConnectionAttempt()
+            connectionMessage = error.localizedDescription
+            return
+        }
+        guard connectionAttemptID == id else { return }
+        connectionTask = Task { [weak self] in
+            let deadline = Date().addingTimeInterval(timeout)
+            while !Task.isCancelled {
+                guard let self, self.connectionAttemptID == id else { return }
+                self.refreshRoute()
+                if self.hasHeadphones {
+                    do {
+                        try self.audio.playConnectionConfirmation()
+                        self.connectionMessage = L("已连接，正在耳机内播放轻柔提示音。")
+                        try await Task.sleep(for: .seconds(confirmationDuration))
+                        guard !Task.isCancelled, self.connectionAttemptID == id else { return }
+                        self.cancelConnectionAttempt()
+                        self.refreshRoute()
+                        self.connectionMessage = self.hasHeadphones ? L("耳机已连接，可以开始休息。") : L("耳机已断开，声音已停止。")
+                    } catch {
+                        guard !Task.isCancelled, self.connectionAttemptID == id else { return }
+                        self.cancelConnectionAttempt()
+                        self.connectionMessage = error.localizedDescription
+                    }
+                    return
+                }
+                if Date() >= deadline {
+                    self.cancelConnectionAttempt()
+                    self.refreshRoute()
+                    self.connectionMessage = L("暂未切换成功。请点右侧输出按钮重新选择 AirPods，或在控制中心选择耳机后再试。")
+                    return
+                }
+                try? await Task.sleep(for: .milliseconds(200))
+            }
+        }
+    }
+
+    /// 同步停止连接探测及确认音，取消的任务不能再影响后续休息播放。
+    func cancelConnectionAttempt() {
+        guard isConnecting else { return }
+        connectionAttemptID = nil
+        connectionTask?.cancel()
+        connectionTask = nil
+        isConnecting = false
+        connectionMessage = nil
+        audio.stop()
+        refreshRoute()
+    }
+
+    /// 连接探测仅限前台；真实助眠播放和提醒沿用后台音频会话。
+    func enteredBackground() { cancelConnectionAttempt() }
 
     /// 响铃期间断连后仅在真实耳机重连时续响，休息阶段保持手动恢复。
     private func handleRouteUpdate() {

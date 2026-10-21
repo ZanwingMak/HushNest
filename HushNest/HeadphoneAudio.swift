@@ -8,6 +8,10 @@ protocol RestAudio: AnyObject {
     var onRouteUpdate: (() -> Void)? { get set }
     /// 无声激活会话并刷新系统路由。
     func refreshConnection() throws
+    /// 用户确认后短暂启动零音量媒体，尝试请求系统切换耳机。
+    func beginConnectionAttempt() throws
+    /// 实际路由确认后在耳机内播放低音量提示。
+    func playConnectionConfirmation() throws
     /// 在验证耳机路由后开始助眠音及按设备时钟预约的提醒。
     func start(preferences: Preferences, remaining: TimeInterval) throws
     /// 在耳机内短暂试听指定音轨，不创建计时会话。
@@ -37,6 +41,7 @@ final class HeadphoneAudio: NSObject, RestAudio {
     private var alarm: AVAudioPlayer?
     private var observers: [NSObjectProtocol] = []
     private var active = false
+    private var connecting = false
     var onSafetyStop: ((String, Bool) -> Void)?
     var onRouteUpdate: (() -> Void)?
 
@@ -130,6 +135,36 @@ final class HeadphoneAudio: NSObject, RestAudio {
         onRouteUpdate?()
     }
 
+    /// 仅在用户确认后临时申请独占媒体会话，路由未确认前播放器始终为零音量。
+    func beginConnectionAttempt() throws {
+        stop()
+        do {
+            connecting = true
+            try session.setCategory(.playback, mode: .default, options: [])
+            try session.setPrefersInterruptionOnRouteDisconnect(true)
+            try session.setActive(true)
+            let probe = try player(named: "piano")
+            probe.volume = 0
+            probe.numberOfLoops = -1
+            ambience = probe
+            guard probe.play() else { throw AudioFailure.playbackFailed }
+        } catch {
+            stop()
+            throw error
+        }
+    }
+
+    /// 复用探测播放器，只有真实耳机输出才允许两秒轻柔确认音。
+    func playConnectionConfirmation() throws {
+        guard connecting, let player = ambience, isHeadphoneConnected else { throw AudioFailure.noHeadphones }
+        connecting = false
+        active = true
+        player.currentTime = 0
+        player.numberOfLoops = 0
+        guard isHeadphoneConnected else { stop(); throw AudioFailure.noHeadphones }
+        player.setVolume(0.12, fadeDuration: 0.4)
+    }
+
     /// 先激活系统媒体路由，再检查耳机；不抢占其他应用的音乐。
     private func activateHeadphones() throws {
         try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
@@ -144,6 +179,8 @@ final class HeadphoneAudio: NSObject, RestAudio {
     /// 在停止后清除预约音轨，不留下可外放的通知声音。
     func stop() {
         active = false
+        connecting = false
+        ambience?.volume = 0
         ambience?.stop()
         alarm?.stop()
         ambience = nil
@@ -176,7 +213,7 @@ final class HeadphoneAudio: NSObject, RestAudio {
 
     /// 统一执行安全停止，并通知会话层标记中断。
     private func safetyStop(_ reason: String, disconnected: Bool = false) {
-        guard active else { onRouteUpdate?(); return }
+        guard active || connecting else { onRouteUpdate?(); return }
         stop()
         onSafetyStop?(reason, disconnected)
     }
@@ -198,9 +235,21 @@ final class PreviewAudio: RestAudio {
     var stops = 0
     var previewVolume: Float = 0
     var failure: Error?
+    var connectionAttempts = 0
+    var connectionConfirmations = 0
 
     /// 无声替身只刷新可观察连接状态。
     func refreshConnection() throws { onRouteUpdate?() }
+    /// 记录主动连接请求，始终保持无声且不模拟虚假成功。
+    func beginConnectionAttempt() throws {
+        if let failure { throw failure }
+        connectionAttempts += 1
+    }
+    /// 仅在模拟路由真实为耳机时记录确认音请求。
+    func playConnectionConfirmation() throws {
+        guard isHeadphoneConnected else { throw AudioFailure.noHeadphones }
+        connectionConfirmations += 1
+    }
     /// 测试替身仅记录启动，不访问任何音频设备。
     func start(preferences: Preferences, remaining: TimeInterval) throws {
         guard isHeadphoneConnected else { throw AudioFailure.noHeadphones }

@@ -50,6 +50,43 @@ final class HushNestUITests: XCTestCase {
         XCTAssertTrue(app.buttons["session.start"].exists)
     }
 
+    /// 连接入口先解释影响，取消确认不会启动尝试；确认后可取消并再次重试。
+    func testHeadphoneConnectionConfirmationAndCancel() {
+        app.launchArguments.append("-no-headphones")
+        app.launch()
+        app.buttons["connection.open"].tap()
+        XCTAssertTrue(app.buttons["connection.confirm"].firstMatch.waitForExistence(timeout: 5))
+        screenshot("23-connection-confirmation")
+        app.buttons["取消"].firstMatch.tap()
+        XCTAssertFalse(app.buttons["connection.cancel"].exists)
+        app.buttons["connection.open"].tap()
+        app.buttons["connection.confirm"].firstMatch.tap()
+        XCTAssertTrue(app.buttons["connection.cancel"].waitForExistence(timeout: 5))
+        app.buttons["connection.cancel"].tap()
+        XCTAssertTrue(app.buttons["connection.open"].waitForExistence(timeout: 5))
+        app.buttons["connection.open"].tap()
+        app.buttons["connection.confirm"].firstMatch.tap()
+        XCTAssertTrue(app.buttons["connection.cancel"].waitForExistence(timeout: 5))
+        XCUIDevice.shared.press(.home)
+        app.activate()
+        XCTAssertTrue(app.buttons["connection.open"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["connection.cancel"].exists)
+    }
+
+    /// 真实等待超过连接上限后显示手动切换指引，保持休息未开始。
+    func testHeadphoneConnectionTimeoutGuidance() {
+        app.launchArguments.append("-no-headphones")
+        app.launch()
+        app.buttons["route.status"].tap()
+        app.buttons["connection.confirm"].firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["connection.message"].waitForExistence(timeout: 5))
+        let timedOut = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label CONTAINS %@", "暂未切换成功"), object: app.staticTexts["connection.message"])
+        XCTAssertEqual(XCTWaiter.wait(for: [timedOut], timeout: 20), .completed)
+        XCTAssertTrue(app.buttons["connection.open"].exists)
+        XCTAssertTrue(app.buttons["session.start"].exists)
+        screenshot("24-connection-timeout")
+    }
+
     /// 验证到点提醒、稍后提醒和完成后的历史页面可正常贯通。
     func testRingingSnoozeAndHistory() {
         app.launch()

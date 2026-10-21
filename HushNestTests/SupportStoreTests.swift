@@ -31,6 +31,20 @@ final class SupportStoreTests: XCTestCase {
         XCTAssertEqual(session.allTransactions().count, 2)
     }
 
+    /// 验证四档消耗型商品按真实价格排序，且每档均可在本地沙盒完成赞助。
+    func testEveryTipTierCanBePurchased() async throws {
+        let store = SupportStore()
+        await store.load()
+        XCTAssertEqual(Set(store.products.map(\.id)), Set(SupportStore.productIDs))
+        XCTAssertEqual(store.products.map(\.price), [Decimal(string: "0.99")!, Decimal(string: "2.99")!, Decimal(string: "5.99")!, Decimal(string: "9.99")!])
+        for product in store.products {
+            XCTAssertEqual(product.type, .consumable)
+            await store.purchase(product)
+            XCTAssertEqual(store.message, L("谢谢你的支持，让片刻安静继续生长。"))
+        }
+        XCTAssertEqual(session.allTransactions().count, 4)
+    }
+
     /// 验证 Apple 待批准购买与用户取消均不会被显示为赞助成功。
     func testPendingAndCancelledPurchase() async throws {
         let store = SupportStore()
@@ -60,13 +74,13 @@ final class SupportStoreTests: XCTestCase {
         XCTAssertFalse(store.busy)
         try await session.setSimulatedError(nil, forAPI: .loadProducts)
         await store.load()
-        XCTAssertEqual(store.products.count, 1)
+        XCTAssertEqual(store.products.count, 4)
     }
     /// 在真实应用窗口渲染本地沙盒商品，保留审核截图且不执行实际支付。
     func testSupportSheetRendersStoreKitProduct() async throws {
         let store = SupportStore()
         await store.load()
-        XCTAssertEqual(store.products.count, 1)
+        XCTAssertEqual(store.products.count, 4)
         let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.first as? UIWindowScene)
         let window = try XCTUnwrap(scene.windows.first(where: \.isKeyWindow))
         let previous = window.rootViewController

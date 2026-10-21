@@ -22,6 +22,7 @@ struct RestView: View {
     @EnvironmentObject private var store: RestStore
     @Environment(\.dynamicTypeSize) private var typeSize
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var confirmConnection = false
     @State private var confirmSilent = false
     @State private var showDuration = false
     @State private var showSound = false
@@ -66,6 +67,13 @@ struct RestView: View {
             .sheet(isPresented: $showDuration) { DurationSheet().presentationDetents([.large]) }
             .sheet(isPresented: $showSound) { SoundSheet() }
             .sheet(isPresented: $showGuide) { GuideSheet() }
+            .alert(L("尝试将耳机切到 iPhone？"), isPresented: $confirmConnection) {
+                Button(L("我已戴上耳机，尝试播放音频触发连接")) { store.attemptHeadphoneConnection() }
+                    .accessibilityIdentifier("connection.confirm")
+                Button(L("取消"), role: .cancel) {}
+            } message: {
+                Text(L("如果 AirPods 仍在 Mac 上播放，可尝试唤起 iPhone 音频。这可能暂停其他媒体；确认实际耳机路由前保持无声，成功后仅在耳机内播放两秒轻柔音乐。最多等待 12 秒，可随时取消。iOS 决定是否切换，无法保证成功。"))
+            }
             .confirmationDialog(L("无助眠音：锁屏提醒无法保证"), isPresented: $confirmSilent, titleVisibility: .visible) {
                 Button(L("了解风险，仍然开始")) { store.start(duration: selectedDuration) }.accessibilityIdentifier("silent.confirm")
                 Button(L("返回选择助眠音")) { showSound = true }
@@ -95,20 +103,40 @@ struct RestView: View {
     }
 
     private var routeCard: some View {
-        HStack(spacing: 12) {
-            Button { store.reconnectHeadphones() } label: {
-                HStack(spacing: 12) {
-                    Image(systemName: store.hasHeadphones ? "headphones" : "headphones.slash")
-                        .font(.title2).foregroundStyle(theme.accent).frame(width: 30)
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(store.hasHeadphones ? L("耳机已就绪") : L("连接耳机，再安心休息")).font(.subheadline.weight(.semibold))
-                        Text(store.routeName + L(" · 点按刷新")).font(.caption).foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    Spacer(minLength: 0)
-                }.frame(minHeight: 44)
-            }.buttonStyle(.plain).accessibilityIdentifier("route.status")
-            RoutePicker().frame(width: 44, height: 44).accessibilityLabel(L("选择耳机输出"))
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 12) {
+                Button {
+                    store.reconnectHeadphones()
+                    if !store.hasHeadphones && store.session == nil && !store.isConnecting { confirmConnection = true }
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: store.hasHeadphones ? "headphones" : "headphones.slash")
+                            .font(.title2).foregroundStyle(theme.accent).frame(width: 30)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(store.hasHeadphones ? L("耳机已就绪") : L("连接耳机，再安心休息")).font(.subheadline.weight(.semibold))
+                            Text(store.routeName + L(" · 点按刷新")).font(.caption).foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        Spacer(minLength: 0)
+                    }.frame(minHeight: 44)
+                }.buttonStyle(.plain).accessibilityIdentifier("route.status")
+                RoutePicker().frame(width: 44, height: 44).accessibilityLabel(L("选择耳机输出"))
+            }
+            if let message = store.connectionMessage {
+                Text(message).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("connection.message")
+            }
+            if store.isConnecting {
+                HStack {
+                    ProgressView().accessibilityLabel(L("正在尝试连接耳机…"))
+                    Spacer()
+                    Button(L("取消连接")) { store.cancelConnectionAttempt() }
+                        .frame(minHeight: 44).accessibilityIdentifier("connection.cancel")
+                }
+            } else if !store.hasHeadphones && store.session == nil {
+                Button(L("已戴上耳机？尝试连接")) { confirmConnection = true }
+                    .font(.subheadline).frame(minHeight: 44).accessibilityIdentifier("connection.open")
+            }
         }.padding(16).background(theme.card, in: RoundedRectangle(cornerRadius: 20))
     }
 
