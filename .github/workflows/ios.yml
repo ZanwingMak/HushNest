@@ -11,14 +11,18 @@ concurrency:
   cancel-in-progress: true
 jobs:
   test:
-    runs-on: macos-latest
+    runs-on: macos-15
     timeout-minutes: 30
     env:
-      DEVELOPER_DIR: /Applications/Xcode_26.5.app/Contents/Developer
+      DEVELOPER_DIR: /Applications/Xcode_26.2.app/Contents/Developer
     steps:
       - uses: actions/checkout@v4
       - name: 准备 XcodeGen
         run: command -v xcodegen || brew install xcodegen
+      # iOS 26.5 的 StoreKitTest CLI 问题见 Apple Developer Forums/thread/826971。
+      - name: 选择支持 StoreKitTest 的 iOS 26.2 模拟器
+        run: |
+          xcrun simctl list devices available -j | python3 -c 'import json,sys; items=json.load(sys.stdin)["devices"]["com.apple.CoreSimulator.SimRuntime.iOS-26-2"]; print("SIMULATOR_ID=" + next(d["udid"] for d in items if d["name"] == "iPhone 17 Pro"))' >> "$GITHUB_ENV"
       - name: 执行无声自动化测试
         run: bash scripts/test.sh
       - name: 保存测试结果和界面截图
