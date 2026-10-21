@@ -34,7 +34,7 @@ final class HushNestUITests: XCTestCase {
         XCTAssertLessThanOrEqual(resumed, seconds(frozen))
         XCTAssertGreaterThanOrEqual(resumed, seconds(frozen) - Int(ceil(Date().timeIntervalSince(resumedAt))) - 1)
         app.buttons["session.cancel"].tap()
-        app.buttons["结束休息"].tap()
+        app.buttons["session.confirmEnd"].firstMatch.tap()
         XCTAssertTrue(app.buttons["session.start"].waitForExistence(timeout: 5))
         screenshot("01-rest")
     }
@@ -61,7 +61,7 @@ final class HushNestUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["好好休息"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["已稍后提醒 1 次"].waitForExistence(timeout: 5))
         app.buttons["session.cancel"].tap()
-        app.buttons["结束休息"].tap()
+        app.buttons["session.confirmEnd"].firstMatch.tap()
         app.tabBars.buttons["足迹"].tap()
         XCTAssertTrue(app.staticTexts["提前结束"].waitForExistence(timeout: 5))
         screenshot("03-history")
@@ -184,7 +184,9 @@ final class HushNestUITests: XCTestCase {
             let start = app.buttons["session.start"]
             let behindControls = start.exists && start.isHittable && element.exists && element.frame.intersects(start.frame)
             if element.exists && element.isHittable && !behindControls { return }
-            app.swipeUp()
+            let startPoint = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.68))
+            let endPoint = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.42))
+            startPoint.press(forDuration: 0.05, thenDragTo: endPoint)
         }
         XCTAssertTrue(element.isHittable, "目标控件应可通过滚动触达")
     }
