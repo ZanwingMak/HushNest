@@ -4,10 +4,15 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      compact_layout:
+        description: 仅验证 iPhone SE 首页与大字体布局
+        type: boolean
+        default: false
 permissions:
   contents: read
 concurrency:
-  group: ios-${{ github.ref }}
+  group: ios-${{ github.ref }}-${{ inputs.compact_layout || false }}
   cancel-in-progress: true
 jobs:
   test:
@@ -15,6 +20,7 @@ jobs:
     timeout-minutes: 30
     env:
       DEVELOPER_DIR: /Applications/Xcode_26.2.app/Contents/Developer
+      HUSHNEST_COMPACT_LAYOUT: ${{ inputs.compact_layout && '1' || '0' }}
     steps:
       - uses: actions/checkout@v4
       - name: 准备 XcodeGen
@@ -22,9 +28,21 @@ jobs:
       # iOS 26.5 的 StoreKitTest CLI 问题见 Apple Developer Forums/thread/826971。
       - name: 选择支持 StoreKitTest 的 iOS 26.2 模拟器
         run: |
-          xcrun simctl list devices available -j | python3 -c 'import json,sys; items=json.load(sys.stdin)["devices"]["com.apple.CoreSimulator.SimRuntime.iOS-26-2"]; print("SIMULATOR_ID=" + next(d["udid"] for d in items if d["name"] == "iPhone 17 Pro"))' >> "$GITHUB_ENV"
+          if [[ "$HUSHNEST_COMPACT_LAYOUT" == "1" ]]; then
+            echo "SIMULATOR_ID=$(xcrun simctl create 'HushNest Compact QA' com.apple.CoreSimulator.SimDeviceType.iPhone-SE-3rd-generation com.apple.CoreSimulator.SimRuntime.iOS-26-2)" >> "$GITHUB_ENV"
+          else
+            xcrun simctl list devices available -j | python3 -c 'import json,sys; items=json.load(sys.stdin)["devices"]["com.apple.CoreSimulator.SimRuntime.iOS-26-2"]; print("SIMULATOR_ID=" + next(d["udid"] for d in items if d["name"] == "iPhone 17 Pro"))' >> "$GITHUB_ENV"
+          fi
       - name: 执行无声自动化测试
-        run: bash scripts/test.sh
+        run: |
+          if [[ "$HUSHNEST_COMPACT_LAYOUT" == "1" ]]; then
+            bash scripts/test.sh \
+              -only-testing:HushNestUITests/HushNestUITests/testCompactHeadphoneCardKeepsSafetyVisible \
+              -only-testing:HushNestUITests/HushNestUITests/testSafetyReminderTracksAudioModeAndSession \
+              -only-testing:HushNestUITests/HushNestUITests/testAccessibilityTextSizeKeepsPrimaryControlsReachable
+          else
+            bash scripts/test.sh
+          fi
       - name: 保存测试结果和界面截图
         if: always()
         uses: actions/upload-artifact@v4
