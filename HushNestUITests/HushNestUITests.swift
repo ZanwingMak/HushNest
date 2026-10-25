@@ -298,11 +298,14 @@ final class HushNestUITests: XCTestCase {
         XCTAssertTrue(app.buttons["sound.done"].waitForExistence(timeout: 5))
     }
 
-    /// 滚动使目标控件可见，避免测试依赖固定屏幕坐标。
+    /// 滚动到控件完整高于固定提醒和操作区，避免小屏幕上被误判为可点击。
     private func reveal(_ element: XCUIElement) {
         for _ in 0..<8 {
             let start = app.buttons["session.start"]
-            let behindControls = start.exists && start.isHittable && element.exists && element.frame.intersects(start.frame)
+            let reminder = app.descendants(matching: .any)["rest.safety"].firstMatch
+            let footerTop = reminder.exists && reminder.isHittable ? reminder.frame.minY :
+                (start.exists && start.isHittable ? start.frame.minY : app.frame.maxY)
+            let behindControls = element.exists && element.frame.maxY > footerTop - 8
             if element.exists && element.isHittable && !behindControls { return }
             let startPoint = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.68))
             let endPoint = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.42))
