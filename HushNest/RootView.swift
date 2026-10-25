@@ -42,7 +42,7 @@ struct RestView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 24) {
+                VStack(spacing: 16) {
                     header
                     routeCard
                     #if DEBUG
@@ -58,8 +58,7 @@ struct RestView: View {
                             .font(.subheadline).foregroundStyle(.orange).frame(maxWidth: .infinity, alignment: .leading)
                             .padding(20).background(.orange.opacity(0.08), in: RoundedRectangle(cornerRadius: 20))
                     }
-                    reassurance
-                }.padding(.horizontal, 24).padding(.top, 16).padding(.bottom, 24)
+                }.padding(.horizontal, 20).padding(.top, 12).padding(.bottom, 20)
             }
             .background(theme.background)
             .safeAreaInset(edge: .bottom, spacing: 0) { controls }
@@ -103,26 +102,33 @@ struct RestView: View {
     }
 
     private var routeCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 12) {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 4) {
                 Button {
                     store.reconnectHeadphones()
                     if !store.hasHeadphones && store.session == nil && !store.isConnecting { confirmConnection = true }
                 } label: {
-                    HStack(spacing: 12) {
+                    HStack(spacing: 10) {
                         Image(systemName: store.hasHeadphones ? "headphones" : "headphones.slash")
-                            .font(.title2).foregroundStyle(theme.accent).frame(width: 30)
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(store.hasHeadphones ? L("耳机已就绪") : L("连接耳机，再安心休息")).font(.subheadline.weight(.semibold))
-                            Text(store.routeName + L(" · 点按刷新")).font(.caption).foregroundStyle(.secondary)
+                            .font(.title3).foregroundStyle(theme.accent).frame(width: 24)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(store.hasHeadphones ? L("耳机已就绪") : L("尚未连接耳机")).font(.subheadline.weight(.semibold))
                                 .fixedSize(horizontal: false, vertical: true)
+                            Text(store.hasHeadphones ? store.routeName : L("连接耳机，再安心休息"))
+                                .font(.caption).foregroundStyle(.secondary).lineLimit(typeSize.isAccessibilitySize ? nil : 1)
+                                .truncationMode(.middle)
                         }
                         Spacer(minLength: 0)
                     }.frame(minHeight: 44)
                 }.buttonStyle(.plain).accessibilityIdentifier("route.status")
+                if !store.hasHeadphones && store.session == nil && !store.isConnecting {
+                    Button { confirmConnection = true } label: {
+                        Image(systemName: "link").frame(width: 44, height: 44)
+                    }.accessibilityLabel(L("已戴上耳机？尝试连接")).accessibilityIdentifier("connection.open")
+                }
                 RoutePicker().frame(width: 44, height: 44).accessibilityLabel(L("选择耳机输出"))
             }
-            if let message = store.connectionMessage {
+            if let message = store.connectionMessage, !store.hasHeadphones {
                 Text(message).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                     .accessibilityIdentifier("connection.message")
             }
@@ -133,11 +139,10 @@ struct RestView: View {
                     Button(L("取消连接")) { store.cancelConnectionAttempt() }
                         .frame(minHeight: 44).accessibilityIdentifier("connection.cancel")
                 }
-            } else if !store.hasHeadphones && store.session == nil {
-                Button(L("已戴上耳机？尝试连接")) { confirmConnection = true }
-                    .font(.subheadline).frame(minHeight: 44).accessibilityIdentifier("connection.open")
             }
-        }.padding(16).background(theme.card, in: RoundedRectangle(cornerRadius: 20))
+        }.padding(12).background(theme.card, in: RoundedRectangle(cornerRadius: 18))
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("route.card")
     }
 
     private var idleTimer: some View {
@@ -248,15 +253,16 @@ struct RestView: View {
     private var alarmTitle: String { store.preferences.alarmSound == .custom ? library.sounds.first { $0.id == store.preferences.customAlarmID }?.name ?? L("自定义声音") : store.preferences.alarmSound.title }
 
     private var reassurance: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label(L("手机不外放，断连即停止"), systemImage: "speaker.slash").font(.subheadline.weight(.medium))
-            Text(L("选择助眠音可锁屏休息，并与音乐混音；其他应用仍可能中断播放。无助眠音需确认锁屏风险，后台响铃和震动无法保证。不要强制关闭应用。"))
-                .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-        }.frame(maxWidth: .infinity, alignment: .leading)
+        Label(store.preferences.sleepSound == .none ? L("无助眠音：锁屏提醒无法保证") : L("手机不外放，断连即停止"),
+              systemImage: store.preferences.sleepSound == .none ? "exclamationmark.circle" : "speaker.slash")
+            .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            .accessibilityElement(children: .combine)
+            .accessibilityIdentifier("rest.safety")
     }
 
     private var controls: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 8) {
+            reassurance
             if let session = store.session {
                 if session.phase == .ringing {
                     Button(L("我醒了，结束休息")) { store.finish(completed: true) }
@@ -281,7 +287,7 @@ struct RestView: View {
                 }.buttonStyle(NestButtonStyle()).accessibilityIdentifier("session.start")
                 Text(L("免费 · 无广告 · 无订阅 · 数据仅在本机")).font(.caption2).foregroundStyle(.secondary)
             }
-        }.padding(.horizontal, 24).padding(.top, 16).padding(.bottom, 12).background(theme.background)
+        }.padding(.horizontal, 20).padding(.top, 10).padding(.bottom, 8).background(theme.background)
             .transaction { transaction in
                 transaction.animation = nil
                 transaction.disablesAnimations = true

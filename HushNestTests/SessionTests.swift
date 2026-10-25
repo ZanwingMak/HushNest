@@ -2,6 +2,7 @@ import XCTest
 import AVFoundation
 import UIKit
 import SwiftUI
+import CryptoKit
 @testable import HushNest
 
 final class SessionTests: XCTestCase {
@@ -159,6 +160,54 @@ final class SessionTests: XCTestCase {
             try file.read(into: buffer)
             let samples = try XCTUnwrap(buffer.floatChannelData?[0])
             XCTAssertGreaterThan((0..<Int(buffer.frameLength)).map { abs(samples[$0]) }.max() ?? 0, 0.0001)
+        }
+    }
+
+    /// 实录资源必须匹配已核实的来源、许可及摘要，防止重新生成时被同名合成噪音覆盖。
+    func testFieldRecordingsMatchLicensedCatalog() throws {
+        let catalogURL = try XCTUnwrap(Bundle.main.url(forResource: "FieldRecordings", withExtension: "json"))
+        let catalog = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf: catalogURL)) as? [String: Any])
+        let recordings = try XCTUnwrap(catalog["recordings"] as? [[String: Any]])
+        XCTAssertEqual(Set(recordings.compactMap { $0["id"] as? String }), Set(["rain", "ocean", "stream", "forest", "fireplace", "night"]))
+        var hashes = Set<String>()
+        for recording in recordings {
+            let name = try XCTUnwrap(recording["id"] as? String)
+            XCTAssertTrue(["CC0-1.0", "Public Domain"].contains(recording["license"] as? String ?? ""))
+            XCTAssertFalse((recording["author"] as? String ?? "").isEmpty)
+            XCTAssertTrue((recording["source"] as? String ?? "").hasPrefix("https://"))
+            let url = try XCTUnwrap(Bundle.main.url(forResource: name, withExtension: "wav"))
+            let hash = SHA256.hash(data: try Data(contentsOf: url)).map { String(format: "%02x", $0) }.joined()
+            XCTAssertEqual(hash, recording["outputSHA256"] as? String, name)
+            hashes.insert(hash)
+            let audio = try AVAudioFile(forReading: url)
+            XCTAssertEqual(Double(audio.length) / audio.processingFormat.sampleRate,
+                           try XCTUnwrap(recording["seconds"] as? Double), accuracy: 0.01)
+            XCTAssertEqual(audio.processingFormat.sampleRate, 44100)
+            XCTAssertEqual(audio.processingFormat.channelCount, 2)
+        }
+        XCTAssertEqual(hashes.count, 6)
+    }
+
+    /// 解码实际循环首尾，确认没有静音接缝或大于相邻采样变化的突跳；不创建播放会话。
+    func testFieldRecordingLoopBoundariesAreContinuous() throws {
+        for name in ["rain", "ocean", "stream", "forest", "fireplace", "night"] {
+            let url = try XCTUnwrap(Bundle.main.url(forResource: name, withExtension: "wav"))
+            let audio = try AVAudioFile(forReading: url)
+            let first = try XCTUnwrap(AVAudioPCMBuffer(pcmFormat: audio.processingFormat, frameCapacity: 2048))
+            let last = try XCTUnwrap(AVAudioPCMBuffer(pcmFormat: audio.processingFormat, frameCapacity: 2048))
+            try audio.read(into: first)
+            audio.framePosition = audio.length - 2048
+            try audio.read(into: last)
+            let head = try XCTUnwrap(first.floatChannelData?[0])
+            let tail = try XCTUnwrap(last.floatChannelData?[0])
+            let energy = (0..<2048).reduce(Float(0)) { $0 + head[$1] * head[$1] + tail[$1] * tail[$1] }
+            XCTAssertGreaterThan(energy, 0.01, name)
+            let stepEnergy = (1..<2048).reduce(Float(0)) { value, index in
+                let headStep = head[index] - head[index - 1]
+                let tailStep = tail[index] - tail[index - 1]
+                return value + headStep * headStep + tailStep * tailStep
+            }
+            XCTAssertLessThanOrEqual(abs(head[0] - tail[2047]), max(0.01, 5 * sqrt(stepEnergy / 4094)), name)
         }
     }
 

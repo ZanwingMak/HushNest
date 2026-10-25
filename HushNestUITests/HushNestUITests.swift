@@ -145,6 +145,46 @@ final class HushNestUITests: XCTestCase {
         XCTAssertEqual(toggle.value as? String, "0")
     }
 
+    /// 未连耳机时连接操作保持可达，安全提醒始终位于固定操作区且不遮挡声音设置。
+    func testCompactHeadphoneCardKeepsSafetyVisible() {
+        app.launchArguments.append("-no-headphones")
+        app.launch()
+        let card = app.otherElements["route.card"].firstMatch
+        XCTAssertTrue(card.waitForExistence(timeout: 5))
+        XCTAssertLessThanOrEqual(card.frame.height, 100)
+        XCTAssertTrue(app.buttons["route.status"].isHittable)
+        XCTAssertTrue(app.buttons["connection.open"].isHittable)
+        let reminder = app.descendants(matching: .any)["rest.safety"].firstMatch
+        let start = app.buttons["session.start"]
+        XCTAssertTrue(reminder.exists)
+        XCTAssertLessThanOrEqual(reminder.frame.maxY, start.frame.minY)
+        app.buttons["connection.open"].tap()
+        XCTAssertTrue(app.buttons["connection.confirm"].firstMatch.waitForExistence(timeout: 5))
+        app.buttons["取消"].firstMatch.tap()
+        reveal(app.buttons["sound.open"])
+        XCTAssertLessThanOrEqual(app.buttons["sound.open"].frame.maxY, reminder.frame.minY)
+        screenshot("27-compact-headphone-home")
+    }
+
+    /// 待机、运行和暂停时提醒文字不与按钮重叠，无助眠音时显示明确的锁屏风险。
+    func testSafetyReminderTracksAudioModeAndSession() {
+        app.launch()
+        let reminder = app.descendants(matching: .any)["rest.safety"].firstMatch
+        XCTAssertTrue(reminder.label.contains("手机不外放"))
+        app.buttons["session.start"].tap()
+        XCTAssertLessThanOrEqual(reminder.frame.maxY, app.buttons["session.toggle"].frame.minY)
+        app.buttons["session.toggle"].tap()
+        XCTAssertLessThanOrEqual(reminder.frame.maxY, app.buttons["session.toggle"].frame.minY)
+        screenshot("28-compact-active-home")
+        app.buttons["session.cancel"].tap()
+        app.buttons["session.confirmEnd"].firstMatch.tap()
+        openSounds()
+        app.buttons["sound.none"].tap()
+        app.buttons["sound.done"].tap()
+        XCTAssertTrue(reminder.label.contains("锁屏提醒无法保证"))
+        XCTAssertLessThanOrEqual(reminder.frame.maxY, app.buttons["session.start"].frame.minY)
+    }
+
     /// 使用真实扬声器路由拍摄正式商店截图，只操作界面且不启动播放。
     func testAppStoreScreenshotsWithoutAudio() {
         app.launchArguments = ["-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh_CN"]

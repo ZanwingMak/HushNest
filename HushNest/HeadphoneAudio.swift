@@ -196,7 +196,7 @@ final class HeadphoneAudio: NSObject, RestAudio {
         try? session.setActive(false, options: .notifyOthersOnDeactivation)
     }
 
-    /// 从应用内读取原创合成音频，不需要网络或麦克风权限。
+    /// 从应用内读取实录音景或合成铃声，不需要网络或麦克风权限。
     private func player(named name: String) throws -> AVAudioPlayer {
         let url: URL
         if name.hasPrefix("custom-") {
