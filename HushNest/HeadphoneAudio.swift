@@ -1,11 +1,17 @@
 import AVFoundation
 
+enum AudioInterruption {
+    case began
+    case ended(shouldResume: Bool)
+}
+
 @MainActor
 protocol RestAudio: AnyObject {
     var isHeadphoneConnected: Bool { get }
     var routeName: String { get }
     var onSafetyStop: ((String, Bool) -> Void)? { get set }
     var onRouteUpdate: (() -> Void)? { get set }
+    var onInterruption: ((AudioInterruption) -> Void)? { get set }
     /// 无声激活会话并刷新系统路由。
     func refreshConnection() throws
     /// 用户确认后短暂启动零音量媒体，尝试请求系统切换耳机。
@@ -42,8 +48,10 @@ final class HeadphoneAudio: NSObject, RestAudio {
     private var observers: [NSObjectProtocol] = []
     private var active = false
     private var connecting = false
+    private var interrupted = false
     var onSafetyStop: ((String, Bool) -> Void)?
     var onRouteUpdate: (() -> Void)?
+    var onInterruption: ((AudioInterruption) -> Void)?
 
     var isHeadphoneConnected: Bool { Self.allOutputsArePrivate(session.currentRoute.outputs.map(\.portType)) }
     var routeName: String { isHeadphoneConnected ? session.currentRoute.outputs.map(\.portName).joined(separator: "、") : L("尚未连接耳机") }
@@ -60,19 +68,38 @@ final class HeadphoneAudio: NSObject, RestAudio {
             MainActor.assumeIsolated { self?.routeChanged() }
         })
         observers.append(NotificationCenter.default.addObserver(forName: AVAudioSession.interruptionNotification, object: nil, queue: .main) { [weak self] note in
-            let type = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt
-            if type == AVAudioSession.InterruptionType.began.rawValue {
-                let reason = note.userInfo?[AVAudioSessionInterruptionReasonKey] as? UInt
-                let disconnected = reason == AVAudioSession.InterruptionReason.routeDisconnected.rawValue
-                MainActor.assumeIsolated {
-                    self?.safetyStop(disconnected ? L("耳机已断开，声音已停止。") : L("音频被来电或其他应用中断，请确认耳机后手动继续。"), disconnected: disconnected)
-                }
-            }
+            MainActor.assumeIsolated { self?.handleInterruption(note) }
         })
         observers.append(NotificationCenter.default.addObserver(forName: AVAudioSession.mediaServicesWereResetNotification, object: nil, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated { self?.safetyStop(L("系统音频服务已重置，请重新连接耳机并继续。")) }
+            MainActor.assumeIsolated {
+                self?.stop()
+                self?.onSafetyStop?(L("系统音频服务已重置，请重新连接耳机并继续。"), false)
+            }
         })
 
+    }
+
+    /// 中断时只释放音轨，不主动停用已被系统中断的会话，保留结束通知的恢复机会。
+    func handleInterruption(_ note: Notification) {
+        guard let value = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt,
+              let type = AVAudioSession.InterruptionType(rawValue: value) else { return }
+        switch type {
+        case .began:
+            guard active || connecting || interrupted else { return }
+            if note.userInfo?[AVAudioSessionInterruptionReasonKey] as? UInt == AVAudioSession.InterruptionReason.routeDisconnected.rawValue {
+                safetyStop(L("耳机已断开，声音已停止。"), disconnected: true)
+                return
+            }
+            interrupted = true
+            releasePlayers()
+            onInterruption?(.began)
+        case .ended:
+            guard interrupted else { return }
+            interrupted = false
+            let options = AVAudioSession.InterruptionOptions(rawValue: note.userInfo?[AVAudioSessionInterruptionOptionKey] as? UInt ?? 0)
+            onInterruption?(.ended(shouldResume: options.contains(.shouldResume)))
+        @unknown default: break
+        }
     }
 
     /// 启动真实可听的助眠播放，并预约提醒，前后两次检查耳机路由。
@@ -186,6 +213,13 @@ final class HeadphoneAudio: NSObject, RestAudio {
 
     /// 在停止后清除预约音轨，不留下可外放的通知声音。
     func stop() {
+        interrupted = false
+        releasePlayers()
+        try? session.setActive(false, options: .notifyOthersOnDeactivation)
+    }
+
+    /// 清除播放对象及预约，不改变系统会话的激活状态。
+    private func releasePlayers() {
         active = false
         connecting = false
         ambience?.volume = 0
@@ -193,7 +227,6 @@ final class HeadphoneAudio: NSObject, RestAudio {
         alarm?.stop()
         ambience = nil
         alarm = nil
-        try? session.setActive(false, options: .notifyOthersOnDeactivation)
     }
 
     /// 从应用内读取实录音景或合成铃声，不需要网络或麦克风权限。
@@ -221,7 +254,7 @@ final class HeadphoneAudio: NSObject, RestAudio {
 
     /// 统一执行安全停止，并通知会话层标记中断。
     private func safetyStop(_ reason: String, disconnected: Bool = false) {
-        guard active || connecting else { onRouteUpdate?(); return }
+        guard active || connecting || interrupted else { onRouteUpdate?(); return }
         stop()
         onSafetyStop?(reason, disconnected)
     }
@@ -238,6 +271,7 @@ final class PreviewAudio: RestAudio {
     var routeName: String { isHeadphoneConnected ? L("测试耳机（无声模拟）") : L("尚未连接耳机") }
     var onSafetyStop: ((String, Bool) -> Void)?
     var onRouteUpdate: (() -> Void)?
+    var onInterruption: ((AudioInterruption) -> Void)?
     var starts = 0
     var previews = 0
     var stops = 0
@@ -245,6 +279,9 @@ final class PreviewAudio: RestAudio {
     var failure: Error?
     var connectionAttempts = 0
     var connectionConfirmations = 0
+    var lastRemaining: TimeInterval?
+    var lastPreferences: Preferences?
+    var onStart: (() -> Void)?
 
     /// 无声替身只刷新可观察连接状态。
     func refreshConnection() throws { onRouteUpdate?() }
@@ -260,9 +297,12 @@ final class PreviewAudio: RestAudio {
     }
     /// 测试替身仅记录启动，不访问任何音频设备。
     func start(preferences: Preferences, remaining: TimeInterval) throws {
+        onStart?()
         guard isHeadphoneConnected else { throw AudioFailure.noHeadphones }
         if let failure { throw failure }
         starts += 1
+        lastRemaining = remaining
+        lastPreferences = preferences
     }
     /// 无声验证试听门禁，不向模拟器或 Mac 输出声音。
     func preview(name: String, volume: Float) throws {
@@ -283,5 +323,9 @@ final class PreviewAudio: RestAudio {
     }
     /// 注入重连事件，由会话层根据阶段决定是否续响。
     func reconnect() { isHeadphoneConnected = true; onRouteUpdate?() }
+    /// 模拟系统开始中断，替身不访问真实音频会话。
+    func interrupt() { onInterruption?(.began) }
+    /// 模拟系统是否建议恢复，由会话层决定能否重新预约。
+    func endInterruption(shouldResume: Bool = true) { onInterruption?(.ended(shouldResume: shouldResume)) }
 }
 #endif

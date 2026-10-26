@@ -28,6 +28,10 @@ final class RestStore: ObservableObject {
     private let vibrate: () -> Void
     private var lastVibration: Date?
     private var resumeAlarmOnReconnect = false
+    private enum InterruptionRecovery { case waitingForEnd, ready }
+    private var interruptionRecovery: InterruptionRecovery?
+    private var recoveryTask: Task<Void, Never>?
+    private var isRecoveringAudio = false
 
     var remaining: TimeInterval { session?.remaining(at: now) ?? 0 }
     var totalMinutes: Int { records.filter(\.completed).reduce(0) { $0 + ($1.seconds ?? $1.minutes * 60) } / 60 }
@@ -67,6 +71,7 @@ final class RestStore: ObservableObject {
         refreshRoute()
         audio.onSafetyStop = { [weak self] reason, disconnected in self?.block(reason, disconnected: disconnected) }
         audio.onRouteUpdate = { [weak self] in self?.handleRouteUpdate() }
+        audio.onInterruption = { [weak self] event in self?.handleInterruption(event) }
         if runsTimer {
             timer = Timer.publish(every: 0.25, on: .main, in: .common).autoconnect().sink { [weak self] _ in self?.tick() }
         }
@@ -116,6 +121,7 @@ final class RestStore: ObservableObject {
     /// 手动暂停同时撤销预约音轨和静默通知，并冻结剩余时间。
     func pause() {
         guard var current = session, current.phase == .resting else { return }
+        cancelInterruptionRecovery()
         now = clock()
         current.pause(at: now)
         audio.stop()
@@ -126,18 +132,36 @@ final class RestStore: ObservableObject {
 
     /// 恢复时重新验证耳机，失败时保留暂停状态；响铃重连由会话策略触发。
     func resume() {
-        guard var current = session, [.paused, .blocked].contains(current.phase) else { return }
+        cancelInterruptionRecovery()
+        _ = resumeSession(automatically: false)
+    }
+
+    /// 重建本轮音轨和设备时钟预约；自动恢复失败只更新状态，不弹出打扰休息的警告。
+    @discardableResult
+    private func resumeSession(automatically: Bool) -> Bool {
+        guard !isRecoveringAudio, var current = session, [.paused, .blocked].contains(current.phase) else { return false }
+        isRecoveringAudio = true
+        defer { isRecoveringAudio = false }
         now = clock()
         current.resume(at: now)
         do {
             try audio.start(preferences: sessionPreferences ?? preferences, remaining: current.remaining(at: now))
             session = current
+            cancelInterruptionRecovery()
             resumeAlarmOnReconnect = false
             lastVibration = nil
             persistSession()
             if current.phase == .resting { scheduleNotification() }
-        } catch { errorMessage = error.localizedDescription }
+            refreshRoute()
+            return true
+        } catch {
+            if automatically && interruptionRecovery != nil {
+                session?.reason = L("音频暂时无法恢复，将在耳机连接或返回应用时重试。也可确认耳机后手动继续。")
+                persistSession()
+            } else if !automatically { errorMessage = error.localizedDescription }
+        }
         refreshRoute()
+        return false
     }
 
     /// 响铃期间执行稍后提醒，音频预约失败则进入明确的中断状态。
@@ -159,6 +183,7 @@ final class RestStore: ObservableObject {
     /// 结束会话仅写入一次记录，同时清除音频、预约和恢复快照。
     func finish(completed: Bool) {
         guard let current = session else { return }
+        cancelInterruptionRecovery()
         resumeAlarmOnReconnect = false
         lastVibration = nil
         audio.stop()
@@ -177,6 +202,7 @@ final class RestStore: ObservableObject {
 
     /// 安全事件立即停止音轨；仅响铃阶段断连允许限时自动续响。
     func block(_ reason: String, disconnected: Bool = false) {
+        cancelInterruptionRecovery()
         if isConnecting {
             cancelConnectionAttempt()
             connectionMessage = reason
@@ -195,6 +221,59 @@ final class RestStore: ObservableObject {
         persistSession()
         cancelNotification()
         refreshRoute()
+    }
+
+    /// 暂时中断保留绝对截止时间和静默通知，仅在系统允许后恢复；试听与连接探测不自动重启。
+    private func handleInterruption(_ event: AudioInterruption) {
+        switch event {
+        case .began:
+            cancelConnectionAttempt()
+            previewTask?.cancel()
+            previewing = nil
+            guard var current = session,
+                  [.resting, .ringing].contains(current.phase) || interruptionRecovery != nil else { return }
+            recoveryTask?.cancel()
+            interruptionRecovery = .waitingForEnd
+            resumeAlarmOnReconnect = false
+            now = clock()
+            let reason = L("音频暂时被系统中断，计时继续。系统允许后将自动恢复；若已到点，将立即补响。")
+            current.pause(at: now, reason: reason)
+            current.reason = reason
+            session = current
+            persistSession()
+        case .ended(let shouldResume):
+            guard interruptionRecovery != nil, session?.phase == .blocked else { return }
+            guard shouldResume else {
+                cancelInterruptionRecovery()
+                session?.reason = L("系统尚未允许恢复音频。计时未重置，请确认耳机后手动继续；已到点时将立即响铃。")
+                persistSession()
+                return
+            }
+            interruptionRecovery = .ready
+            recoverInterruptedSession()
+        }
+    }
+
+    /// 蓝牙路由及音频服务在结束通知后可能仍在切换，只做三次短暂重试并等待后续路由事件。
+    private func recoverInterruptedSession() {
+        guard !isRecoveringAudio, interruptionRecovery == .ready, session?.phase == .blocked else { return }
+        recoveryTask?.cancel()
+        if resumeSession(automatically: true) { return }
+        guard interruptionRecovery == .ready else { return }
+        recoveryTask = Task { [weak self] in
+            for delay in [0.5, 1.5, 3.0] {
+                do { try await Task.sleep(for: .seconds(delay)) } catch { return }
+                guard let self, self.interruptionRecovery == .ready, !Task.isCancelled else { return }
+                if self.resumeSession(automatically: true) { return }
+            }
+        }
+    }
+
+    /// 用户操作、断连或会话结束撤销恢复资格，迟到的系统通知不能重新播放。
+    private func cancelInterruptionRecovery() {
+        recoveryTask?.cancel()
+        recoveryTask = nil
+        interruptionRecovery = nil
     }
 
     /// 耳机内试听十五秒；再次点击同一声音停止，不创建闹钟或通知。
@@ -316,6 +395,8 @@ final class RestStore: ObservableObject {
     /// 响铃期间断连后仅在真实耳机重连时续响，休息阶段保持手动恢复。
     private func handleRouteUpdate() {
         refreshRoute()
+        guard !isRecoveringAudio else { return }
+        if interruptionRecovery == .ready && hasHeadphones { recoverInterruptedSession() }
         if resumeAlarmOnReconnect && hasHeadphones {
             if canResumeAlarm { resume() }
             else { resumeAlarmOnReconnect = false }
@@ -325,6 +406,11 @@ final class RestStore: ObservableObject {
     /// 前台恢复时核对路由，避免界面仍显示已连接或运行状态。
     func becameActive() {
         refreshRoute()
+        // 部分中断没有结束通知，返回前台时让系统重新验证激活资格；失败仍保持中断。
+        if interruptionRecovery != nil {
+            interruptionRecovery = .ready
+            recoverInterruptedSession()
+        }
         if let current = session, [.resting, .ringing].contains(current.phase), !hasHeadphones {
             block(L("当前没有可用耳机，声音已停止。连接后请手动继续。"), disconnected: true)
         }

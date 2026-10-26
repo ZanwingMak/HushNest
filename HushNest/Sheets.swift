@@ -79,7 +79,7 @@ struct SoundSheet: View {
                     NavigationLink { MediaSheet() } label: { Label(L("我的声音 · 导入音频或视频"), systemImage: "square.and.arrow.down") }.accessibilityIdentifier("media.open")
                     LabeledContent(L("助眠音量"), value: "\(Int(store.preferences.sleepVolume * 100))%")
                     Slider(value: $store.preferences.sleepVolume, in: 0.01...0.6).accessibilityLabel(L("助眠音量")).disabled(store.preferences.sleepSound == .none)
-                } header: { Text(L("休息时，听见自然")) } footer: { Text(L("有助眠音：可锁屏并与其他应用混音；若被其他应用或来电中断，需手动恢复。无助眠音：开始前需确认锁屏风险。保留尽力预约和无声通知，但 iOS 挂起后无法保证耳机响铃或震动。")) }
+                } header: { Text(L("休息时，听见自然")) } footer: { Text(L("有助眠音：支持锁屏与混音。暂时中断后，系统允许且耳机可用时会自动恢复；已到点则补响。系统未允许恢复时需手动继续。无助眠音：仍无法保证锁屏响铃或震动，开始前需确认风险。")) }
                 Section {
                     Picker(L("唤醒铃声"), selection: $store.preferences.alarmSound) {
                         ForEach(AlarmSound.allCases.filter { $0 != .custom || store.preferences.customAlarmID != nil }) { Text($0.title).tag($0) }

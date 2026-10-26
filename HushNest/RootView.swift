@@ -55,6 +55,7 @@ struct RestView: View {
                     if store.session == nil { configuration }
                     if let session = store.session, session.phase == .blocked {
                         Label(session.reason ?? L("请检查耳机后手动恢复。"), systemImage: "pause.circle")
+                            .accessibilityIdentifier("session.interruption")
                             .font(.subheadline).foregroundStyle(.orange).frame(maxWidth: .infinity, alignment: .leading)
                             .padding(20).background(.orange.opacity(0.08), in: RoundedRectangle(cornerRadius: 20))
                     }

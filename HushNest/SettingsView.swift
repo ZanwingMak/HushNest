@@ -70,7 +70,8 @@ struct SettingsView: View {
                     Section(L("自动化测试 · 无声模拟")) {
                         Button(L("模拟断开耳机")) { (store.audio as? PreviewAudio)?.disconnect() }.accessibilityIdentifier("test.disconnect")
                         Button(L("模拟重新连接")) { (store.audio as? PreviewAudio)?.reconnect() }.accessibilityIdentifier("test.reconnect")
-                        Button(L("模拟系统中断")) { store.block(L("模拟来电中断，请手动继续。")) }.accessibilityIdentifier("test.interrupt")
+                        Button(L("模拟系统中断")) { (store.audio as? PreviewAudio)?.interrupt() }.accessibilityIdentifier("test.interrupt")
+                        Button(L("模拟中断结束")) { (store.audio as? PreviewAudio)?.endInterruption() }.accessibilityIdentifier("test.interruptionEnded")
                     }
                 }
                 #endif

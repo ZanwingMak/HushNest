@@ -207,7 +207,6 @@
 "我的声音 · 导入音频或视频" = "Mis sonidos · Importar audio o vídeo";
 "助眠音量" = "Volumen de descanso";
 "休息时，听见自然" = "Escucha la naturaleza al descansar";
-"有助眠音：可锁屏并与其他应用混音；若被其他应用或来电中断，需手动恢复。无助眠音：开始前需确认锁屏风险。保留尽力预约和无声通知，但 iOS 挂起后无法保证耳机响铃或震动。" = "Con audio: bloquea la pantalla y mezcla con otras apps; reanuda manualmente tras llamadas o interrupciones. Sin audio: confirma el riesgo antes de empezar. Se conservan la programación y los avisos silenciosos, pero iOS puede impedir sonido y vibración al suspender la app.";
 "试听铃声（仅耳机）" = "Probar alarma (solo auriculares)";
 "提醒音量" = "Volumen de alarma";
 "唤醒时震动" = "Vibrar al despertar";
@@ -241,3 +240,8 @@
 "耳机已断开，响铃已停止。重新连接后将尝试继续重复响铃。" = "Auriculares desconectados. La alarma repetida se detuvo. Al reconectarlos se intentará reanudar.";
 "内置铃声逐渐增强，经典与强力铃声更鲜明。可选择持续重复响铃。实际响度也受 iPhone 媒体音量影响；初次使用请先用短计时确认。" = "Las alarmas incluidas aumentan gradualmente; las clásicas e intensas son más marcadas. Puedes activar la repetición continua. El volumen multimedia del iPhone también influye. Haz una prueba breve primero.";
 "助眠音循环播放；自定义铃声使用前 60 秒。开启持续响铃后会重复到手动停止，关闭时最多提醒 3 分钟。首次请先用短计时测试。" = "El audio de descanso se repite. Las alarmas personales usan los primeros 60 segundos. Con repetición continua suenan hasta detenerlas; si no, hasta 3 minutos. Prueba con un temporizador corto.";
+"音频暂时被系统中断，计时继续。系统允许后将自动恢复；若已到点，将立即补响。" = "El sistema ha interrumpido el audio temporalmente. La cuenta atrás continúa. Se reanudará cuando esté permitido; si ya terminó el tiempo, la alarma sonará de inmediato.";
+"系统尚未允许恢复音频。计时未重置，请确认耳机后手动继续；已到点时将立即响铃。" = "El sistema aún no permite reanudar el audio. La hora de finalización no ha cambiado. Comprueba los auriculares y reanuda manualmente; si ya terminó el tiempo, la alarma sonará de inmediato.";
+"音频暂时无法恢复，将在耳机连接或返回应用时重试。也可确认耳机后手动继续。" = "El audio aún no se puede reanudar. Lo intentaremos al conectar los auriculares o volver a la app. También puedes comprobarlos y reanudar manualmente.";
+"有助眠音：支持锁屏与混音。暂时中断后，系统允许且耳机可用时会自动恢复；已到点则补响。系统未允许恢复时需手动继续。无助眠音：仍无法保证锁屏响铃或震动，开始前需确认风险。" = "Con sonido de descanso: admite la pantalla bloqueada y la mezcla de audio. Tras una interrupción, se reanuda cuando el sistema lo permite y hay auriculares disponibles; las alarmas pendientes suenan de inmediato. Si no, reanuda manualmente. Sin sonido: no se garantiza el sonido ni la vibración con la pantalla bloqueada; confirma el riesgo antes de empezar.";
+"模拟中断结束" = "Simular fin de interrupción";

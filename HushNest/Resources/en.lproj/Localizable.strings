@@ -207,7 +207,6 @@
 "我的声音 · 导入音频或视频" = "My sounds · Import audio or video";
 "助眠音量" = "Sleep volume";
 "休息时，听见自然" = "Hear nature while you rest";
-"有助眠音：可锁屏并与其他应用混音；若被其他应用或来电中断，需手动恢复。无助眠音：开始前需确认锁屏风险。保留尽力预约和无声通知，但 iOS 挂起后无法保证耳机响铃或震动。" = "With sleep audio: lock the screen and mix with other apps; resume manually after calls or interruptions. Without sleep audio: confirm the lock-screen risk before starting. Scheduling and silent notifications remain, but iOS suspension can prevent ringing and vibration.";
 "试听铃声（仅耳机）" = "Preview alarm (headphones only)";
 "提醒音量" = "Alarm volume";
 "唤醒时震动" = "Vibrate on wake-up";
@@ -241,3 +240,8 @@
 "耳机已断开，响铃已停止。重新连接后将尝试继续重复响铃。" = "Headphones disconnected. Repeating alarm stopped. Reconnect to try resuming it.";
 "内置铃声逐渐增强，经典与强力铃声更鲜明。可选择持续重复响铃。实际响度也受 iPhone 媒体音量影响；初次使用请先用短计时确认。" = "Built-in alarms grow gradually; classic and strong sounds are more distinct. You can enable continuous ringing. iPhone media volume also affects loudness. Test briefly before first use.";
 "助眠音循环播放；自定义铃声使用前 60 秒。开启持续响铃后会重复到手动停止，关闭时最多提醒 3 分钟。首次请先用短计时测试。" = "Sleep audio loops. Custom alarms use the first 60 seconds. Continuous ringing repeats until stopped; otherwise reminders last up to 3 minutes. Test with a short timer first.";
+"音频暂时被系统中断，计时继续。系统允许后将自动恢复；若已到点，将立即补响。" = "Audio is temporarily interrupted by the system. The countdown continues. Playback resumes when permitted; if time is up, the alarm plays immediately.";
+"系统尚未允许恢复音频。计时未重置，请确认耳机后手动继续；已到点时将立即响铃。" = "The system has not permitted audio to resume. The countdown was not reset. Check your headphones and resume manually; if time is up, the alarm plays immediately.";
+"音频暂时无法恢复，将在耳机连接或返回应用时重试。也可确认耳机后手动继续。" = "Audio could not resume yet. We will retry when headphones connect or you return to the app. You can also check your headphones and resume manually.";
+"有助眠音：支持锁屏与混音。暂时中断后，系统允许且耳机可用时会自动恢复；已到点则补响。系统未允许恢复时需手动继续。无助眠音：仍无法保证锁屏响铃或震动，开始前需确认风险。" = "With sleep audio: supports the Lock Screen and mixing. After an interruption, playback resumes when the system permits and headphones are available; overdue alarms play immediately. Otherwise, resume manually. Without sleep audio: Lock Screen sound and vibration remain unreliable; confirm the risk before starting.";
+"模拟中断结束" = "Simulate interruption ending";

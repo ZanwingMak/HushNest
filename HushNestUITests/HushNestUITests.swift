@@ -252,6 +252,44 @@ final class HushNestUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["好好休息"].exists)
     }
 
+    /// 系统允许恢复后，不点击继续即可回到倒计时并清除中断说明。
+    func testSystemInterruptionResumesAutomatically() {
+        app.launch()
+        app.buttons["session.start"].tap()
+        app.tabBars.buttons["设置"].tap()
+        reveal(app.buttons["test.interrupt"])
+        app.buttons["test.interrupt"].tap()
+        app.tabBars.buttons["休息"].tap()
+        XCTAssertTrue(app.staticTexts["提醒已中断"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.otherElements["session.interruption"].exists || app.staticTexts["session.interruption"].exists)
+        app.tabBars.buttons["设置"].tap()
+        reveal(app.buttons["test.interruptionEnded"])
+        app.buttons["test.interruptionEnded"].tap()
+        app.tabBars.buttons["休息"].tap()
+        XCTAssertTrue(app.staticTexts["好好休息"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.staticTexts["提醒已中断"].exists)
+        screenshot("31-interruption-recovered")
+    }
+
+    /// 无声替身模拟中断后切后台，跨过到期时间再前台时立即补响；不代表真机锁屏音频验证。
+    func testInterruptedBackgroundDeadlineCatchesUpOnForeground() {
+        app.launch()
+        reveal(app.buttons["test.quickStart"])
+        app.buttons["test.quickStart"].tap()
+        app.tabBars.buttons["设置"].tap()
+        reveal(app.buttons["test.interrupt"])
+        app.buttons["test.interrupt"].tap()
+        app.tabBars.buttons["休息"].tap()
+        XCTAssertTrue(app.staticTexts["提醒已中断"].waitForExistence(timeout: 5))
+        XCUIDevice.shared.press(.home)
+        Thread.sleep(forTimeInterval: 4)
+        app.activate()
+        XCTAssertTrue(app.buttons["session.finish"].waitForExistence(timeout: 5))
+        screenshot("32-interruption-overdue")
+        app.buttons["session.finish"].tap()
+        XCTAssertTrue(app.buttons["session.start"].waitForExistence(timeout: 5))
+    }
+
     /// 验证强制关闭后恢复的是中断状态，不会伪装成后台仍在工作。
     func testRelaunchShowsInterruptedSession() {
         app.launch()

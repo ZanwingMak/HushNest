@@ -400,4 +400,187 @@ final class RestStoreTests: XCTestCase {
     }
 
 
+    /// 锁屏中断结束后重建预约，保持原截止时间以及本轮声音配置。
+    func testInterruptionResumesOriginalDeadlineInBackground() {
+        store.start(duration: 60)
+        let deadline = store.session?.deadline
+        let settings = store.preferences
+        store.enteredBackground()
+        now.addTimeInterval(10)
+        audio.interrupt()
+        XCTAssertEqual(store.session?.phase, .blocked)
+        now.addTimeInterval(20)
+        store.preferences.alarmSound = .classic
+        audio.endInterruption()
+        XCTAssertEqual(store.session?.phase, .resting)
+        XCTAssertEqual(store.session?.deadline, deadline)
+        XCTAssertEqual(audio.lastRemaining, 30)
+        XCTAssertEqual(audio.lastPreferences, settings)
+        audio.endInterruption()
+        XCTAssertEqual(audio.starts, 2)
+    }
+
+    /// 中断跨过截止时间时不再等待前台或 Timer，结束通知立即触发补响。
+    func testOverdueInterruptionImmediatelyRingsWithoutTick() {
+        store.start(duration: 60)
+        audio.interrupt()
+        store.enteredBackground()
+        now.addTimeInterval(600)
+        audio.endInterruption()
+        XCTAssertEqual(store.session?.phase, .ringing)
+        XCTAssertEqual(audio.lastRemaining, 0)
+        XCTAssertEqual(audio.starts, 2)
+        store.tick()
+        XCTAssertEqual(store.session?.phase, .ringing)
+    }
+
+    /// 系统未允许恢复时，前台、路由事件及 Timer 均不能自行重启播放。
+    func testInterruptionWithoutResumePermissionRequiresUser() {
+        store.start(duration: 60)
+        audio.interrupt()
+        audio.endInterruption(shouldResume: false)
+        now.addTimeInterval(70)
+        audio.reconnect()
+        store.becameActive()
+        XCTAssertEqual(audio.starts, 1)
+        XCTAssertEqual(store.session?.phase, .blocked)
+        store.resume()
+        XCTAssertEqual(store.session?.phase, .ringing)
+        XCTAssertEqual(audio.starts, 2)
+    }
+
+    /// 没有结束通知时，仅返回前台才重试激活；普通路由事件不打断尚未结束的通话。
+    func testMissingEndNotificationCanRecoverOnForeground() {
+        store.start(duration: 60)
+        audio.interrupt()
+        audio.reconnect()
+        XCTAssertEqual(audio.starts, 1)
+        now.addTimeInterval(20)
+        store.becameActive()
+        XCTAssertEqual(audio.starts, 2)
+        XCTAssertEqual(audio.lastRemaining, 40)
+    }
+
+    /// 自动恢复在路由尚未就绪时保持阻止状态，真实耳机重连后立即补响。
+    func testInterruptedAlarmWaitsForPrivateRoute() {
+        store.start(duration: 60)
+        audio.interrupt()
+        audio.isHeadphoneConnected = false
+        now.addTimeInterval(61)
+        audio.endInterruption()
+        XCTAssertEqual(audio.starts, 1)
+        XCTAssertEqual(store.session?.phase, .blocked)
+        XCTAssertNil(store.errorMessage)
+        audio.reconnect()
+        XCTAssertEqual(audio.starts, 2)
+        XCTAssertEqual(audio.lastRemaining, 0)
+        XCTAssertEqual(store.session?.phase, .ringing)
+    }
+
+    /// 明确拔出耳机会撤销中断恢复资格，休息阶段重连仍须用户确认。
+    func testDisconnectionOverridesInterruptionRecovery() {
+        store.start(duration: 60)
+        audio.interrupt()
+        audio.disconnect()
+        audio.endInterruption()
+        audio.reconnect()
+        store.becameActive()
+        XCTAssertEqual(audio.starts, 1)
+        XCTAssertEqual(store.session?.phase, .blocked)
+    }
+
+    /// 用户已暂停、结束或新开一轮时，迟到的系统恢复事件不能重启旧预约。
+    func testLateInterruptionEventsCannotOverrideUserActions() {
+        store.start(duration: 60)
+        store.pause()
+        audio.interrupt()
+        audio.endInterruption()
+        XCTAssertEqual(store.session?.phase, .paused)
+        XCTAssertEqual(audio.starts, 1)
+        store.resume()
+        audio.interrupt()
+        store.finish(completed: false)
+        audio.endInterruption()
+        XCTAssertNil(store.session)
+        store.start(duration: 120)
+        audio.endInterruption()
+        XCTAssertEqual(audio.lastRemaining, 120)
+        XCTAssertEqual(audio.starts, 3)
+    }
+
+    /// 多次系统中断不延长计时，结束后只重建一次预约。
+    func testRepeatedInterruptionsDoNotDuplicateAppointments() {
+        store.start(duration: 60)
+        let deadline = store.session?.deadline
+        audio.interrupt()
+        now.addTimeInterval(10)
+        audio.interrupt()
+        audio.endInterruption()
+        audio.endInterruption()
+        XCTAssertEqual(audio.starts, 2)
+        XCTAssertEqual(store.session?.deadline, deadline)
+    }
+
+    /// 激活音频时同步发出的路由通知不会递归恢复或重复创建播放器。
+    func testRouteNotificationDuringActivationDoesNotReenterRecovery() {
+        store.start(duration: 60)
+        audio.interrupt()
+        audio.onStart = { [weak audio] in audio?.onRouteUpdate?() }
+        audio.endInterruption()
+        XCTAssertEqual(audio.starts, 2)
+        XCTAssertEqual(store.session?.phase, .resting)
+    }
+
+    /// 系统解除中断但短暂拒绝激活时自动有限重试，不弹窗也不丢失到点补响。
+    func testTransientActivationFailureRetriesAutomatically() async throws {
+        store.start(duration: 1)
+        audio.interrupt()
+        audio.failure = AudioFailure.playbackFailed
+        audio.endInterruption()
+        XCTAssertEqual(store.session?.phase, .blocked)
+        XCTAssertNil(store.errorMessage)
+        now.addTimeInterval(2)
+        audio.failure = nil
+        try await Task.sleep(for: .milliseconds(700))
+        XCTAssertEqual(audio.starts, 2)
+        XCTAssertEqual(store.session?.phase, .ringing)
+    }
+
+    /// 重试等待期间结束会话，旧任务不能停止或覆盖新一轮休息。
+    func testFinishingCancelsPendingRecoveryRetry() async throws {
+        store.start(duration: 1)
+        audio.interrupt()
+        audio.failure = AudioFailure.playbackFailed
+        audio.endInterruption()
+        store.finish(completed: false)
+        audio.failure = nil
+        store.start(duration: 120)
+        try await Task.sleep(for: .milliseconds(700))
+        XCTAssertEqual(audio.starts, 2)
+        XCTAssertEqual(audio.lastRemaining, 120)
+        XCTAssertEqual(store.session?.phase, .resting)
+    }
+
+    /// 重启不恢复内存中的自动播放资格，即使收到旧的结束通知也须手动恢复。
+    func testRelaunchDoesNotRestoreInterruptionAutoplay() {
+        store.start(duration: 60)
+        audio.interrupt()
+        let restoredAudio = PreviewAudio()
+        let restored = RestStore(audio: restoredAudio, defaults: defaults, runsTimer: false, notificationsEnabled: false)
+        restoredAudio.endInterruption()
+        restored.becameActive()
+        XCTAssertEqual(restored.session?.phase, .blocked)
+        XCTAssertEqual(restoredAudio.starts, 0)
+    }
+
+    /// 试听被中断后不会自动播放，用户休息计时也不会被意外创建。
+    func testPreviewInterruptionNeverAutoplays() throws {
+        try store.preview(name: "rain", volume: 0.2)
+        audio.interrupt()
+        audio.endInterruption()
+        XCTAssertNil(store.previewing)
+        XCTAssertNil(store.session)
+        XCTAssertEqual(audio.previews, 1)
+        XCTAssertEqual(audio.starts, 0)
+    }
 }
