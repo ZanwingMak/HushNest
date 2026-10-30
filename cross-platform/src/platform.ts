@@ -19,5 +19,6 @@ declare global {
   } }
 }
 export const isWindows = !!window.hushnestDesktop;
+export const isWeb = !isAndroid && !isWindows;
 export const platformName = isAndroid ? 'Android' : isWindows ? 'Windows' : 'Web';
 export const unknownRoute: Route = { connected: false, verified: false, name: '', token: '' };

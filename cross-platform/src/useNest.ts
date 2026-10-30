@@ -3,7 +3,7 @@ import { appendRecord, loadJSON, loadRecords, saveJSON } from './core/storage';
 import { block, createSession, defaultPreferences, finish, normalizePreferences, pause, restoreSession, resume, rested, snooze, tick } from './core/model';
 import type { Preferences, RestRecord, Route, Session } from './core/model';
 import { AudioEngine } from './audio';
-import { isAndroid, isWindows, native, unknownRoute } from './platform';
+import { isAndroid, isWindows, isWeb, native, unknownRoute } from './platform';
 
 function initialPreferences() {
   const stored = loadJSON('preferences');
@@ -78,6 +78,7 @@ export function useNest() {
     return () => { disposed = true; clearInterval(interval); };
   }, [exclusive]);
   useEffect(() => {
+    if (isWeb) return;
     const lost = () => {
       setRoute(unknownRoute); state.current.route = unknownRoute; checkedToken.current = '';
       engine.current?.stop(); audioKey.current = '';
@@ -148,7 +149,7 @@ export function useNest() {
     setError(''); setBusy(true);
     try {
       const { preferences: p, session: s, route: r } = state.current;
-      if (['start', 'resume', 'snooze'].includes(action) && !r.connected) throw new Error('routeLost');
+      if (!isWeb && ['start', 'resume', 'snooze'].includes(action) && !r.connected) throw new Error('routeLost');
       if (isAndroid) {
         if (action === 'start') await native.requestNotifications();
         ingest(await native.command({ action, preferences: p, session: action === 'start' ? createSession(Date.now(), duration ?? p.duration) : undefined }));
@@ -162,9 +163,9 @@ export function useNest() {
     } catch (e) { setError(e instanceof Error && ['routeLost', 'otherTab'].includes(e.message) ? e.message : 'audioError'); }
     finally { setBusy(false); }
   }
-  async function preview(sound: string, alarm = false, allowUnverified = false) {
+  async function preview(sound: string, alarm = false) {
     if (session || busy || !exclusive) return;
-    if (!route.connected && !allowUnverified) { setError('routeLost'); return; }
+    if (!isWeb && !route.connected) { setError('routeLost'); return; }
     setBusy(true); setError('');
     try {
       if (isAndroid) await native.command({ action: 'preview', sound, volume: alarm ? preferences.alarmVolume : preferences.sleepVolume });
@@ -175,9 +176,6 @@ export function useNest() {
     if (isAndroid) ingest(await native.snapshot());
     else if (isWindows) { const r = await window.hushnestDesktop!.route(); setRoute(r); state.current.route = r; }
   }
-  function confirmWebRoute(connected: boolean) {
-    const r = { connected, verified: false, name: 'Headphones', token: connected ? 'user-confirmed' : '' }; setRoute(r); state.current.route = r;
-  }
   async function clearRecords() {
     if (isAndroid) await native.command({ action: 'clearRecords' });
     state.current.records = []; setRecords([]); save('records', []);
@@ -187,5 +185,5 @@ export function useNest() {
     if (isAndroid && session) void native.command({ action: 'volume', preferences: next }).catch(() => setError('audioError'));
   }
   return { preferences, updatePreferences, session, records, route, error: !exclusive ? 'otherTab' : error, setError,
-    busy, ready, now, command, preview, checkRoute, confirmWebRoute, clearRecords, exclusive };
+    busy, ready, now, command, preview, checkRoute, clearRecords, exclusive };
 }

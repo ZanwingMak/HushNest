@@ -3,27 +3,24 @@ import type { Page } from '@playwright/test';
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     // Exercise timer/UI transitions without outputting audio on the developer's machine.
-    window.HTMLMediaElement.prototype.play = async function () { this.dispatchEvent(new Event('play')); };
+    window.HTMLMediaElement.prototype.play = async function () {
+      const data = document.documentElement.dataset;
+      data.testPlayCount = String(Number(data.testPlayCount ?? 0) + 1);
+      this.dispatchEvent(new Event('play'));
+    };
   });
   await page.goto('/');
   await expect(page.getByRole('heading', { name: '好好休息.' })).toBeVisible();
 });
-async function confirmHeadphones(page: Page) {
-  await page.getByRole('button', { name: '检查耳机' }).click();
-  await page.getByRole('checkbox', { name: '我已确认声音仅从耳机播放' }).check();
-  await page.getByRole('dialog').getByRole('button', { name: '完成', exact: true }).click();
-}
 async function duration(page: Page, seconds: number) {
   await page.getByRole('button', { name: '添加常用时长' }).click();
   await page.getByRole('spinbutton', { name: '分钟', exact: true }).fill('0');
   await page.getByRole('spinbutton', { name: '秒', exact: true }).fill(String(seconds));
   await page.getByRole('dialog').getByRole('button', { name: '添加常用时长' }).click();
 }
-test('headphone gate, short alarm, snooze, pause, resume, history', async ({ page }) => {
-  await page.getByRole('button', { name: '开始我的片刻安静' }).click();
-  await expect(page.getByRole('dialog', { name: '检查耳机' })).toBeVisible();
-  await page.getByRole('checkbox').check();
-  await page.getByRole('dialog').getByRole('button', { name: '完成', exact: true }).click();
+test('Web starts without headphones, then alarms, snoozes, pauses, resumes and records', async ({ page }) => {
+  await expect(page.getByRole('button', { name: '检查耳机' })).toHaveCount(0);
+  await expect(page.getByText('系统默认音频输出', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: '不播放助眠音', exact: true }).click();
   await duration(page, 1);
   await page.getByRole('button', { name: '开始我的片刻安静' }).click();
@@ -33,28 +30,65 @@ test('headphone gate, short alarm, snooze, pause, resume, history', async ({ pag
   const before = await page.locator('.timer-value').textContent();
   await page.waitForTimeout(1100);
   expect(await page.locator('.timer-value').textContent()).toBe(before);
-  await page.getByRole('button', { name: '确认耳机，继续休息' }).click();
+  await page.getByRole('button', { name: '继续休息', exact: true }).click();
   await page.getByRole('button', { name: '结束这次休息' }).click();
   await page.getByRole('button', { name: '休息足迹', exact: true }).click();
   await expect(page.locator('.record-row')).toHaveCount(1);
 });
-test('reload restores interrupted state and requires a new headphone confirmation', async ({ page }) => {
-  await confirmHeadphones(page); await duration(page, 30);
+test('Web restores an interrupted session without requiring headphone confirmation', async ({ page }) => {
+  await duration(page, 30);
   await page.getByRole('button', { name: '开始我的片刻安静' }).click();
   await page.reload();
-  await expect(page.getByText('应用曾关闭，计时未在后台继续。确认耳机后可手动恢复。')).toBeVisible();
-  await page.getByRole('button', { name: '确认耳机，继续休息' }).click();
-  await expect(page.getByRole('alert')).toContainText('耳机输出已变化');
-  await confirmHeadphones(page);
-  await page.getByRole('button', { name: '确认耳机，继续休息' }).click();
+  await expect(page.getByText('应用曾关闭，计时未在后台继续。可手动继续休息。')).toBeVisible();
+  await page.getByRole('button', { name: '继续休息', exact: true }).click();
   await expect(page.getByRole('button', { name: '暂停一下' })).toBeVisible();
+  await expect(page.getByRole('dialog', { name: '检查耳机' })).toHaveCount(0);
 });
-test('an output change immediately blocks a running session', async ({ page }) => {
-  await confirmHeadphones(page); await duration(page, 30);
+test('Web keeps its running session and deadline when output devices change', async ({ page }) => {
+  await duration(page, 30);
   await page.getByRole('button', { name: '开始我的片刻安静' }).click();
+  const before = await page.evaluate(() => JSON.parse(localStorage.getItem('hushnest:session')!));
   await page.evaluate(() => navigator.mediaDevices.dispatchEvent(new Event('devicechange')));
-  await expect(page.getByText('耳机输出已变化，声音已停止。确认耳机后继续。')).toBeVisible();
+  await expect(page.getByRole('button', { name: '暂停一下' })).toBeVisible();
+  const after = await page.evaluate(() => JSON.parse(localStorage.getItem('hushnest:session')!));
+  expect(after.phase).toBe('resting'); expect(after.deadline).toBe(before.deadline);
+  await expect(page.getByText('耳机输出已变化，声音已停止。确认耳机后继续。')).toHaveCount(0);
+});
+test('Web previews sleep audio and alarms without a headphone check', async ({ page }) => {
+  await page.getByRole('button', { name: '试听', exact: true }).click();
+  await expect.poll(() => page.evaluate(() => Number(document.documentElement.dataset.testPlayCount))).toBe(1);
+  await page.getByRole('button', { name: '试听唤醒铃声', exact: true }).click();
+  await expect.poll(() => page.evaluate(() => Number(document.documentElement.dataset.testPlayCount))).toBe(2);
+  await expect(page.getByRole('dialog', { name: '检查耳机' })).toHaveCount(0);
+});
+test('native desktop still requires headphones and blocks on an output change', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.hushnestDesktop = {
+      route: async () => {
+        const connected = document.documentElement.dataset.testNativeConnected === 'true';
+        return { connected, verified: connected, name: connected ? 'Test headphones' : '', token: connected ? 'test-headphones' : '' };
+      },
+      keepAwake: async () => {}, onSuspend: () => () => {},
+    };
+    window.hushnestAudio = {
+      play: async () => {}, stop: async () => {}, volume: async () => {}, cacheMedia: async () => {}, deleteMedia: async () => {}, onRouteLost: () => () => {},
+    };
+  });
+  await page.reload();
+  await page.getByRole('button', { name: '开始我的片刻安静' }).click();
+  const dialog = page.getByRole('dialog', { name: '检查耳机' });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole('button', { name: '完成', exact: true })).toBeDisabled();
+  expect(await page.evaluate(() => localStorage.getItem('hushnest:session'))).toBeNull();
+  await page.evaluate(() => { document.documentElement.dataset.testNativeConnected = 'true'; });
+  await dialog.getByRole('button', { name: '检查耳机', exact: true }).click();
+  await dialog.getByRole('button', { name: '完成', exact: true }).click();
+  await duration(page, 30);
+  await page.getByRole('button', { name: '开始我的片刻安静' }).click();
+  await expect(page.getByRole('button', { name: '暂停一下' })).toBeVisible();
+  await page.evaluate(() => navigator.mediaDevices.dispatchEvent(new Event('devicechange')));
   await expect(page.getByRole('button', { name: '确认耳机，继续休息' })).toBeVisible();
+  await expect(page.getByText('耳机输出已变化，声音已停止。确认耳机后继续。')).toBeVisible();
 });
 test('imported audio survives reload and deletion resets its selected sound', async ({ page }) => {
   await page.getByRole('button', { name: '我的声音', exact: true }).click();
