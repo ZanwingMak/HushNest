@@ -1,0 +1,58 @@
+name: Web Android Windows
+on:
+  push:
+    branches: [codex/web-android-windows]
+    paths: ['cross-platform/**', '.github/workflows/multiplatform.yml']
+  pull_request:
+    paths: ['cross-platform/**', '.github/workflows/multiplatform.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    working-directory: cross-platform
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '24', cache: npm, cache-dependency-path: cross-platform/package-lock.json }
+      - run: npm ci
+      - run: npm test
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:web
+      - run: npm run build
+      - run: node tests/offline-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        with: { name: HushNest-Web, path: cross-platform/dist }
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '24', cache: npm, cache-dependency-path: cross-platform/package-lock.json }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '21' }
+      - uses: android-actions/setup-android@v3
+      - run: npm ci
+      - run: chmod +x android/gradlew
+      - run: npm run android:build
+      - run: ./android/gradlew -p android lintDebug --console=plain
+      - uses: actions/upload-artifact@v4
+        with: { name: HushNest-Android-debug, path: cross-platform/android/app/build/outputs/apk/debug/app-debug.apk }
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '24', cache: npm, cache-dependency-path: cross-platform/package-lock.json }
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: '8.0.x' }
+      - run: npm ci
+      - run: npm run windows:build
+      - run: node tests/windows-smoke.mjs
+        env:
+          HUSHNEST_PACKAGED_EXE: '${{ github.workspace }}/cross-platform/release/win-unpacked/HushNest.exe'
+      - uses: actions/upload-artifact@v4
+        with: { name: HushNest-Windows, path: cross-platform/release/*.exe }
