@@ -34,7 +34,10 @@ jobs:
         with: { node-version: '24', cache: npm, cache-dependency-path: cross-platform/package-lock.json }
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: '21' }
-      - uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools'
+          log-accepted-android-sdk-licenses: 'false'
       - run: npm ci
       - run: chmod +x android/gradlew
       - run: npm run android:build
