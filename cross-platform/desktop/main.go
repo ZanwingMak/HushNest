@@ -96,7 +96,7 @@ func main() {
 		mygo.App.SetLocale(d.view.preferences.Language)
 		d.window = mygo.NewWindow(mygo.WindowOptions{
 			Title: "耳憩 HushNest", Content: ui.View(d.view.render),
-			Width: 1040, Height: 850, MinWidth: 600, MinHeight: 560,
+			Width: 1180, Height: 840, MinWidth: 600, MinHeight: 560,
 			BackgroundColor: "#f5f5f0", StateKey: "main",
 			Hidden: os.Getenv("HUSHNEST_SMOKE") != "",
 		})

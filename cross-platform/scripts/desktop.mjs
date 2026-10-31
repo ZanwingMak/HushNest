@@ -94,4 +94,7 @@ if (mode === 'dev') {
   const executable = target === 'windows' ? 'release/mygo-native/windows-amd64/HushNest.exe' : 'release/mygo-native/darwin-universal/HushNest.app/Contents/MacOS/HushNest';
   const child = spawn(path.join(root, executable), [], { cwd: root, env, stdio: 'inherit', windowsHide: true });
   child.on('exit', code => process.exit(code ?? 1));
-} else await writeFile(path.join(root, 'release/mygo-native/BUILD.txt'), `HushNest 0.2.0 / MyGo 0.7.3 native Go UI\nTarget: ${platform}\nNo HTML, JavaScript or WebView\n`);
+} else {
+  const config = JSON.parse(await readFile(path.join(root, 'mygo.json'), 'utf8'));
+  await writeFile(path.join(root, 'release/mygo-native/BUILD.txt'), `HushNest ${config.version} / MyGo 0.7.3 native Go UI\nTarget: ${platform}\nNo HTML, JavaScript or WebView\n`);
+}
