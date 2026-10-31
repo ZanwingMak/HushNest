@@ -153,6 +153,9 @@ func (a *nativeApp) save() {
 	}, nil)
 }
 func (a *nativeApp) command(action string, duration int, sound string, previewAlarm ...bool) {
+	if action == "preview" && sound != "" && a.snapshot.PreviewSound == sound {
+		action = "stopPreview"
+	}
 	p := a.preferences
 	input := CommandInput{Action: action, Preferences: &p, Sound: sound, Volume: 0.12}
 	if action == "preview" {

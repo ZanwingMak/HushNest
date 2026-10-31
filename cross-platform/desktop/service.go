@@ -45,9 +45,10 @@ func normalizePreferences(p Preferences) (Preferences, error) {
 }
 
 type Snapshot struct {
-	Session *Session     `json:"session"`
-	Route   Route        `json:"route"`
-	Records []RestRecord `json:"records"`
+	Session      *Session     `json:"session"`
+	Route        Route        `json:"route"`
+	Records      []RestRecord `json:"records"`
+	PreviewSound string       `json:"previewSound"`
 }
 type CommandInput struct {
 	Action      string       `json:"action"`
@@ -78,6 +79,7 @@ type restService struct {
 	audioKey     string
 	outputToken  string
 	previewUntil int64
+	previewSound string
 	lastRoute    int64
 	lastSave     int64
 	active       atomic.Bool
@@ -140,7 +142,7 @@ func (s *restService) snapshotLocked() Snapshot {
 		copy := *s.state.Session
 		session = &copy
 	}
-	return Snapshot{Session: session, Route: s.route, Records: slices.Clone(s.state.Records)}
+	return Snapshot{Session: session, Route: s.route, Records: slices.Clone(s.state.Records), PreviewSound: s.previewSound}
 }
 func (s *restService) snapshot() Snapshot {
 	s.mu.Lock()
@@ -168,6 +170,7 @@ func (s *restService) routeLocked() error {
 func (s *restService) stopAudioLocked() {
 	s.audioKey = ""
 	s.previewUntil = 0
+	s.previewSound = ""
 	_ = s.backend.request("stop", nil, nil)
 }
 func (s *restService) blockLocked(now int64, reason string) {
@@ -259,6 +262,11 @@ func (s *restService) command(input CommandInput) (result Snapshot, err error) {
 	case "clearRecords":
 		s.state.Records = []RestRecord{}
 	case "volume":
+	case "stopPreview":
+		if v != nil {
+			return result, errors.New("session-active")
+		}
+		s.stopAudioLocked()
 	case "preview":
 		if v != nil {
 			return result, errors.New("session-active")
@@ -275,6 +283,7 @@ func (s *restService) command(input CommandInput) (result Snapshot, err error) {
 		err = s.backend.request("play", map[string]any{"sound": input.Sound, "volume": min(1, max(0.01, input.Volume)), "alarm": alarm, "preview": true, "startSeconds": start, "previewSeconds": previewSeconds}, nil)
 		if err == nil {
 			s.previewUntil = time.Now().UnixMilli() + previewSeconds*1000
+			s.previewSound = input.Sound
 			s.outputToken = s.route.Token
 		}
 		return

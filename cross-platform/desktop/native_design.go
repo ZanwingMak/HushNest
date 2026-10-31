@@ -39,6 +39,7 @@ var nestIcons = map[string]*ui.SVG{
 	"settings":   nestSVG(`<path d="M4 6h4m4 0h8M4 12h10m4 0h2M4 18h2m4 0h10"/><circle cx="10" cy="6" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="8" cy="18" r="2"/>`),
 	"headphones": nestSVG(`<path d="M4 14v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="12" width="4" height="8" rx="2"/><rect x="17" y="12" width="4" height="8" rx="2"/>`),
 	"play":       nestSVG(`<path d="m9 5 11 7-11 7Z"/>`),
+	"stop":       nestSVG(`<rect x="6" y="6" width="12" height="12" rx="2"/>`),
 	"plus":       nestSVG(`<path d="M12 5v14M5 12h14"/>`),
 	"check":      nestSVG(`<path d="m5 12 4 4L19 6"/>`),
 	"shield":     nestSVG(`<path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6Z"/><path d="m8 12 3 3 5-6"/>`),
@@ -518,9 +519,22 @@ func (a *nativeApp) soundSelector(c *ui.Context, label string, value *string, ch
 			if a.selectChoice(c, label, value, choices, active || a.busy).Height(35).FontSize(12).Changed() {
 				a.changed()
 			}
-			nestButton(c.Key(label+"-preview"), "").Label(a.t("试听")+" "+a.t(label)).Tooltip(a.t("试听")).Size(34, 34).Padding(0).Justify(ui.Center).Background(t.Background).Border(1, t.Border).Disabled(active || a.busy || *value == "none").Children(func() { nestIcon(c, "play", 14, t.Accent) }).OnClick(func() { a.command("preview", 0, *value, label == "唤醒铃声") })
+			a.previewButton(c.Key(label+"-preview"), *value, a.t(label), label == "唤醒铃声", active || a.busy || *value == "none", 34)
 		})
 	})
+}
+func (a *nativeApp) previewButton(c *ui.Context, sound, label string, alarm, disabled bool, size float32) {
+	t := c.Theme()
+	icon, title := "play", a.t("试听")
+	playing := a.snapshot.PreviewSound == sound && sound != ""
+	if playing {
+		icon, title = "stop", a.t("停止试听")
+	}
+	button := nestButton(c, "").Label(title+" "+label).Tooltip(title).Size(size, size).Padding(0).Justify(ui.Center).Background(t.Background).Border(1, t.Border).Disabled(disabled)
+	if playing {
+		button.Background(t.Accent.Alpha(.12)).Border(1, t.Accent.Alpha(.5))
+	}
+	button.Children(func() { nestIcon(c, icon, 14, t.Accent) }).OnClick(func() { a.command("preview", 0, sound, alarm) })
 }
 func (a *nativeApp) selectChoice(c *ui.Context, label string, value *string, choices []soundChoice, disabled bool) ui.Element {
 	names := make([]string, len(choices))
@@ -588,7 +602,7 @@ func (a *nativeApp) libraryPage(c *ui.Context) {
 						label = "已选择"
 					}
 					nestButton(c, a.t(label)).Height(29).Grow(1).FontSize(10).Background(t.Accent.Alpha(.07)).Border(0, ui.Transparent).TextColor(t.Accent).Disabled(a.busy || a.snapshot.Session != nil).OnClick(func() { a.preferences.SleepSound = sound.id; a.changed() })
-					nestButton(c, "").Label(a.t("试听")+" "+a.t(sound.name)).Size(29, 29).Padding(0).Justify(ui.Center).Background(ui.Transparent).Border(1, t.Border).Disabled(a.busy || a.snapshot.Session != nil).Children(func() { nestIcon(c, "play", 12, t.Accent) }).OnClick(func() { a.command("preview", 0, sound.id) })
+					a.previewButton(c, sound.id, a.t(sound.name), false, a.busy || a.snapshot.Session != nil, 29)
 				})
 			})
 		}
@@ -626,7 +640,7 @@ func (a *nativeApp) mediaRow(c *ui.Context, item localMedia) {
 		ui.Row(c).Gap(7).Children(func() {
 			nestButton(c, a.t("助眠音")).FontSize(10).Disabled(disabled).OnClick(func() { a.preferences.SleepSound = "custom:" + item.ID; a.changed() })
 			nestButton(c, a.t("唤醒铃声")).FontSize(10).Disabled(disabled).OnClick(func() { a.preferences.AlarmSound = "custom:" + item.ID; a.changed() })
-			nestButton(c, "").Label(a.t("试听")+" "+item.Name).Tooltip(a.t("试听")).Size(29, 29).Padding(0).Justify(ui.Center).Background(ui.Transparent).Border(1, t.Border).Disabled(disabled).Children(func() { nestIcon(c, "play", 12, t.Accent) }).OnClick(func() { a.command("preview", 0, "custom:"+item.ID) })
+			a.previewButton(c, "custom:"+item.ID, item.Name, false, disabled, 29)
 			nestButton(c, a.t("删除声音")).FontSize(10).Background(ui.Transparent).Border(0, ui.Transparent).TextColor(t.TextMuted).Disabled(disabled).OnClick(func() { a.removeMedia(item.ID) })
 		})
 	})

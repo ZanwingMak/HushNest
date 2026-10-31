@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/egoist/mygo/ui"
 	"testing"
 )
 
@@ -65,5 +66,50 @@ func TestActualAlarmStillStartsFromBeginningWithRamp(t *testing.T) {
 	play := audio.plays[len(audio.plays)-1]
 	if play["preview"] != false || play["alarm"] != true || play["startSeconds"] != nil || play["volume"].(float64) >= .02 {
 		t.Fatal(play)
+	}
+}
+
+func TestNativePreviewButtonTogglesStopAndReturnsAfterExpiry(t *testing.T) {
+	a, audio := nativeFixture(t)
+	tt := ui.NewTester(func(c *ui.Context) {
+		a.theme(c)
+		a.soundSelector(c, "唤醒铃声", &a.preferences.AlarmSound, alarmChoices, false)
+	}, 400, 180)
+	clickNative(t, tt, "试听 唤醒铃声")
+	if a.snapshot.PreviewSound != "dawn" || len(audio.plays) != 1 {
+		t.Fatal("preview did not start")
+	}
+	if _, ok := tt.Find("停止试听 唤醒铃声"); !ok {
+		t.Fatal("preview did not switch to a stop button")
+	}
+	stops := audio.stops
+	clickNative(t, tt, "停止试听 唤醒铃声")
+	if a.snapshot.PreviewSound != "" || audio.stops <= stops || len(audio.plays) != 1 {
+		t.Fatal("second click did not stop immediately")
+	}
+	clickNative(t, tt, "试听 唤醒铃声")
+	s := a.service
+	s.mu.Lock()
+	_ = s.tickLocked(s.previewUntil)
+	s.mu.Unlock()
+	a.snapshot = s.snapshot()
+	tt.Frame()
+	if a.snapshot.PreviewSound != "" {
+		t.Fatal("expired preview remains active")
+	}
+	if _, ok := tt.Find("试听 唤醒铃声"); !ok {
+		t.Fatal("preview button did not reset")
+	}
+}
+func TestSwitchingPreviewReplacesSound(t *testing.T) {
+	a, audio := nativeFixture(t)
+	a.command("preview", 0, "dawn", true)
+	a.command("preview", 0, "bell", true)
+	if a.snapshot.PreviewSound != "bell" || len(audio.plays) != 2 {
+		t.Fatal("new preview did not replace the old one")
+	}
+	a.command("preview", 0, "bell", true)
+	if a.snapshot.PreviewSound != "" || len(audio.plays) != 2 {
+		t.Fatal("stop restarted playback")
 	}
 }
