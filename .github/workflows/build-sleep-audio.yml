@@ -1,5 +1,8 @@
 name: Rebuild long sleep audio pack
 on:
+  push:
+    branches: [codex/web-android-windows]
+    paths: ['.github/workflows/build-sleep-audio.yml']
   workflow_dispatch:
     inputs:
       source_run:
@@ -18,7 +21,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           github-token: ${{ github.token }}
-          run-id: ${{ inputs.source_run }}
+          run-id: ${{ inputs.source_run || '41219597922' }}
           pattern: HushNest-sleep-source-*
           merge-multiple: true
           path: build/long-sleep-sources
