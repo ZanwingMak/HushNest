@@ -1,7 +1,7 @@
 name: Web Android MyGo desktop
 on:
   push:
-    branches: [codex/web-android-windows]
+    branches: [main, codex/web-android-windows]
     paths: ['cross-platform/**', '.github/workflows/multiplatform.yml']
   pull_request:
     paths: ['cross-platform/**', '.github/workflows/multiplatform.yml']

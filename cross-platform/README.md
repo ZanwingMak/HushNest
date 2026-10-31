@@ -2,6 +2,8 @@
 
 独立的多端应用，开发分支为 `codex/web-android-windows`。桌面客户端 0.4.0 使用 [MyGo 0.7.3](https://github.com/egoist/mygo) 的原生 `ui` 包：Go 界面、Go 后台和系统音频组件。桌面窗口没有 WebView，不加载 React、HTML 或 JavaScript，也不要求安装 WebView2。Web / Android 保留现有前端，原生 iOS 工程及官网保持原样。
 
+本次需求范围、最终决策、验收标准与验证记录归档于 [跨平台需求与交付文档](../docs/requirements/2026-11-01-multiplatform.md)。
+
 0.3.0 重做桌面视觉：侧边导航、原生绘制的圆环计时、紧凑的耳机/时长/声音面板、自然声音卡片及足迹统计。窄窗口自动改为顶部导航和纵向布局，较矮的窗口缩小计时圆环，保留首屏开始按钮。沿用四种主题、深浅外观、六种语言和原有本机数据。
 
 ## 功能
@@ -95,7 +97,7 @@ node tests/desktop-smoke.mjs
 
 Go 测试覆盖独立于界面的计时状态机，以及原生界面的开始、暂停、恢复、稍后提醒、断连保护、设备确认、设置、文件导入/删除、大小限制和失败回滚。原生视图在常规 / 最小窗口尺寸及深色外观下运行。浏览器测试继续覆盖 Web 无耳机门槛等现有行为。桌面 smoke 实际运行 MyGo 原生窗口，要求 `window.Page() == nil`，截图四个页面，检查安装包没有 HTML/JS/CSS 资源，并用真实解码器无声导入、验证和删除音轨。截图和报告在 `release/mygo-native/qa/`；自动化不播放声音。
 
-CI 分别构建 Web、Android、Windows MyGo 和 macOS MyGo 并上传产物，不自动上架或发布网站。原 iOS 工作流不变。实体安卓 / Mac / Windows 耳机的热插拔、音量、来电和厂商策略仍需硬件验证。
+CI 在 `main`、开发分支及相关 Pull Request 上分别构建 Web、Android、Windows MyGo 和 macOS MyGo 并上传产物，不自动上架或发布网站。原 iOS 工作流不变。实体安卓 / Mac / Windows 耳机的热插拔、音量、来电和厂商策略仍需硬件验证。
 
 Windows CI 还会运行 `node tests/windows-installer.mjs`：在隔离 runner 上实际安装并覆盖安装到含空格和中文的可写目录，核对程序、许可证及音频资源，最后运行安装后的原生应用测试。此检查会写入当前用户的应用注册信息及开始菜单，因此仅在隔离 CI 中执行。
 
