@@ -138,7 +138,15 @@ with zipfile.ZipFile(sys.argv[1]) as z:
     if (!latestDraft.draft) throw new Error('The draft was published during upload; do not overwrite it');
     const previous = latestDraft.assets.find(asset => asset.name === name);
     if (previous?.digest === `sha256:${hash}`) continue;
-    command('gh', ['release', 'upload', release.tag, file, '--repo', repository, '--clobber']);
+    if (previous) api(`${apiRoot}/releases/assets/${previous.id}`, 'DELETE');
+    const bytes = await readFile(file);
+    const response = await fetch(`https://uploads.github.com/${apiRoot}/releases/${draft.id}/assets?name=${encodeURIComponent(name)}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${process.env.GH_TOKEN}`, 'Content-Type': 'application/octet-stream', 'Content-Length': String(bytes.length), 'User-Agent': 'HushNest-release' },
+      body: bytes,
+    });
+    const uploaded = await response.json();
+    if (!response.ok || uploaded.name !== name || uploaded.size !== bytes.length) throw new Error(`Release upload failed for ${name}: ${response.status} ${uploaded.message || ''}`);
   }
   if (!await verifiedExisting(api(`${apiRoot}/releases/${draft.id}`))) throw new Error('Server-side release digest verification failed');
   console.log(`Draft complete and all downloads verified: ${draft.html_url}`);

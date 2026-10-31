@@ -1,0 +1,22 @@
+name: Website and Web app preview
+on:
+  pull_request:
+    paths: ['website/**', 'scripts/assemble-site.mjs', 'scripts/check-site.mjs', 'README.md', 'docs/DOWNLOADS.md', '.github/workflows/pages.yml', '.github/workflows/website-preview.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '24', cache: npm, cache-dependency-path: cross-platform/package-lock.json }
+      - run: npm ci --prefix cross-platform
+      - run: npm run build --prefix cross-platform
+      - run: node scripts/assemble-site.mjs
+      - run: npx playwright install --with-deps chromium
+        working-directory: cross-platform
+      - run: node scripts/check-site.mjs
+      - uses: actions/upload-artifact@v4
+        with: { name: HushNest-Website-Preview, path: build/site-qa, retention-days: 7 }
