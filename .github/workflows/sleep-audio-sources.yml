@@ -1,0 +1,50 @@
+name: Fetch public CC0 sleep recordings
+on:
+  push:
+    branches: [codex/web-android-windows]
+    paths: ['.github/workflows/sleep-audio-sources.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  sources:
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 2
+      matrix:
+        sound:
+          - { id: rain, author: joedeshon, sound: '430765', preview: '430/430765_1218676' }
+          - { id: ocean, author: esh9419, sound: '417797', preview: '417/417797_3285887' }
+          - { id: forest, author: gadesound, sound: '653519', preview: '653/653519_8666001' }
+          - { id: stream, author: sammerz_, sound: '864286', preview: '864/864286_12821231' }
+          - { id: fireplace, author: petebuchwald, sound: '496130', preview: '496/496130_2367139' }
+          - { id: night, author: Goldenboy76, sound: '857163', preview: '857/857163_12970089' }
+    steps:
+      - name: Download the public full-length preview and preserve provenance
+        env:
+          SOUND: ${{ toJSON(matrix.sound) }}
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os, pathlib, shutil, urllib.request
+          sound = json.loads(os.environ['SOUND'])
+          folder = pathlib.Path('source'); folder.mkdir()
+          source = f"https://freesound.org/people/{sound['author']}/sounds/{sound['sound']}/"
+          download = f"https://cdn.freesound.org/previews/{sound['preview']}-hq.mp3"
+          page = urllib.request.urlopen(source, timeout=60).read()
+          assert b'creativecommons.org/publicdomain/zero/1.0' in page, 'CC0 license must be confirmed'
+          (folder / (sound['id'] + '.source.html')).write_bytes(page)
+          target = folder / (sound['id'] + '.mp3')
+          with urllib.request.urlopen(download, timeout=90) as response, target.open('wb') as output:
+              expected = int(response.headers['Content-Length'])
+              shutil.copyfileobj(response, output)
+          assert target.stat().st_size == expected and expected > 1000000, 'Incomplete public preview'
+          metadata = dict(id=sound['id'], author=sound['author'], source=source, download=download,
+                          license='CC0-1.0', sourceSHA256=hashlib.sha256(target.read_bytes()).hexdigest())
+          (folder / (sound['id'] + '.source.json')).write_text(json.dumps(metadata, indent=2))
+          print(json.dumps(metadata))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: HushNest-sleep-source-${{ matrix.sound.id }}
+          path: source/
+          retention-days: 7
