@@ -12,7 +12,7 @@ struct OutputRoute: Codable {
     let token: String
     let requiresConfirmation: Bool
 }
-enum GuardError: Error { case invalidSound, noHeadphones, audio(OSStatus), invalidMedia, invalidCommand }
+enum GuardError: Error { case invalidSound, noHeadphones, audio(OSStatus), invalidMedia, invalidCommand, mediaProbe(String) }
 func check(_ status: OSStatus) throws { if status != noErr { throw GuardError.audio(status) } }
 
 final class AudioGuard {
@@ -23,6 +23,7 @@ final class AudioGuard {
     var reader: AVAssetReader?
     var trackOutput: AVAssetReaderTrackOutput?
     var source: URL?
+    var sourceAlias: URL?
     var sourceLimit = Double.infinity
     var pending = Data()
     var pendingOffset = 0
@@ -32,7 +33,64 @@ final class AudioGuard {
     var timer: DispatchSourceTimer?
     let bufferBytes: UInt32 = 4800 * 2 * 4
 
-    init(audio: URL, media: URL) { audioDirectory = audio; mediaDirectory = media }
+    init(audio: URL, media: URL) {
+        audioDirectory = audio; mediaDirectory = media
+        // A crash may leave a decoder hard link behind. Remove only our own
+        // UUID-named aliases, never the canonical imported media files.
+        for file in (try? FileManager.default.contentsOfDirectory(at: media, includingPropertiesForKeys: nil)) ?? [] {
+            let name = file.deletingPathExtension().lastPathComponent
+            if name.hasPrefix(".decode-"), UUID(uuidString: String(name.dropFirst(8))) != nil,
+               ["wav", "aiff", "caf", "flac", "ogg", "aac", "mp3", "mp4", "mov"].contains(file.pathExtension) {
+                try? FileManager.default.removeItem(at: file)
+            }
+        }
+    }
+    // AVFoundation relies on a recognizable URL extension on macOS 12/13.
+    // Detect the container from its bytes and make a temporary private hard
+    // link: no full-file copy, no user-controlled extension or external path.
+    func decoderURL(_ stored: URL) throws -> URL {
+        guard stored.pathExtension == "media" else { return stored }
+        let file = try FileHandle(forReadingFrom: stored)
+        defer { try? file.close() }
+        let bytes = Array(try file.read(upToCount: 32) ?? Data())
+        func tag(_ offset: Int, _ length: Int) -> String {
+            guard bytes.count >= offset + length else { return "" }
+            return String(bytes: bytes[offset..<(offset + length)], encoding: .ascii) ?? ""
+        }
+        let ext: String
+        if ["RIFF", "RF64", "BW64"].contains(tag(0, 4)) && tag(8, 4) == "WAVE" { ext = "wav" }
+        else if tag(0, 4) == "FORM" && ["AIFF", "AIFC"].contains(tag(8, 4)) { ext = "aiff" }
+        else if tag(0, 4) == "caff" { ext = "caf" }
+        else if tag(0, 4) == "fLaC" { ext = "flac" }
+        else if tag(0, 4) == "OggS" { ext = "ogg" }
+        else if tag(4, 4) == "ftyp" { ext = tag(8, 4) == "qt  " ? "mov" : "mp4" }
+        else if ["moov", "mdat", "wide"].contains(tag(4, 4)) { ext = "mov" }
+        else if tag(0, 4) == "ADIF" || bytes.count >= 2 && bytes[0] == 0xff && bytes[1] & 0xf6 == 0xf0 { ext = "aac" }
+        else if tag(0, 3) == "ID3" || bytes.count >= 2 && bytes[0] == 0xff && bytes[1] & 0xe0 == 0xe0 { ext = "mp3" }
+        else { throw GuardError.mediaProbe("unsupported-container") }
+        let alias = mediaDirectory.appendingPathComponent(".decode-" + UUID().uuidString + "." + ext)
+        try FileManager.default.linkItem(at: stored, to: alias)
+        return alias
+    }
+    func inspect(_ id: String) throws -> Double {
+        let url = try decoderURL(mediaDirectory.appendingPathComponent(id + ".media"))
+        defer { try? FileManager.default.removeItem(at: url) }
+        let asset = AVURLAsset(url: url)
+        let seconds = asset.duration.seconds
+        guard seconds.isFinite && seconds > 0 && !asset.hasProtectedContent else { throw GuardError.mediaProbe("invalid-duration-or-protected") }
+        guard let track = asset.tracks(withMediaType: .audio).first else { throw GuardError.mediaProbe("missing-audio-track") }
+        let probe = try AVAssetReader(asset: asset)
+        let output = AVAssetReaderTrackOutput(track: track, outputSettings: [
+            AVFormatIDKey: kAudioFormatLinearPCM, AVSampleRateKey: 48000, AVNumberOfChannelsKey: 2,
+            AVLinearPCMIsFloatKey: true, AVLinearPCMBitDepthKey: 32, AVLinearPCMIsNonInterleaved: false,
+        ])
+        output.alwaysCopiesSampleData = false
+        guard probe.canAdd(output) else { throw GuardError.mediaProbe("unsupported-audio-track") }; probe.add(output)
+        guard probe.startReading() else { throw probe.error ?? GuardError.mediaProbe("decoder-start") }
+        defer { probe.cancelReading() }
+        guard output.copyNextSampleBuffer() != nil else { throw probe.error ?? GuardError.mediaProbe("decoder-empty") }
+        return seconds
+    }
     func emit(_ value: [String: Any]) {
         guard JSONSerialization.isValidJSONObject(value), let bytes = try? JSONSerialization.data(withJSONObject: value, options: [.sortedKeys]) else { return }
         FileHandle.standardOutput.write(bytes); FileHandle.standardOutput.write(Data([10]))
@@ -65,6 +123,7 @@ final class AudioGuard {
         let old = output; output = nil
         if let old { AudioQueueSetParameter(old, kAudioQueueParam_Volume, 0); AudioQueueStop(old, true); AudioQueueDispose(old, true) }
         reader?.cancelReading(); reader = nil; trackOutput = nil; source = nil
+        if let alias = sourceAlias { try? FileManager.default.removeItem(at: alias) }; sourceAlias = nil
         selectedToken = ""; previewEnd = .distantFuture; pending.removeAll(keepingCapacity: false); pendingOffset = 0
     }
     func lost() {
@@ -119,7 +178,7 @@ final class AudioGuard {
         let custom = sound.hasPrefix("custom:")
         if custom {
             let id = String(sound.dropFirst(7)); guard UUID(uuidString: id) != nil && id.count == 36 else { throw GuardError.invalidSound }
-            source = mediaDirectory.appendingPathComponent(id + ".media")
+            sourceAlias = try decoderURL(mediaDirectory.appendingPathComponent(id + ".media")); source = sourceAlias
         } else {
             let allowed = Set("rain ocean stream forest fireplace night brown pink dawn bell orbit piano marimba harp bamboo aurora classic twinbell digital pulse beacon reveille".split(separator: " ").map(String.init))
             guard allowed.contains(sound) else { throw GuardError.invalidSound }; source = audioDirectory.appendingPathComponent(sound + ".wav")
@@ -163,10 +222,7 @@ final class AudioGuard {
                 guard let sound = input["sound"] as? String, sound.hasPrefix("custom:") else { throw GuardError.invalidMedia }
                 let id = String(sound.dropFirst(7))
                 guard UUID(uuidString: id) != nil && id.count == 36 else { throw GuardError.invalidMedia }
-                let asset = AVURLAsset(url: mediaDirectory.appendingPathComponent(id + ".media"))
-                let seconds = asset.duration.seconds
-                guard seconds.isFinite && seconds > 0 && !asset.hasProtectedContent && !asset.tracks(withMediaType: .audio).isEmpty else { throw GuardError.invalidMedia }
-                result = ["seconds": seconds]
+                result = ["seconds": try inspect(id)]
             case "confirmRoute":
                 let current = route(); guard current.requiresConfirmation && !current.token.isEmpty else { throw GuardError.noHeadphones }; confirmedToken = current.token
             case "play": try play(input)

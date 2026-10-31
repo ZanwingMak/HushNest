@@ -1,5 +1,5 @@
 import { spawn, spawnSync } from 'node:child_process';
-import { copyFile, cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { chmod, copyFile, cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -46,7 +46,13 @@ for (const [module, filename] of [
   ['golang.org/x/image@v0.46.0', 'x-image'],
   ['golang.org/x/net@v0.59.0', 'x-net'],
   ['golang.org/x/text@v0.43.0', 'x-text'],
-]) await copyFile(path.join(moduleCache.stdout.trim(), module, 'LICENSE'), path.join(root, 'resources/licenses', `${filename}.LICENSE.txt`));
+]) {
+  const destination = path.join(root, 'resources/licenses', `${filename}.LICENSE.txt`);
+  // Go's module cache is read-only. CopyFile preserves that Windows attribute,
+  // so write fresh bytes and normalize any previously staged license instead.
+  await chmod(destination, 0o644).catch(error => { if (error.code !== 'ENOENT') throw error; });
+  await writeFile(destination, await readFile(path.join(moduleCache.stdout.trim(), module, 'LICENSE')));
+}
 let platform;
 if (target === 'windows') {
   if (process.platform !== 'win32') throw new Error('Build the Windows audio helper on Windows.');
@@ -71,7 +77,13 @@ const args = ['build', '-platform', platform, '-skip-build-command', '-o', build
 run(process.execPath, [mygo, ...args]);
 await mkdir(path.join(root, 'release/mygo-native'), { recursive: true });
 for (const entry of await readdir(buildOutput, { withFileTypes: true })) {
-  await cp(path.join(buildOutput, entry.name), path.join(root, 'release/mygo-native', entry.name), { recursive: true });
+  const outputRoot = path.resolve(root, 'release/mygo-native');
+  const destination = path.resolve(outputRoot, entry.name);
+  if (path.dirname(destination) !== outputRoot || entry.name !== platform.replace('/', '-')) throw new Error(`Unexpected desktop output: ${entry.name}`);
+  // Replace only this validated platform's generated output. This also removes
+  // obsolete resources and read-only licenses from earlier development builds.
+  await rm(destination, { recursive: entry.isDirectory(), force: true });
+  await cp(path.join(buildOutput, entry.name), destination, { recursive: true });
 }
 const resolvedBuild = path.resolve(buildOutput);
 if (path.dirname(resolvedBuild) === path.resolve(tmpdir()) && /^hushnest-mygo-build-/.test(path.basename(resolvedBuild))) {
