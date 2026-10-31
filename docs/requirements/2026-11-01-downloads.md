@@ -27,3 +27,13 @@
 | 原生 iOS | 本轮不修改 iOS 工程、音包、功能和既有发行附件。 |
 
 配置与维护入口见 [website/downloads.json](../../website/downloads.json)、[发行工作流](../../.github/workflows/multiplatform-release.yml)及[Pages 工作流](../../.github/workflows/pages.yml)。
+
+## 上线验证记录
+
+2026-11-01 已通过 [PR #2](https://github.com/ZanwingMak/HushNest/pull/2) 合并到主分支，并完成公开分发：
+
+- [多平台预览 Release](https://github.com/ZanwingMak/HushNest/releases/tag/multiplatform-v0.4.0) 包含五个安装或静态附件、SHA256SUMS 和发行来源清单。七个匿名下载 URL 均实测返回 206，安装器及 ZIP / APK 文件头正确。
+- [发行草稿与发布验证](https://github.com/ZanwingMak/HushNest/actions/runs/41227532079)通过；服务器上的文件大小和 SHA256 与来源清单一致。
+- [官网预览检查](https://github.com/ZanwingMak/HushNest/actions/runs/41227536033)及 [Pages 部署](https://github.com/ZanwingMak/HushNest/actions/runs/41227804098)通过；320 / 390 / 768 / 1440 宽度检查、主题及时长示意、子路径离线缓存全部通过。
+- 公开官网、隐私与条款、README、Web 应用、service worker 和 manifest 均已实测 200；线上雨声资源 Range 请求为 206、长度为 10 分钟。真实浏览器打开官网的“网页版”入口后成功进入应用，service worker 作用域为 `/HushNest/app/`。
+- 原 iOS Release 补充其他平台入口，已有附件的 ID、大小和摘要保持一致；iOS 1.6.0 继续作为原有稳定发行，新增多平台版本标记为预览。
