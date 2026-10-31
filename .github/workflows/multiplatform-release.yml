@@ -1,8 +1,5 @@
 name: Prepare or publish multiplatform downloads
 on:
-  push:
-    branches: [codex/downloads-and-release]
-    paths: ['.github/workflows/multiplatform-release.yml']
   workflow_dispatch:
     inputs:
       publish:

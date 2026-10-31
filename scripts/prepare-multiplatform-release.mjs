@@ -25,7 +25,8 @@ function api(endpoint, method = 'GET', body) {
   const args = ['api', endpoint];
   if (method !== 'GET') args.push('--method', method);
   if (body !== undefined) args.push('--input', '-');
-  return JSON.parse(command('gh', args, body === undefined ? {} : { input: JSON.stringify(body) }));
+  const result = command('gh', args, body === undefined ? {} : { input: JSON.stringify(body) });
+  return result.trim() ? JSON.parse(result) : null;
 }
 async function sha256(file) { return createHash('sha256').update(await readFile(file)).digest('hex'); }
 function assetURL(name, tag = release.tag) { return `https://github.com/${repository}/releases/download/${tag}/${name}`; }
@@ -40,13 +41,22 @@ async function verifyNative(name, platform) {
   const result = await report(path.join(input, name));
   if (!result?.ok || result.webview || !result.nativeUI || !result.noWebAssets || result.platform !== platform || result.alarmPreviews?.length !== 14 || result.sleepAudio?.length !== 16) throw new Error(`Missing native QA: ${platform}`);
 }
-function existingRelease() { return api(`${apiRoot}/releases?per_page=100`).find(item => item.tag_name === release.tag); }
+function existingRelease() {
+  const releases = api(`${apiRoot}/releases?per_page=100`);
+  const tagged = releases.find(item => item.tag_name === release.tag);
+  if (tagged) return tagged;
+  // GitHub may give an unpublished draft an untagged-* URL until its tag
+  // exists. Identify only our named draft for this exact verified source.
+  return releases.filter(item => item.draft && item.name === release.name && item.target_commitish === release.sourceCommit)
+    .sort((a, b) => b.assets.length - a.assets.length || b.id - a.id)[0];
+}
 async function verifiedExisting(item) {
   if (!item || item.target_commitish !== release.sourceCommit || !item.prerelease) return false;
   const marker = item.assets.find(asset => asset.name === proofName);
   if (!marker) return false;
   const proof = JSON.parse(command('gh', ['api', `${apiRoot}/releases/assets/${marker.id}`, '-H', 'Accept: application/octet-stream']));
   if (proof.sourceCommit !== release.sourceCommit || proof.sourceRun !== release.sourceRun) return false;
+  if (proof.releaseTag && proof.releaseTag !== release.tag) return false;
   const required = [...Object.values(release.assets), checksumName];
   if (proof.files?.length !== required.length || required.some(name => !proof.files.some(file => file.name === name))) return false;
   return proof.files.every(file => item.assets.some(asset => asset.name === file.name && asset.size === file.size && asset.digest === `sha256:${file.sha256}`));
@@ -67,7 +77,15 @@ if (mode === 'preflight') {
   console.log(JSON.stringify({ sourceRun: release.sourceRun, sourceCommit: release.sourceCommit, reuseVerifiedDraft: reusable }));
 } else if (mode === 'publish') {
   if (!current || !reusable) throw new Error('Publish requires a complete draft with verified server-side file digests');
-  const result = current.draft ? api(`${apiRoot}/releases/${current.id}`, 'PATCH', { draft: false, make_latest: 'false' }) : current;
+  if (current.draft) {
+    const reference = `refs/tags/${release.tag}`;
+    const refs = api(`${apiRoot}/git/matching-refs/tags/${release.tag}`);
+    const tag = refs.find(item => item.ref === reference);
+    if (tag && tag.object.sha !== release.sourceCommit) throw new Error('The release tag already points to another commit');
+    if (!tag) api(`${apiRoot}/git/refs`, 'POST', { ref: reference, sha: release.sourceCommit });
+  }
+  const result = current.draft ? api(`${apiRoot}/releases/${current.id}`, 'PATCH', { tag_name: release.tag, target_commitish: release.sourceCommit, draft: false, prerelease: true, make_latest: 'false' }) : current;
+  if (result.draft || result.tag_name !== release.tag) throw new Error('The release was not published at its configured tag');
   console.log(`Published verified preview: ${result.html_url}`);
 } else if (reusable) {
   console.log(`All release files already verified: ${current.html_url}`);
@@ -115,7 +133,7 @@ with zipfile.ZipFile(sys.argv[1]) as z:
   for (const name of Object.values(release.assets)) files.push({ name, size: (await stat(path.join(output, name))).size, sha256: await sha256(path.join(output, name)) });
   await writeFile(path.join(output, checksumName), files.map(file => `${file.sha256}  ${file.name}`).join('\n') + '\n');
   files.push({ name: checksumName, size: (await stat(path.join(output, checksumName))).size, sha256: await sha256(path.join(output, checksumName)) });
-  await writeFile(path.join(output, proofName), JSON.stringify({ schemaVersion: 1, sourceCommit: release.sourceCommit, sourceRun: release.sourceRun, files }, null, 2) + '\n');
+  await writeFile(path.join(output, proofName), JSON.stringify({ schemaVersion: 1, releaseTag: release.tag, sourceCommit: release.sourceCommit, sourceRun: release.sourceRun, files }, null, 2) + '\n');
   const notes = `HushNest 多平台预览：Windows / macOS 0.4.0，Android / Web 0.1.0。所有功能免费。\n\n` +
     `| 平台 | 下载 / 使用 | 安装条件 |\n| --- | --- | --- |\n` +
     `| Windows x64 | [安装器](${assetURL(release.assets.windows)}) · [完整便携包](${assetURL(release.assets.windowsPortable)}) | 未签名测试包；安装器默认使用当前用户目录。便携版需保留整个解压目录。 |\n` +
