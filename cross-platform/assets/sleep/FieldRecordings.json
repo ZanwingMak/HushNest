@@ -29,7 +29,7 @@
         "seamToTypicalDelta": 1.1339285714285714,
         "seamLevelDB": 0.1965079378894437,
         "uniqueSecondBlocks": 600,
-        "maxShortLagCorrelation": 0.00737981380307504
+        "maxShortLagCorrelation": 0.007379813803075037
       }
     },
     {
@@ -61,7 +61,7 @@
         "seamToTypicalDelta": 0.15489989462592202,
         "seamLevelDB": 2.366252769641476,
         "uniqueSecondBlocks": 600,
-        "maxShortLagCorrelation": 0.021309319103373546
+        "maxShortLagCorrelation": 0.021309319103373504
       }
     },
     {
@@ -75,7 +75,22 @@
       "start": 2,
       "seconds": 360,
       "crossfade": 12,
-      "channels": 2
+      "channels": 2,
+      "sourceSHA256": "439412aababe9c893ecf46fe9261c0cdedcf662c56a48426fdb5689fc3e1be5c",
+      "outputSHA256": "6fbe630be3bc637f4b5e2b65b32ab240248d4af98a6e197fe16bb21328b70710",
+      "analysis": {
+        "seconds": 360.0,
+        "sampleRate": 24000,
+        "channels": 2,
+        "peak": 0.405517578125,
+        "rms": 0.036578644067049026,
+        "minimumSecondRMS": 0.026020364835858345,
+        "seamDelta": 0.021820068359375,
+        "seamToTypicalDelta": 0.3939393939393939,
+        "seamLevelDB": 1.3770908897533225,
+        "uniqueSecondBlocks": 360,
+        "maxShortLagCorrelation": 0.006657849565420586
+      }
     },
     {
       "id": "forest",
@@ -88,7 +103,22 @@
       "start": 30,
       "seconds": 480,
       "crossfade": 12,
-      "channels": 2
+      "channels": 2,
+      "sourceSHA256": "5ec1df706e25d683faca97e3ff56d1dcf2d0d79eefbc58a1f07b4f5d3bb8f987",
+      "outputSHA256": "54bf261ed8e9ed775cae38511948bb45896cc054a77fac8a1a25f95daef314fc",
+      "analysis": {
+        "seconds": 480.0,
+        "sampleRate": 24000,
+        "channels": 2,
+        "peak": 0.399139404296875,
+        "rms": 0.050349459052085876,
+        "minimumSecondRMS": 0.027762746438384056,
+        "seamDelta": 0.01361083984375,
+        "seamToTypicalDelta": 0.12783032387503582,
+        "seamLevelDB": 0.8607998835703666,
+        "uniqueSecondBlocks": 480,
+        "maxShortLagCorrelation": 0.040211156785327266
+      }
     },
     {
       "id": "fireplace",
@@ -101,7 +131,22 @@
       "start": 30,
       "seconds": 300,
       "crossfade": 12,
-      "channels": 2
+      "channels": 2,
+      "sourceSHA256": "571aed9c9284356ffb975c37374390756dfc0c024ecc75ad568b6f81f04c0708",
+      "outputSHA256": "2a317f5b3063c539a1d6248c58e1df392d6cc2615be8816eb39d9cb01fe9887f",
+      "analysis": {
+        "seconds": 300.0,
+        "sampleRate": 24000,
+        "channels": 2,
+        "peak": 0.423095703125,
+        "rms": 0.048698678612709045,
+        "minimumSecondRMS": 0.036320384591817856,
+        "seamDelta": 0.00067138671875,
+        "seamToTypicalDelta": 0.023404255319148935,
+        "seamLevelDB": 0.05681303075591609,
+        "uniqueSecondBlocks": 300,
+        "maxShortLagCorrelation": 0.018278568231542138
+      }
     },
     {
       "id": "night",
@@ -114,7 +159,22 @@
       "start": 20,
       "seconds": 480,
       "crossfade": 12,
-      "channels": 1
+      "channels": 1,
+      "sourceSHA256": "b694f7160f814318307c1d9728802d967d1b58e9a101fae9023d959facd4b1b2",
+      "outputSHA256": "9016692d46c0a29ba14041fdc49bf662dc3e33f2873596a002c6e22bea1e39d1",
+      "analysis": {
+        "seconds": 480.0,
+        "sampleRate": 24000,
+        "channels": 1,
+        "peak": 0.376434326171875,
+        "rms": 0.06365565955638885,
+        "minimumSecondRMS": 0.047638311982154846,
+        "seamDelta": 0.021331787109375,
+        "seamToTypicalDelta": 0.3063102541630149,
+        "seamLevelDB": 0.3356755040671073,
+        "uniqueSecondBlocks": 480,
+        "maxShortLagCorrelation": 0.028902590037196023
+      }
     }
   ],
   "generated": [
@@ -138,7 +198,7 @@
         "seamToTypicalDelta": 0.15666666666666668,
         "seamLevelDB": 0.1976273070420184,
         "uniqueSecondBlocks": 600,
-        "maxShortLagCorrelation": 0.031554968635689296
+        "maxShortLagCorrelation": 0.0315549686356893
       }
     },
     {
@@ -161,10 +221,10 @@
         "seamToTypicalDelta": 0.4955849889624724,
         "seamLevelDB": 0.3389400945315746,
         "uniqueSecondBlocks": 600,
-        "maxShortLagCorrelation": 0.010641723809195749
+        "maxShortLagCorrelation": 0.010641723809195754
       }
     }
   ],
-  "ffmpegVersion": "ffmpeg version 7.1-essentials_build-www.gyan.dev Copyright (c) 2000-2024 the FFmpeg developers",
+  "ffmpegVersion": "ffmpeg version 7.0.2-static https://johnvansickle.com/ffmpeg/  Copyright (c) 2000-2024 the FFmpeg developers",
   "numpyVersion": "2.5.4"
 }
