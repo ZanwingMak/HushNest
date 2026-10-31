@@ -145,6 +145,28 @@ final class HushNestUITests: XCTestCase {
         XCTAssertEqual(toggle.value as? String, "0")
     }
 
+    /// 八种长音轨展示真实时长，小屏幕滚动后仍可选择且保留足够触摸区域。
+    func testLongSleepTrackDurationsAndSelection() {
+        app.launch()
+        openSounds()
+        let durations = [("rain", "10 分钟实录"), ("ocean", "10 分钟实录"),
+                         ("brown", "5 分钟长音轨"), ("pink", "5 分钟长音轨"),
+                         ("stream", "10 分钟实录"), ("forest", "8 分钟实录"),
+                         ("fireplace", "5 分 40 秒实录"), ("night", "7 分钟实录")]
+        screenshot("29-long-sleep-tracks")
+        for (name, duration) in durations {
+            let row = app.buttons["sound.\(name)"]
+            reveal(row)
+            XCTAssertTrue(row.label.contains(duration), row.label)
+            XCTAssertGreaterThanOrEqual(row.frame.height, 44)
+            row.tap()
+            XCTAssertTrue(row.isSelected)
+        }
+        screenshot("30-long-sleep-tracks-bottom")
+        app.buttons["sound.done"].tap()
+        XCTAssertTrue(app.staticTexts["夏夜 → 晨光"].exists)
+    }
+
     /// 未连耳机时连接操作保持可达，安全提醒始终位于固定操作区且不遮挡声音设置。
     func testCompactHeadphoneCardKeepsSafetyVisible() {
         app.launchArguments.append("-no-headphones")
