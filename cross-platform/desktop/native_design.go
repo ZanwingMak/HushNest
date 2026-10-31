@@ -184,7 +184,7 @@ func (a *nativeApp) sidebar(c *ui.Context) {
 		ui.Column(c).Gap(12).Padding(0, 10).Children(func() {
 			nestIcon(c, "history", 24, t.Accent.Alpha(.6))
 			nestText(c, a.t("每一次停下，都是照顾自己。")).FontSize(12).LineHeight(1.8).TextColor(t.TextMuted)
-			nestText(c, "HUSHNEST  /  0.3").FontSize(9).LetterSpacing(1.3).TextColor(t.TextMuted.Alpha(.7))
+			nestText(c, "HUSHNEST  /  0.3.1").FontSize(9).LetterSpacing(1.3).TextColor(t.TextMuted.Alpha(.7))
 		})
 	})
 }
@@ -418,8 +418,14 @@ func (a *nativeApp) timerActions(c *ui.Context) {
 func (a *nativeApp) routeControls(c *ui.Context) {
 	t, route := c.Theme(), a.snapshot.Route
 	label, color := "尚未连接耳机", t.TextMuted
+	if !route.Connected && route.Token != "" && route.RequiresConfirmation {
+		label = "尚未识别到耳机"
+	}
 	if route.Connected {
 		label, color = "耳机已就绪", t.Accent
+		if !route.Verified {
+			label = "耳机已手动确认"
+		}
 	}
 	ui.Row(c).Gap(11).Children(func() {
 		ui.Box(c).Size(36, 36).Radius(12).Center().Background(t.Accent.Alpha(.07)).Children(func() { nestIcon(c, "headphones", 19, t.Accent) })
@@ -434,11 +440,9 @@ func (a *nativeApp) routeControls(c *ui.Context) {
 	})
 	nestButton(c, a.t("检查耳机")).Height(30).FontSize(11).Background(ui.Transparent).TextColor(t.TextMuted).Border(1, t.Border).Disabled(a.busy).OnClick(a.checkRoute)
 	if route.RequiresConfirmation && !route.Connected {
-		nestText(c, a.t("请确认当前输出是耳机，而不是音箱或车载设备。")).FontSize(11).TextColor(t.TextMuted)
+		nestText(c, a.t("无法自动识别？可手动确认当前输出是耳机。")).FontSize(11).TextColor(t.TextMuted)
 		nestButton(c, a.t("确认这是耳机")).Disabled(a.busy).OnClick(func() {
-			if a.ask("请确认当前输出是耳机，而不是音箱或车载设备。", "确认这是耳机") {
-				a.command("confirmRoute", 0, "")
-			}
+			a.confirmCurrentRoute()
 		})
 	}
 }

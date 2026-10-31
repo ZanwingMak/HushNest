@@ -39,6 +39,7 @@ type nativeApp struct {
 	dirty                    bool
 	dirtyAt                  time.Time
 	afterRender              func()
+	confirmHeadphones        func(Route) bool
 }
 
 func newNativeApp(service *restService, resources string) (*nativeApp, error) {
@@ -90,6 +91,9 @@ func (a *nativeApp) setDuration(seconds int) {
 }
 func (a *nativeApp) changed() { a.dirty = true; a.dirtyAt = time.Now().Add(650 * time.Millisecond) }
 func (a *nativeApp) launch(kind string, work func() error, done func()) {
+	a.launchWithError(kind, work, done, nil)
+}
+func (a *nativeApp) launchWithError(kind string, work func() error, done func(), failure func(error) bool) {
 	if a.busy {
 		return
 	}
@@ -101,6 +105,9 @@ func (a *nativeApp) launch(kind string, work func() error, done func()) {
 			a.busy = false
 			a.snapshot = snapshot
 			if err != nil {
+				if failure != nil && failure(err) {
+					return
+				}
 				log.Printf("desktop %s: %v", kind, err)
 				a.showError(kind, err)
 			} else if done != nil {
@@ -124,6 +131,8 @@ func (a *nativeApp) showError(kind string, err error) {
 	switch {
 	case strings.Contains(err.Error(), "routeLost"):
 		key = "当前没有可用耳机，声音已停止。连接后请手动继续。"
+	case strings.Contains(err.Error(), "routeChanged"):
+		key = "输出设备已变化，请重新确认耳机。"
 	case strings.Contains(err.Error(), "invalid-time"):
 		key = "请选择有效的提醒时间。"
 	case kind == "media":
@@ -151,13 +160,67 @@ func (a *nativeApp) command(action string, duration int, sound string) {
 	}
 	settings := a.settings.clone()
 	a.dirty = false
-	a.launch("command", func() error {
+	a.launchWithError("command", func() error {
 		if err := saveNativeSettings(a.service.directory, settings); err != nil {
 			return err
 		}
 		_, err := a.service.command(input)
 		return err
+	}, nil, func(err error) bool {
+		if err.Error() != "routeLost" || !slices.Contains([]string{"start", "resume", "snooze", "preview"}, input.Action) {
+			return false
+		}
+		route := a.snapshot.Route
+		if route.Token == "" || !route.RequiresConfirmation {
+			return false
+		}
+		a.confirmRouteAndContinue(input, settings, route)
+		return true
+	})
+}
+func (a *nativeApp) confirmRouteAndContinue(input CommandInput, settings nativeSettings, route Route) {
+	if route.Token == "" || !route.RequiresConfirmation {
+		return
+	}
+	accepted := false
+	if a.confirmHeadphones != nil {
+		accepted = a.confirmHeadphones(route)
+	} else if a.window != nil {
+		answer, err := mygo.Dialog.Message(mygo.MessageOptions{
+			Parent: a.window, Message: a.t("请确认已连接耳机"),
+			Detail:  a.t("自动检测未识别出耳机。当前输出：%@。请确认声音确实从耳机播放；继续后将使用此输出，若实际是扬声器则会外放。", route.Name),
+			Buttons: []string{a.t("取消"), a.t("我已确认连接耳机，继续")}, DefaultButton: 0, CancelButton: 0,
+		})
+		accepted = err == nil && answer.Button == 1
+	}
+	if !accepted {
+		return
+	}
+	a.dirty = false
+	a.launch("command", func() error {
+		if err := saveNativeSettings(a.service.directory, settings); err != nil {
+			return err
+		}
+		if _, err := a.service.command(CommandInput{Action: "confirmRoute", RouteToken: route.Token}); err != nil {
+			return err
+		}
+		if input.Action == "confirmRoute" {
+			return nil
+		}
+		_, err := a.service.command(input)
+		return err
 	}, nil)
+}
+func (a *nativeApp) confirmCurrentRoute() {
+	// Bind consent to the output shown in the dialog, then check it in both
+	// the Go service and the native helper after the user replies.
+	a.launch("command", func() error {
+		a.service.mu.Lock()
+		defer a.service.mu.Unlock()
+		return a.service.routeLocked()
+	}, func() {
+		a.confirmRouteAndContinue(CommandInput{Action: "confirmRoute"}, a.settings.clone(), a.snapshot.Route)
+	})
 }
 func (a *nativeApp) begin() {
 	duration := a.preferences.Duration

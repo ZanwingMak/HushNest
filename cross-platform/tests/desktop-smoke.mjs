@@ -20,6 +20,7 @@ try {
   assert.equal(result.renderedPages, 4); assert.equal(result.languages, 6); assert.equal(result.noWebAssets, true);
   assert.equal(result.invalidPath, true); assert.equal(result.invalidSound, true);
   assert.equal(result.nativeImport, true); assert.equal(result.deletedMedia, true);
+  assert.equal(result.staleConfirmationRejected, true); assert.equal(result.manualConfirmation, true);
   const qa = path.resolve('release/mygo-native/qa', process.platform);
   await mkdir(qa, { recursive: true });
   await cp(report, path.join(qa, 'report.json'));

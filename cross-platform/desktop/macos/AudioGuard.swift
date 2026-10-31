@@ -29,6 +29,7 @@ final class AudioGuard {
     var pendingOffset = 0
     var selectedToken = ""
     var confirmedToken = ""
+    var observedToken = ""
     var previewEnd = Date.distantFuture
     var timer: DispatchSourceTimer?
     let bufferBytes: UInt32 = 4800 * 2 * 4
@@ -110,13 +111,14 @@ final class AudioGuard {
     func route() -> OutputRoute {
         let empty = OutputRoute(connected: false, verified: false, name: "", token: "", requiresConfirmation: false)
         guard let device = uintProperty(AudioObjectID(kAudioObjectSystemObject), kAudioHardwarePropertyDefaultOutputDevice), device != kAudioObjectUnknown,
-              uintProperty(device, kAudioDevicePropertyDeviceIsAlive) == 1,
-              let transport = uintProperty(device, kAudioDevicePropertyTransportType) else { return empty }
+              uintProperty(device, kAudioDevicePropertyDeviceIsAlive) == 1 else { confirmedToken = ""; observedToken = ""; return empty }
+        let transport = uintProperty(device, kAudioDevicePropertyTransportType) ?? 0
         let uid = stringProperty(device, kAudioDevicePropertyDeviceUID)
-        guard !uid.isEmpty else { return empty }
+        guard !uid.isEmpty else { confirmedToken = ""; observedToken = ""; return empty }
+        if uid != observedToken { confirmedToken = ""; observedToken = uid }
         let name = stringProperty(device, kAudioObjectPropertyName)
         let wired = transport == kAudioDeviceTransportTypeBuiltIn && uintProperty(device, kAudioDevicePropertyJackIsConnected, scope: kAudioDevicePropertyScopeOutput) == 1
-        let needsConfirmation = transport == kAudioDeviceTransportTypeUSB || transport == kAudioDeviceTransportTypeBluetooth || transport == kAudioDeviceTransportTypeBluetoothLE
+        let needsConfirmation = !wired
         return OutputRoute(connected: wired || needsConfirmation && confirmedToken == uid, verified: wired, name: name, token: uid, requiresConfirmation: needsConfirmation)
     }
     func stop() {
@@ -224,7 +226,9 @@ final class AudioGuard {
                 guard UUID(uuidString: id) != nil && id.count == 36 else { throw GuardError.invalidMedia }
                 result = ["seconds": try inspect(id)]
             case "confirmRoute":
-                let current = route(); guard current.requiresConfirmation && !current.token.isEmpty else { throw GuardError.noHeadphones }; confirmedToken = current.token
+                let current = route()
+                guard let expected = input["token"] as? String, !expected.isEmpty, expected == current.token else { throw GuardError.noHeadphones }
+                confirmedToken = current.token
             case "play": try play(input)
             case "stop": stop()
             case "volume": if let output { try check(AudioQueueSetParameter(output, kAudioQueueParam_Volume, Float(max(0, min(1, input["value"] as? Double ?? 0))))) }
@@ -237,9 +241,10 @@ final class AudioGuard {
         let monitor = DispatchSource.makeTimerSource(queue: serial); timer = monitor
         monitor.schedule(deadline: .now(), repeating: .milliseconds(100))
         monitor.setEventHandler { [weak self] in
-            guard let self, self.output != nil else { return }
-            if Date() >= self.previewEnd { self.stop(); return }
+            guard let self else { return }
             let current = self.route()
+            guard self.output != nil else { return }
+            if Date() >= self.previewEnd { self.stop(); return }
             if !current.connected || current.token != self.selectedToken { self.lost() }
         }
         monitor.resume()

@@ -59,6 +59,18 @@ func desktopSmoke(d *Desktop, resources, report string) {
 	invalidSound := d.service.backend.request("inspect", map[string]any{"sound": "custom:../../invalid"}, &metadata)
 	result["invalidPath"] = invalidPath != nil
 	result["invalidSound"] = invalidSound != nil
+	_, staleConfirmation := d.service.command(CommandInput{Action: "confirmRoute", RouteToken: "__invalid-output"})
+	result["staleConfirmationRejected"] = staleConfirmation != nil
+	route := d.service.snapshot().Route
+	result["outputAvailable"] = route.Token != ""
+	manualConfirmation := true
+	if route.Token != "" && route.RequiresConfirmation {
+		// A silent helper contract check: approve an endpoint without playing
+		// any sound or starting a rest, then inspect its admission status.
+		next, confirmError := d.service.command(CommandInput{Action: "confirmRoute", RouteToken: route.Token})
+		manualConfirmation = confirmError == nil && next.Route.Connected && !next.Route.Verified && next.Route.Token == route.Token
+	}
+	result["manualConfirmation"] = manualConfirmation
 	item, err := d.service.importNativeMedia(filepath.Join(resources, "audio", "dawn.wav"), nil)
 	if err != nil {
 		result["error"] = "native import: " + err.Error()
@@ -71,5 +83,5 @@ func desktopSmoke(d *Desktop, resources, report string) {
 	}
 	result["deletedMedia"] = !d.service.hasMedia(item.ID, item.Size)
 	result["languages"] = len(d.view.dictionaries)
-	result["ok"] = d.window.Page() == nil && noWebAssets && invalidPath != nil && invalidSound != nil && result["nativeImport"] == true && result["deletedMedia"] == true && len(d.view.dictionaries) == 6
+	result["ok"] = d.window.Page() == nil && noWebAssets && invalidPath != nil && invalidSound != nil && staleConfirmation != nil && manualConfirmation && result["nativeImport"] == true && result["deletedMedia"] == true && len(d.view.dictionaries) == 6
 }

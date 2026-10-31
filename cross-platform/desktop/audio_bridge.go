@@ -14,6 +14,8 @@ import (
 )
 
 type Route struct {
+	// Connected means this active output is admitted, either detected or
+	// explicitly confirmed. Verified distinguishes automatic detection.
 	Connected            bool   `json:"connected"`
 	Verified             bool   `json:"verified"`
 	Name                 string `json:"name"`

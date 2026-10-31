@@ -9,10 +9,13 @@ import (
 )
 
 type silentAudio struct {
-	route Route
-	plays []map[string]any
-	stops int
-	fail  bool
+	route          Route
+	plays          []map[string]any
+	stops          int
+	fail           bool
+	confirmedToken string
+	observedToken  string
+	confirmations  int
 }
 
 func (f *silentAudio) request(action string, data map[string]any, out any) error {
@@ -21,7 +24,15 @@ func (f *silentAudio) request(action string, data map[string]any, out any) error
 	}
 	switch action {
 	case "route":
-		*out.(*Route) = f.route
+		if f.observedToken != f.route.Token {
+			f.confirmedToken = ""
+			f.observedToken = f.route.Token
+		}
+		route := f.route
+		if route.RequiresConfirmation && route.Token != "" && f.confirmedToken == route.Token {
+			route.Connected = true
+		}
+		*out.(*Route) = route
 	case "inspect":
 		out.(*struct{ Seconds float64 }).Seconds = 1
 	case "play":
@@ -29,7 +40,11 @@ func (f *silentAudio) request(action string, data map[string]any, out any) error
 	case "stop":
 		f.stops++
 	case "confirmRoute":
-		f.route.Connected = true
+		if token, _ := data["token"].(string); token == "" || token != f.route.Token {
+			return errors.New("routeChanged")
+		}
+		f.confirmedToken = f.route.Token
+		f.confirmations++
 	}
 	return nil
 }

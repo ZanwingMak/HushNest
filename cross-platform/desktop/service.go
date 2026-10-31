@@ -51,6 +51,7 @@ type CommandInput struct {
 	Preferences *Preferences `json:"preferences,omitempty"`
 	Sound       string       `json:"sound,omitempty"`
 	Volume      float64      `json:"volume,omitempty"`
+	RouteToken  string       `json:"routeToken,omitempty"`
 }
 type CacheInput struct {
 	ID     string `json:"id"`
@@ -208,15 +209,25 @@ func (s *restService) command(input CommandInput) (result Snapshot, err error) {
 		if v != nil && v.Phase != "paused" && v.Phase != "blocked" {
 			return result, errors.New("session-active")
 		}
-		if e := s.backend.request("confirmRoute", nil, nil); e != nil {
+		if e := s.routeLocked(); e != nil {
+			return result, e
+		}
+		if input.RouteToken == "" || s.route.Token == "" || input.RouteToken != s.route.Token {
+			return result, errors.New("routeChanged")
+		}
+		if e := s.backend.request("confirmRoute", map[string]any{"token": input.RouteToken}, nil); e != nil {
 			return result, e
 		}
 		err = s.routeLocked()
+		if err == nil && (!s.route.Connected || s.route.Token != input.RouteToken) {
+			err = errors.New("routeChanged")
+		}
 		return
 	case "start":
 		if v != nil {
 			return result, errors.New("session-active")
 		}
+		s.stopAudioLocked()
 		duration := p.Duration
 		if input.Session != nil {
 			duration = input.Session.Duration

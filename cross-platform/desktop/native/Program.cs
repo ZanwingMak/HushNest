@@ -11,22 +11,27 @@ static class Program
     private static LoopSource? loop;
     private static MMDevice? selected;
     private static string selectedToken = "";
+    private static string confirmedToken = "", observedToken = "";
     private static DateTime previewEnd = DateTime.MaxValue;
     private static readonly JsonSerializerOptions Json = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
     private static string audioRoot = "", mediaRoot = "";
 
-    record Route(bool Connected, bool Verified, string Name, string Token);
+    record Route(bool Connected, bool Verified, string Name, string Token, bool RequiresConfirmation);
     static Route CurrentRoute()
     {
         try
         {
             using var enumerator = new MMDeviceEnumerator();
             using var device = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
-            var form = Convert.ToInt32(device.Properties[PropertyKeys.PKEY_AudioEndpoint_FormFactor].Value);
-            var headphones = device.State == DeviceState.Active && (form == 3 || form == 5);
-            return new Route(headphones, headphones, device.FriendlyName, device.ID);
+            if (device.State != DeviceState.Active) throw new InvalidOperationException("routeLost");
+            var token = device.ID;
+            if (token != observedToken) { confirmedToken = ""; observedToken = token; }
+            var form = -1;
+            try { form = Convert.ToInt32(device.Properties[PropertyKeys.PKEY_AudioEndpoint_FormFactor].Value); } catch { }
+            var headphones = form == 3 || form == 5;
+            return new Route(headphones || confirmedToken == token, headphones, device.FriendlyName, token, !headphones);
         }
-        catch { return new Route(false, false, "", ""); }
+        catch { confirmedToken = ""; observedToken = ""; return new Route(false, false, "", "", false); }
     }
     static void Emit(object data)
     {
@@ -63,7 +68,7 @@ static class Program
         loop.Volume = alarm && !preview ? 0 : (float)Math.Clamp(data.GetProperty("volume").GetDouble(), 0, 1);
         output = new WasapiOut(selected, AudioClientShareMode.Shared, true, 100);
         var current = output;
-        current.PlaybackStopped += (_, e) => { if (e.Exception != null) Emit(new { eventType = "routeLost" }); };
+        current.PlaybackStopped += (_, e) => { if (e.Exception != null) { Interlocked.Exchange(ref confirmedToken, ""); Emit(new { eventType = "routeLost" }); } };
         current.Init(loop.ToWaveProvider()); current.Play();
         previewEnd = preview ? DateTime.UtcNow.AddSeconds(2) : DateTime.MaxValue;
     }
@@ -71,12 +76,12 @@ static class Program
     {
         lock (Gate)
         {
+            var route = CurrentRoute();
             if (output == null) return;
             if (DateTime.UtcNow >= previewEnd) { Stop(); return; }
-            var route = CurrentRoute();
             if (!route.Connected || route.Token != selectedToken || selected?.State != DeviceState.Active)
             {
-                Stop(); Emit(new { eventType = "routeLost" });
+                confirmedToken = ""; Stop(); Emit(new { eventType = "routeLost" });
             }
         }
     }
@@ -84,7 +89,7 @@ static class Program
     {
         if (args.Length != 2) return 2;
         audioRoot = Path.GetFullPath(args[0]); mediaRoot = Path.GetFullPath(args[1]);
-        using var timer = new Timer(_ => { try { Check(); } catch { lock (Gate) { Stop(); Emit(new { eventType = "routeLost" }); } } }, null, 100, 100);
+        using var timer = new Timer(_ => { try { Check(); } catch { lock (Gate) { confirmedToken = ""; Stop(); Emit(new { eventType = "routeLost" }); } } }, null, 100, 100);
         string? line;
         while ((line = Console.ReadLine()) != null)
         {
@@ -98,6 +103,12 @@ static class Program
                     switch (data.GetProperty("action").GetString())
                     {
                         case "route": result = CurrentRoute(); break;
+                        case "confirmRoute":
+                            var currentRoute = CurrentRoute();
+                            var requestedToken = data.GetProperty("token").GetString();
+                            if (string.IsNullOrEmpty(requestedToken) || requestedToken != currentRoute.Token) throw new InvalidOperationException("routeChanged");
+                            confirmedToken = currentRoute.Token;
+                            break;
                         case "inspect":
                             var media = data.GetProperty("sound").GetString() ?? "";
                             if (!media.StartsWith("custom:") || !Guid.TryParseExact(media[7..], "D", out var mediaId)) throw new InvalidOperationException("invalid-media");

@@ -60,6 +60,8 @@ func TestNativeAmbiguousRouteRequiresConfirmation(t *testing.T) {
 	a, audio := nativeFixture(t)
 	audio.route.Connected = false
 	audio.route.RequiresConfirmation = true
+	audio.route.Verified = false
+	a.confirmHeadphones = func(Route) bool { return true }
 	a.snapshot.Route = audio.route
 	tt := ui.NewTester(a.render, 1040, 850)
 	clickNative(t, tt, "确认这是耳机")
