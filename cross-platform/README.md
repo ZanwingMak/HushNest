@@ -1,6 +1,8 @@
 # 耳憩 HushNest · Web / Android / macOS / Windows
 
-独立的多端应用，开发分支为 `codex/web-android-windows`。桌面客户端 0.4.0 使用 [MyGo 0.7.3](https://github.com/egoist/mygo) 的原生 `ui` 包：Go 界面、Go 后台和系统音频组件。桌面窗口没有 WebView，不加载 React、HTML 或 JavaScript，也不要求安装 WebView2。Web / Android 保留现有前端，原生 iOS 工程及官网保持原样。
+多端应用已集成到 `main`，原开发分支为 `codex/web-android-windows`。桌面客户端 0.4.0 使用 [MyGo 0.7.3](https://github.com/egoist/mygo) 的原生 `ui` 包：Go 界面、Go 后台和系统音频组件。桌面窗口没有 WebView，不加载 React、HTML 或 JavaScript，也不要求安装 WebView2。Web / Android 使用现有前端，原生 iOS 工程独立维护。
+
+[官网下载与在线版](https://zanwingmak.github.io/HushNest/#downloads) · [多平台预览 Release](https://github.com/ZanwingMak/HushNest/releases/tag/multiplatform-v0.4.0) · [下载、安装及发行维护](../docs/DOWNLOADS.md)。Windows / macOS 为 0.4.0，Android / Web 为 0.1.0，安装条件及校验文件见发行说明。
 
 本次需求范围、最终决策、验收标准与验证记录归档于 [跨平台需求与交付文档](../docs/requirements/2026-11-01-multiplatform.md)。
 
@@ -51,7 +53,7 @@ npm run build
 npm run preview
 ```
 
-Web 开发地址 `http://127.0.0.1:5173/`，静态产物为 `dist/`，可部署到 HTTPS 子路径。通过 HTTP / HTTPS 访问，不要双击 index.html。服务工作线程只为 Web 注册，桌面及安卓不使用它。
+Web 开发地址 `http://127.0.0.1:5173/`，静态产物为 `dist/`，官网在线入口为 `https://zanwingmak.github.io/HushNest/app/`，可部署到 HTTPS 子路径。通过 HTTP / HTTPS 访问，不要双击 index.html。服务工作线程只为 Web 注册，作用域限制在应用目录，桌面及安卓不使用它。
 
 Windows 构建需要 Windows x64 和 .NET 8 SDK；不需要 WebView2 Runtime：
 
@@ -97,7 +99,7 @@ node tests/desktop-smoke.mjs
 
 Go 测试覆盖独立于界面的计时状态机，以及原生界面的开始、暂停、恢复、稍后提醒、断连保护、设备确认、设置、文件导入/删除、大小限制和失败回滚。原生视图在常规 / 最小窗口尺寸及深色外观下运行。浏览器测试继续覆盖 Web 无耳机门槛等现有行为。桌面 smoke 实际运行 MyGo 原生窗口，要求 `window.Page() == nil`，截图四个页面，检查安装包没有 HTML/JS/CSS 资源，并用真实解码器无声导入、验证和删除音轨。截图和报告在 `release/mygo-native/qa/`；自动化不播放声音。
 
-CI 在 `main`、开发分支及相关 Pull Request 上分别构建 Web、Android、Windows MyGo 和 macOS MyGo 并上传产物，不自动上架或发布网站。原 iOS 工作流不变。实体安卓 / Mac / Windows 耳机的热插拔、音量、来电和厂商策略仍需硬件验证。
+多端 CI 在 `main`、开发分支及相关 Pull Request 上分别构建 Web、Android、Windows MyGo 和 macOS MyGo 并上传产物。独立 Pages 工作流将官网和 Web 版部署到 `app/`；独立发行工作流从指定成功构建生成校验后的下载草稿，再由显式发布操作公开。原 iOS 工作流不变。实体安卓 / Mac / Windows 耳机的热插拔、音量、来电和厂商策略仍需硬件验证。
 
 Windows CI 还会运行 `node tests/windows-installer.mjs`：在隔离 runner 上实际安装并覆盖安装到含空格和中文的可写目录，核对程序、许可证及音频资源，最后运行安装后的原生应用测试。此检查会写入当前用户的应用注册信息及开始菜单，因此仅在隔离 CI 中执行。
 

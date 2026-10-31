@@ -1,0 +1,41 @@
+name: Prepare or publish multiplatform downloads
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish the fully verified preview release
+        type: boolean
+        default: false
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: multiplatform-release
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '24' }
+      - name: Verify the pinned build and any existing draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/prepare-multiplatform-release.mjs preflight
+      - uses: actions/download-artifact@v4
+        if: env.HUSHNEST_RELEASE_READY != 'true'
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ env.HUSHNEST_SOURCE_RUN }}
+          pattern: HushNest-*
+          path: build/release-input
+      - name: Assemble and verify all release downloads
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/prepare-multiplatform-release.mjs stage
+      - name: Publish the verified preview
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/prepare-multiplatform-release.mjs publish

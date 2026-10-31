@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "repository": "ZanwingMak/HushNest",
+  "homepage": "https://zanwingmak.github.io/HushNest/",
+  "webApp": "https://zanwingmak.github.io/HushNest/app/",
+  "ios": {
+    "version": "1.6.0",
+    "tag": "v1.6.0",
+    "testFlight": "https://testflight.apple.com/join/cmFcXrjy",
+    "ipa": "HushNest-1.6.0-unsigned.ipa"
+  },
+  "release": {
+    "tag": "multiplatform-v0.4.0",
+    "name": "HushNest 多平台预览 · 桌面 0.4.0 / Android 与 Web 0.1.0",
+    "prerelease": true,
+    "sourceRun": 41225418108,
+    "sourceCommit": "a1d2673bb861aa9158ca6f230583b5f49427f733",
+    "assets": {
+      "windows": "HushNest-0.4.0-windows-x64-setup.exe",
+      "windowsPortable": "HushNest-0.4.0-windows-x64-portable.zip",
+      "macos": "HushNest-0.4.0-macos-universal.dmg",
+      "android": "HushNest-0.1.0-android-debug.apk",
+      "web": "HushNest-0.1.0-web.zip"
+    }
+  }
+}
