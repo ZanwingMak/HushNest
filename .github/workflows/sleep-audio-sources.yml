@@ -1,8 +1,5 @@
 name: Fetch public CC0 sleep recordings
 on:
-  push:
-    branches: [codex/web-android-windows]
-    paths: ['.github/workflows/sleep-audio-sources.yml']
   workflow_dispatch:
 permissions:
   contents: read
