@@ -136,7 +136,9 @@ export function useNest() {
       if (!isWeb && ['start', 'resume', 'snooze'].includes(action) && !r.connected) throw new Error('routeLost');
       if (nativeSessions) {
         if (isAndroid && action === 'start') await native.requestNotifications();
-        if (['start', 'resume', 'snooze'].includes(action)) await Promise.all([cacheDesktopSound(p.sleepSound), cacheDesktopSound(p.alarmSound)]);
+        if (['start', 'resume', 'snooze'].includes(action)) {
+          for (const sound of new Set([p.sleepSound, p.alarmSound])) await cacheDesktopSound(sound);
+        }
         ingest(await nativeController!.command({ action, preferences: p, session: action === 'start' ? createSession(Date.now(), duration ?? p.duration) : undefined }));
         return;
       }

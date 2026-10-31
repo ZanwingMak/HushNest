@@ -17,5 +17,6 @@ try {
   assert.equal(result.ok, true, JSON.stringify(result));
   assert.equal(result.framework, 'MyGo'); assert.equal(result.nodeExposed, false);
   assert.equal(result.recordings, 6); assert.equal(result.invalidPath, true); assert.equal(result.invalidSound, true);
+  assert.equal(result.cachedMedia, true); assert.equal(result.deletedMedia, true);
   console.log(JSON.stringify(result));
 } finally { clearTimeout(timeout); if (child.exitCode === null) child.kill(); }

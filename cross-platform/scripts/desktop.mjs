@@ -1,5 +1,5 @@
 import { spawn, spawnSync } from 'node:child_process';
-import { copyFile, cp, mkdir, mkdtemp, readdir, writeFile } from 'node:fs/promises';
+import { copyFile, cp, mkdir, mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -59,6 +59,11 @@ await mkdir(path.join(root, 'release/mygo'), { recursive: true });
 for (const entry of await readdir(buildOutput, { withFileTypes: true })) {
   await cp(path.join(buildOutput, entry.name), path.join(root, 'release/mygo', entry.name), { recursive: true });
 }
+const resolvedBuild = path.resolve(buildOutput);
+if (path.dirname(resolvedBuild) === path.resolve(tmpdir()) && /^hushnest-mygo-build-/.test(path.basename(resolvedBuild))) {
+  await rm(resolvedBuild, { recursive: true, force: true }).catch(() => {});
+}
+console.log(`Desktop artifacts: ${path.join(root, 'release/mygo', platform.replace('/', '-'))}`);
 if (mode === 'dev') {
   const executable = target === 'windows' ? 'release/mygo/windows-amd64/HushNest.exe' : 'release/mygo/darwin-universal/HushNest.app/Contents/MacOS/HushNest';
   const child = spawn(path.join(root, executable), [], { cwd: root, env, stdio: 'inherit', windowsHide: true });

@@ -205,7 +205,12 @@ func desktopSmoke(d *Desktop, report string) {
       try{await desktop.command({action:'preview',sound:'../../invalid',volume:0});}catch{invalidSound=true;}
       try{await window.hushnestAudio.cacheMedia({id:'../invalid',name:'x',bytes:new ArrayBuffer(1)});}catch{invalidPath=true;}
       const recordings=await fetch('./audio/FieldRecordings.json').then(r=>r.json());
-      const result={ok:invalidSound&&invalidPath,platform:window.mygo.platform,framework:'MyGo',recordings:recordings.recordings.length,route:snapshot.route,nodeExposed:typeof window.require!=='undefined',invalidSound,invalidPath,title:document.title};
+      const mediaID=crypto.randomUUID(),bytes=new ArrayBuffer(2*1024*1024+123);
+      await window.hushnestAudio.cacheMedia({id:mediaID,name:'silent-cache-test',bytes});
+      const cachedMedia=await window.mygo.call('Desktop.HasMedia',mediaID,bytes.byteLength);
+      await window.hushnestAudio.deleteMedia(mediaID);
+      const deletedMedia=!(await window.mygo.call('Desktop.HasMedia',mediaID,bytes.byteLength));
+      const result={ok:invalidSound&&invalidPath&&cachedMedia&&deletedMedia,platform:window.mygo.platform,framework:'MyGo',recordings:recordings.recordings.length,route:snapshot.route,nodeExposed:typeof window.require!=='undefined',invalidSound,invalidPath,cachedMedia,deletedMedia,title:document.title};
       if(result.nodeExposed||result.recordings!==6)result.ok=false;
       return result;
     })()`
