@@ -12,9 +12,9 @@ enum SleepSound: String, Codable, CaseIterable, Identifiable {
     case .stream: "drop"; case .forest: "tree"; case .fireplace: "flame"; case .night: "moon.stars"
     } }
     var subtitle: String { switch self {
-    case .custom: L("仅保存在本机的音轨"); case .none: L("安静休息 · 后台仅有无声通知"); case .rain: L("庭院细雨，真实录音"); case .ocean: L("真实海浪，缓慢起落")
-    case .brown: L("深沉平稳，减轻沙沙声"); case .pink: L("均衡柔和的声音毯"); case .stream: L("自然溪水，连续流淌")
-    case .forest: L("林间鸟鸣，清晨实录"); case .fireplace: L("柴火燃烧，真实噼啪"); case .night: L("夜间蟋蟀，自然虫鸣")
+    case .custom: L("仅保存在本机的音轨"); case .none: L("安静休息 · 后台仅有无声通知"); case .rain: L("细雨与水滴 · 10 分钟实录"); case .ocean: L("海浪缓慢起落 · 10 分钟实录")
+    case .brown: L("深沉平稳 · 5 分钟长音轨"); case .pink: L("均衡柔和 · 5 分钟长音轨"); case .stream: L("自然溪水流淌 · 10 分钟实录")
+    case .forest: L("林间鸟鸣 · 8 分钟实录"); case .fireplace: L("柴火噼啪 · 5 分 40 秒实录"); case .night: L("夏夜虫鸣 · 7 分钟实录")
     } }
 }
 

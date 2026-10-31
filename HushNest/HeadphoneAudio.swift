@@ -229,6 +229,11 @@ final class HeadphoneAudio: NSObject, RestAudio {
         alarm = nil
     }
 
+    /// 长助眠音优先读取 M4A，原有铃声继续读取 PCM，不改变保存的声音标识。
+    nonisolated static func bundledURL(named name: String) -> URL? {
+        Bundle.main.url(forResource: name, withExtension: "m4a") ?? Bundle.main.url(forResource: name, withExtension: "wav")
+    }
+
     /// 从应用内读取实录音景或合成铃声，不需要网络或麦克风权限。
     private func player(named name: String) throws -> AVAudioPlayer {
         let url: URL
@@ -238,7 +243,7 @@ final class HeadphoneAudio: NSObject, RestAudio {
             url = MediaLibrary.directory.appendingPathComponent(id.uuidString + (parts[0] == "custom-alarm" ? "-alarm.m4a" : ".m4a"))
             guard FileManager.default.fileExists(atPath: url.path) else { throw AudioFailure.customMissing }
         } else {
-            guard let resource = Bundle.main.url(forResource: name, withExtension: "wav") else { throw AudioFailure.missingResource }
+            guard let resource = Self.bundledURL(named: name) else { throw AudioFailure.missingResource }
             url = resource
         }
         let player = try AVAudioPlayer(contentsOf: url)

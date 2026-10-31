@@ -46,14 +46,6 @@
 "夏夜" = "Noche de verano";
 "仅保存在本机的音轨" = "Audio guardado solo en este dispositivo";
 "安静休息 · 后台仅有无声通知" = "Descanso en silencio · Solo aviso sin sonido en segundo plano";
-"庭院细雨，真实录音" = "Lluvia real en el jardín";
-"真实海浪，缓慢起落" = "Olas reales que van y vienen";
-"深沉平稳，减轻沙沙声" = "Profundo y estable, con menos siseo";
-"均衡柔和的声音毯" = "Una capa de sonido suave y equilibrada";
-"自然溪水，连续流淌" = "Agua de un arroyo natural";
-"林间鸟鸣，清晨实录" = "Aves del bosque al amanecer";
-"柴火燃烧，真实噼啪" = "Fuego y crujidos de leña reales";
-"夜间蟋蟀，自然虫鸣" = "Grillos grabados de noche";
 "经典滴滴" = "Pitidos clásicos";
 "机械双铃" = "Doble campana";
 "数字闹钟" = "Alarma digital";
@@ -245,3 +237,11 @@
 "音频暂时无法恢复，将在耳机连接或返回应用时重试。也可确认耳机后手动继续。" = "El audio aún no se puede reanudar. Lo intentaremos al conectar los auriculares o volver a la app. También puedes comprobarlos y reanudar manualmente.";
 "有助眠音：支持锁屏与混音。暂时中断后，系统允许且耳机可用时会自动恢复；已到点则补响。系统未允许恢复时需手动继续。无助眠音：仍无法保证锁屏响铃或震动，开始前需确认风险。" = "Con sonido de descanso: admite la pantalla bloqueada y la mezcla de audio. Tras una interrupción, se reanuda cuando el sistema lo permite y hay auriculares disponibles; las alarmas pendientes suenan de inmediato. Si no, reanuda manualmente. Sin sonido: no se garantiza el sonido ni la vibración con la pantalla bloqueada; confirma el riesgo antes de empezar.";
 "模拟中断结束" = "Simular fin de interrupción";
+"细雨与水滴 · 10 分钟实录" = "Lluvia y gotas · grabación de 10 min";
+"海浪缓慢起落 · 10 分钟实录" = "Olas suaves · grabación de 10 min";
+"自然溪水流淌 · 10 分钟实录" = "Arroyo natural · grabación de 10 min";
+"林间鸟鸣 · 8 分钟实录" = "Aves del bosque · grabación de 8 min";
+"柴火噼啪 · 5 分 40 秒实录" = "Leña crepitando · grabación de 5 min 40 s";
+"夏夜虫鸣 · 7 分钟实录" = "Insectos nocturnos · grabación de 7 min";
+"深沉平稳 · 5 分钟长音轨" = "Grave y constante · audio de 5 min";
+"均衡柔和 · 5 分钟长音轨" = "Suave y equilibrado · audio de 5 min";

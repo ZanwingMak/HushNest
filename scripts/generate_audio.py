@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""生成两种噪音和十四种原创铃声；六种实录音景由 prepare_recordings.py 单独处理。"""
+"""生成两条五分钟噪音和十四种原创铃声；六种长实录由 prepare_recordings.py 单独处理。"""
 from pathlib import Path
 import wave
+import subprocess
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1] / 'HushNest' / 'Resources'
@@ -24,12 +25,12 @@ def noise(count, slope=0.0, cutoff=6000):
 
 def noise_ambience(name):
     """仅合成名称准确的棕噪音和粉红噪音，不覆盖实地录制的自然音景。"""
-    count = RATE * 32
+    count = RATE * 312
     slope, cutoff = (2.2, 2400) if name == 'brown' else (1.0, 5200)
     values = np.column_stack([noise(count, slope, cutoff) for _ in range(2)])
-    blend = RATE * 2
-    mix = np.linspace(0, 1, blend)[:, None]
-    values[-blend:] = values[-blend:] * (1 - mix) + values[:blend] * mix
+    blend = RATE * 12
+    phase = np.linspace(0, np.pi / 2, blend)[:, None]
+    values[-blend:] = values[-blend:] * np.cos(phase) + values[:blend] * np.sin(phase)
     values = values[blend:]
     values *= 0.17 / np.sqrt(np.mean(values ** 2))
     # 噪音音量对齐约 -25 LUFS 的实录音景，避免切换时突然变响。
@@ -107,11 +108,20 @@ def write_wave(name, values):
         output.writeframes(samples.tobytes())
 
 
+def write_ambience(name, values):
+    """棕噪音采用无损 ALAC 保留低频接缝，粉红噪音采用 AAC 控制安装体积。"""
+    encoding = ['-c:a', 'alac', '-sample_fmt', 's16p'] if name == 'brown' else ['-c:a', 'aac', '-b:a', '192k']
+    subprocess.run([
+        'ffmpeg', '-v', 'error', '-y', '-f', 'f32le', '-ar', str(RATE), '-ac', '2', '-i', '-',
+        *encoding, '-movflags', '+faststart', str(ROOT / f'{name}.m4a')
+    ], input=values.astype('<f4').tobytes(), check=True)
+
+
 def main():
     """可重复生成两种噪音和十四种提醒，保留已有实地录音。"""
     ROOT.mkdir(parents=True, exist_ok=True)
     for name in ['brown', 'pink']:
-        write_wave(name, noise_ambience(name))
+        write_ambience(name, noise_ambience(name))
     for name in ['dawn', 'bell', 'orbit', 'piano', 'marimba', 'harp', 'bamboo', 'aurora']:
         write_wave(name, alarm(name))
     for name in ['classic', 'twinbell', 'digital', 'pulse', 'beacon', 'reveille']:

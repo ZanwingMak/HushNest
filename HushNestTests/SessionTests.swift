@@ -152,8 +152,10 @@ final class SessionTests: XCTestCase {
 
     /// 验证每条正式音频资源可解码，且具有非零时长和可听数据。
     @MainActor func testAllBundledAudioDecodes() throws {
-        for name in SleepSound.allCases.filter { $0 != .none && $0 != .custom }.map(\.rawValue) + AlarmSound.allCases.filter { $0 != .custom }.map(\.rawValue) {
-            let url = try XCTUnwrap(Bundle.main.url(forResource: name, withExtension: "wav"))
+        let names = SleepSound.allCases.filter { $0 != .none && $0 != .custom }.map(\.rawValue)
+            + AlarmSound.allCases.filter { $0 != .custom }.map(\.rawValue)
+        for name in names {
+            let url = try XCTUnwrap(HeadphoneAudio.bundledURL(named: name))
             let file = try AVAudioFile(forReading: url)
             XCTAssertGreaterThan(file.length, 200_000)
             let buffer = try XCTUnwrap(AVAudioPCMBuffer(pcmFormat: file.processingFormat, frameCapacity: 22050))
@@ -175,7 +177,7 @@ final class SessionTests: XCTestCase {
             XCTAssertTrue(["CC0-1.0", "Public Domain"].contains(recording["license"] as? String ?? ""))
             XCTAssertFalse((recording["author"] as? String ?? "").isEmpty)
             XCTAssertTrue((recording["source"] as? String ?? "").hasPrefix("https://"))
-            let url = try XCTUnwrap(Bundle.main.url(forResource: name, withExtension: "wav"))
+            let url = try XCTUnwrap(HeadphoneAudio.bundledURL(named: name))
             let hash = SHA256.hash(data: try Data(contentsOf: url)).map { String(format: "%02x", $0) }.joined()
             XCTAssertEqual(hash, recording["outputSHA256"] as? String, name)
             hashes.insert(hash)
@@ -184,30 +186,79 @@ final class SessionTests: XCTestCase {
                            try XCTUnwrap(recording["seconds"] as? Double), accuracy: 0.01)
             XCTAssertEqual(audio.processingFormat.sampleRate, 44100)
             XCTAssertEqual(audio.processingFormat.channelCount, 2)
+            XCTAssertGreaterThanOrEqual(recording["sourceSeconds"] as? Double ?? 0,
+                                       (recording["start"] as? Double ?? 0) + (recording["seconds"] as? Double ?? 0) + (recording["crossfade"] as? Double ?? 0))
         }
         XCTAssertEqual(hashes.count, 6)
     }
 
     /// 解码实际循环首尾，确认没有静音接缝或大于相邻采样变化的突跳；不创建播放会话。
-    func testFieldRecordingLoopBoundariesAreContinuous() throws {
-        for name in ["rain", "ocean", "stream", "forest", "fireplace", "night"] {
-            let url = try XCTUnwrap(Bundle.main.url(forResource: name, withExtension: "wav"))
+    func testSleepTrackLoopBoundariesAreContinuous() throws {
+        for name in ["rain", "ocean", "stream", "forest", "fireplace", "night", "brown", "pink"] {
+            let url = try XCTUnwrap(HeadphoneAudio.bundledURL(named: name))
             let audio = try AVAudioFile(forReading: url)
             let first = try XCTUnwrap(AVAudioPCMBuffer(pcmFormat: audio.processingFormat, frameCapacity: 2048))
             let last = try XCTUnwrap(AVAudioPCMBuffer(pcmFormat: audio.processingFormat, frameCapacity: 2048))
             try audio.read(into: first)
             audio.framePosition = audio.length - 2048
             try audio.read(into: last)
-            let head = try XCTUnwrap(first.floatChannelData?[0])
-            let tail = try XCTUnwrap(last.floatChannelData?[0])
-            let energy = (0..<2048).reduce(Float(0)) { $0 + head[$1] * head[$1] + tail[$1] * tail[$1] }
-            XCTAssertGreaterThan(energy, 0.01, name)
-            let stepEnergy = (1..<2048).reduce(Float(0)) { value, index in
-                let headStep = head[index] - head[index - 1]
-                let tailStep = tail[index] - tail[index - 1]
-                return value + headStep * headStep + tailStep * tailStep
+            for channel in 0..<Int(audio.processingFormat.channelCount) {
+                let head = try XCTUnwrap(first.floatChannelData?[channel])
+                let tail = try XCTUnwrap(last.floatChannelData?[channel])
+                let energy = (0..<2048).reduce(Float(0)) { $0 + head[$1] * head[$1] + tail[$1] * tail[$1] }
+                XCTAssertGreaterThan(energy, 0.01, name)
+                let stepEnergy = (1..<2048).reduce(Float(0)) { value, index in
+                    let headStep = head[index] - head[index - 1]
+                    let tailStep = tail[index] - tail[index - 1]
+                    return value + headStep * headStep + tailStep * tailStep
+                }
+                XCTAssertLessThanOrEqual(abs(head[0] - tail[2047]), max(0.01, 5 * sqrt(stepEnergy / 4094)), "\(name) channel \(channel)")
             }
-            XCTAssertLessThanOrEqual(abs(head[0] - tail[2047]), max(0.01, 5 * sqrt(stepEnergy / 4094)), name)
+        }
+    }
+
+    /// 用真实 Apple 文件解码器及播放器核对八条长助眠音，读取头尾确认无编码补零，全程不播放。
+    @MainActor func testSleepTracksHaveLongGaplessDurations() throws {
+        let audio = HeadphoneAudio()
+        for sound in SleepSound.allCases where sound != .none && sound != .custom {
+            let url = try XCTUnwrap(HeadphoneAudio.bundledURL(named: sound.rawValue))
+            XCTAssertEqual(url.pathExtension, "m4a")
+            let file = try AVAudioFile(forReading: url)
+            let player = try audio.preparePreview(name: sound.rawValue, volume: 0.1)
+            let seconds = Double(file.length) / file.processingFormat.sampleRate
+            XCTAssertGreaterThanOrEqual(seconds, 300, sound.rawValue)
+            XCTAssertEqual(player.duration, seconds, accuracy: 1 / file.processingFormat.sampleRate, sound.rawValue)
+            let buffer = try XCTUnwrap(AVAudioPCMBuffer(pcmFormat: file.processingFormat, frameCapacity: 4410))
+            for position in [AVAudioFramePosition(0), file.length - 4410] {
+                file.framePosition = position
+                try file.read(into: buffer)
+                XCTAssertEqual(buffer.frameLength, 4410, sound.rawValue)
+                let samples = try XCTUnwrap(buffer.floatChannelData?[0])
+                let energy = (0..<4410).reduce(Float(0)) { $0 + samples[$1] * samples[$1] }
+                XCTAssertGreaterThan(energy, 0.001, sound.rawValue)
+            }
+        }
+        audio.stop()
+    }
+
+    /// 比较真实文件中相隔旧循环周期的波形，防止把短片段复制成表面上更长的文件。
+    func testSleepTracksDoNotRepeatTheirFormerShortExcerpt() throws {
+        let formerPeriods: [String: Double] = ["rain": 55, "ocean": 85, "stream": 65, "forest": 70,
+                                             "fireplace": 22, "night": 44, "brown": 30, "pink": 30]
+        for (name, period) in formerPeriods {
+            let file = try AVAudioFile(forReading: XCTUnwrap(HeadphoneAudio.bundledURL(named: name)))
+            let first = try XCTUnwrap(AVAudioPCMBuffer(pcmFormat: file.processingFormat, frameCapacity: 44100))
+            let later = try XCTUnwrap(AVAudioPCMBuffer(pcmFormat: file.processingFormat, frameCapacity: 44100))
+            file.framePosition = 44100
+            try file.read(into: first)
+            file.framePosition = AVAudioFramePosition((period + 1) * file.processingFormat.sampleRate)
+            try file.read(into: later)
+            let a = try XCTUnwrap(first.floatChannelData?[0])
+            let b = try XCTUnwrap(later.floatChannelData?[0])
+            let dot = (0..<44100).reduce(Double(0)) { $0 + Double(a[$1]) * Double(b[$1]) }
+            let aEnergy = (0..<44100).reduce(Double(0)) { $0 + Double(a[$1]) * Double(a[$1]) }
+            let bEnergy = (0..<44100).reduce(Double(0)) { $0 + Double(b[$1]) * Double(b[$1]) }
+            XCTAssertLessThan(abs(dot / sqrt(max(1e-20, aEnergy * bEnergy))), 0.95, name)
         }
     }
 

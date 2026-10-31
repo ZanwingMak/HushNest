@@ -46,14 +46,6 @@
 "夏夜" = "Summer night";
 "仅保存在本机的音轨" = "Audio stored only on this device";
 "安静休息 · 后台仅有无声通知" = "Quiet rest · Silent background notification only";
-"庭院细雨，真实录音" = "Garden rain · field recording";
-"真实海浪，缓慢起落" = "Real waves, rolling gently";
-"深沉平稳，减轻沙沙声" = "Deep and steady, less hiss";
-"均衡柔和的声音毯" = "A balanced, soft blanket of sound";
-"自然溪水，连续流淌" = "Natural flowing stream";
-"林间鸟鸣，清晨实录" = "Dawn birds in the forest";
-"柴火燃烧，真实噼啪" = "Real wood fire and crackles";
-"夜间蟋蟀，自然虫鸣" = "Crickets recorded at night";
 "经典滴滴" = "Classic beeps";
 "机械双铃" = "Twin bell";
 "数字闹钟" = "Digital alarm";
@@ -245,3 +237,11 @@
 "音频暂时无法恢复，将在耳机连接或返回应用时重试。也可确认耳机后手动继续。" = "Audio could not resume yet. We will retry when headphones connect or you return to the app. You can also check your headphones and resume manually.";
 "有助眠音：支持锁屏与混音。暂时中断后，系统允许且耳机可用时会自动恢复；已到点则补响。系统未允许恢复时需手动继续。无助眠音：仍无法保证锁屏响铃或震动，开始前需确认风险。" = "With sleep audio: supports the Lock Screen and mixing. After an interruption, playback resumes when the system permits and headphones are available; overdue alarms play immediately. Otherwise, resume manually. Without sleep audio: Lock Screen sound and vibration remain unreliable; confirm the risk before starting.";
 "模拟中断结束" = "Simulate interruption ending";
+"细雨与水滴 · 10 分钟实录" = "Rain and droplets · 10-min recording";
+"海浪缓慢起落 · 10 分钟实录" = "Rolling ocean waves · 10-min recording";
+"自然溪水流淌 · 10 分钟实录" = "Flowing forest creek · 10-min recording";
+"林间鸟鸣 · 8 分钟实录" = "Woodland birds · 8-min recording";
+"柴火噼啪 · 5 分 40 秒实录" = "Crackling wood fire · 5-min 40-sec recording";
+"夏夜虫鸣 · 7 分钟实录" = "Summer night insects · 7-min recording";
+"深沉平稳 · 5 分钟长音轨" = "Deep and steady · 5-min soundscape";
+"均衡柔和 · 5 分钟长音轨" = "Soft and balanced · 5-min soundscape";

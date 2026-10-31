@@ -19,7 +19,7 @@ final class MediaTests: XCTestCase {
     /// 音频导入可跨实例恢复；文件名与展示名隔离，删除后两条音轨均消失。
     func testAudioImportPersistenceAndDeletion() async throws {
         let library = MediaLibrary(directory: directory.appendingPathComponent("library"))
-        let source = try XCTUnwrap(Bundle.main.url(forResource: "rain", withExtension: "wav"))
+        let source = try XCTUnwrap(HeadphoneAudio.bundledURL(named: "rain"))
         let sound = try await library.importFile(source, name: "../../my rain")
         XCTAssertEqual(sound.name, "../../my rain")
         XCTAssertEqual(library.sounds.count, 1)
@@ -97,7 +97,7 @@ final class MediaTests: XCTestCase {
     /// 已取消任务不写入音轨或清单，超大文件也应在解码前拒绝。
     func testCancellationAndSizeLimit() async throws {
         let library = MediaLibrary(directory: directory.appendingPathComponent("library"))
-        let source = try XCTUnwrap(Bundle.main.url(forResource: "rain", withExtension: "wav"))
+        let source = try XCTUnwrap(HeadphoneAudio.bundledURL(named: "rain"))
         let task = Task { try await library.importFile(source) }
         task.cancel()
         do { _ = try await task.value; XCTFail("Cancelled import must fail") } catch {}
@@ -137,7 +137,7 @@ final class MediaTests: XCTestCase {
         let videoAsset = AVURLAsset(url: silent)
         let video = try await videoAsset.loadTracks(withMediaType: .video)[0]
         try composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid)!.insertTimeRange(CMTimeRange(start: .zero, duration: CMTime(seconds: 2, preferredTimescale: 600)), of: video, at: .zero)
-        let audioAsset = AVURLAsset(url: Bundle.main.url(forResource: "rain", withExtension: "wav")!)
+        let audioAsset = AVURLAsset(url: try XCTUnwrap(HeadphoneAudio.bundledURL(named: "rain")))
         let audio = try await audioAsset.loadTracks(withMediaType: .audio)[0]
         try composition.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid)!.insertTimeRange(CMTimeRange(start: .zero, duration: CMTime(seconds: 2, preferredTimescale: 600)), of: audio, at: .zero)
         let output = directory.appendingPathComponent("with-audio.mov")
