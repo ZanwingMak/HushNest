@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">HushNest</string>
+    <string name="title_activity_main">HushNest</string>
+    <string name="package_name">com.hushnest.app</string>
+    <string name="custom_url_scheme">com.hushnest.app</string>
+</resources>

@@ -4,6 +4,8 @@
 
 [官网](https://zanwingmak.github.io/HushNest/) · [TestFlight](https://testflight.apple.com/join/cmFcXrjy) · [下载源码与自行签名安装包](https://github.com/ZanwingMak/HushNest/releases) · [隐私政策](https://zanwingmak.github.io/HushNest/privacy.html) · [服务条款](https://zanwingmak.github.io/HushNest/terms.html)
 
+Web / PWA、Android 及 MyGo 原生 macOS / Windows 客户端位于 [cross-platform](cross-platform/README.md)。本轮跨平台开发、耳机确认、试听修复和长音轨的需求、验收标准与交付记录见 [需求与交付文档](docs/requirements/2026-11-01-multiplatform.md)。下文为原生 iPhone 应用说明。
+
 ## 功能
 
 - 秒级倒计时、指定时间，默认 15 / 30 / 45 / 60 分钟预设，自定义时长可保存。

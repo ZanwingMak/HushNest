@@ -1,0 +1,48 @@
+{
+  "name": "hushnest-multiplatform",
+  "version": "0.1.0",
+  "private": true,
+  "description": "HushNest for Web, Android, macOS and Windows",
+  "type": "module",
+  "author": "ZHENYING MAI",
+  "license": "MIT",
+  "scripts": {
+    "prepare:assets": "node scripts/prepare-assets.mjs",
+    "dev": "npm run prepare:assets && vite --host 127.0.0.1",
+    "build": "npm run prepare:assets && tsc -b && vite build && node scripts/build-service-worker.mjs",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "node --experimental-strip-types --test tests/*.test.ts",
+    "test:web": "playwright test",
+    "android:sync": "npm run build && cap sync android",
+    "android:build": "npm run android:sync && node scripts/build-android.mjs",
+    "windows:helper": "node scripts/build-windows-helper.mjs",
+    "windows:dev": "node scripts/desktop.mjs dev windows",
+    "windows:build": "node scripts/desktop.mjs build windows",
+    "macos:dev": "node scripts/desktop.mjs dev macos",
+    "macos:build": "node scripts/desktop.mjs build macos",
+    "desktop:generate": "mygo generate",
+    "test:desktop": "go test ./desktop/..."
+  },
+  "dependencies": {
+    "@capacitor/android": "8.6.0",
+    "@capacitor/core": "8.6.0",
+    "@phosphor-icons/react": "^2.1.10",
+    "mygo-runtime": "0.7.3",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.6.0",
+    "@playwright/test": "^1.64.1",
+    "@tailwindcss/vite": "^4.3.0",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^6.0.0",
+    "mygo-cli": "0.7.3",
+    "sharp": "^0.35.5",
+    "tailwindcss": "^4.3.0",
+    "typescript": "^6.0.0",
+    "vite": "8.3.5"
+  }
+}

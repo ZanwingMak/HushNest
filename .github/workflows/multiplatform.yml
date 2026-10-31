@@ -1,0 +1,83 @@
+name: Web Android MyGo desktop
+on:
+  push:
+    branches: [main, codex/web-android-windows]
+    paths: ['cross-platform/**', '.github/workflows/multiplatform.yml']
+  pull_request:
+    paths: ['cross-platform/**', '.github/workflows/multiplatform.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    working-directory: cross-platform
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '24', cache: npm, cache-dependency-path: cross-platform/package-lock.json }
+      - run: npm ci
+      - run: npm test
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:web
+      - run: npm run build
+      - run: node tests/offline-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        with: { name: HushNest-Web, path: cross-platform/dist }
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '24', cache: npm, cache-dependency-path: cross-platform/package-lock.json }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '21' }
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools'
+          log-accepted-android-sdk-licenses: 'false'
+      - run: npm ci
+      - run: chmod +x android/gradlew
+      - run: npm run android:build
+      - run: ./android/gradlew -p android lintDebug --console=plain
+      - uses: actions/upload-artifact@v4
+        with: { name: HushNest-Android-debug, path: cross-platform/android/app/build/outputs/apk/debug/app-debug.apk }
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '24', cache: npm, cache-dependency-path: cross-platform/package-lock.json }
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: '8.0.x' }
+      - uses: actions/setup-go@v7
+        with: { go-version-file: cross-platform/go.mod, cache-dependency-path: cross-platform/go.sum }
+      - run: npm ci
+      - run: go test ./desktop/...
+      - run: go vet ./desktop/...
+      - run: npm run windows:build
+      - run: node tests/desktop-smoke.mjs
+      - run: node tests/windows-installer.mjs
+      - uses: actions/upload-artifact@v4
+        with: { name: HushNest-Windows-MyGo-Native, path: cross-platform/release/mygo-native/windows-amd64 }
+      - uses: actions/upload-artifact@v4
+        with: { name: HushNest-Windows-Native-QA, path: cross-platform/release/mygo-native/qa }
+  macos:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '24', cache: npm, cache-dependency-path: cross-platform/package-lock.json }
+      - uses: actions/setup-go@v7
+        with: { go-version-file: cross-platform/go.mod, cache-dependency-path: cross-platform/go.sum }
+      - run: npm ci
+      - run: go test ./desktop/...
+      - run: go vet ./desktop/...
+      - run: npm run macos:build
+      - run: node tests/desktop-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        with: { name: HushNest-macOS-MyGo-Native, path: cross-platform/release/mygo-native/darwin-universal/*.dmg }
+      - uses: actions/upload-artifact@v4
+        with: { name: HushNest-macOS-Native-QA, path: cross-platform/release/mygo-native/qa }

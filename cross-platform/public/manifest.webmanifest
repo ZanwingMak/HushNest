@@ -1,0 +1,6 @@
+{
+  "id": "./", "name": "耳憩 HushNest", "short_name": "HushNest",
+  "start_url": "./", "scope": "./", "display": "standalone",
+  "background_color": "#f4f5ef", "theme_color": "#304f40",
+  "icons": [{ "src": "./icon.png", "sizes": "1024x1024", "type": "image/png", "purpose": "any" }]
+}
