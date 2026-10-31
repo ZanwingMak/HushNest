@@ -22,6 +22,8 @@ func (f *silentAudio) request(action string, data map[string]any, out any) error
 	switch action {
 	case "route":
 		*out.(*Route) = f.route
+	case "inspect":
+		out.(*struct{ Seconds float64 }).Seconds = 1
 	case "play":
 		f.plays = append(f.plays, data)
 	case "stop":

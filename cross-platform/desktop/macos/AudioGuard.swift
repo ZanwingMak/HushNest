@@ -159,6 +159,14 @@ final class AudioGuard {
             var result: Any = NSNull()
             switch action {
             case "route": result = try JSONSerialization.jsonObject(with: JSONEncoder().encode(route()))
+            case "inspect":
+                guard let sound = input["sound"] as? String, sound.hasPrefix("custom:") else { throw GuardError.invalidMedia }
+                let id = String(sound.dropFirst(7))
+                guard UUID(uuidString: id) != nil && id.count == 36 else { throw GuardError.invalidMedia }
+                let asset = AVURLAsset(url: mediaDirectory.appendingPathComponent(id + ".media"))
+                let seconds = asset.duration.seconds
+                guard seconds.isFinite && seconds > 0 && !asset.hasProtectedContent && !asset.tracks(withMediaType: .audio).isEmpty else { throw GuardError.invalidMedia }
+                result = ["seconds": seconds]
             case "confirmRoute":
                 let current = route(); guard current.requiresConfirmation && !current.token.isEmpty else { throw GuardError.noHeadphones }; confirmedToken = current.token
             case "play": try play(input)

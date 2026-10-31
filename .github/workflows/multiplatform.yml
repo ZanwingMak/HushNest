@@ -60,7 +60,9 @@ jobs:
       - run: npm run windows:build
       - run: node tests/desktop-smoke.mjs
       - uses: actions/upload-artifact@v4
-        with: { name: HushNest-Windows-MyGo, path: cross-platform/release/mygo/windows-amd64 }
+        with: { name: HushNest-Windows-MyGo-Native, path: cross-platform/release/mygo-native/windows-amd64 }
+      - uses: actions/upload-artifact@v4
+        with: { name: HushNest-Windows-Native-QA, path: cross-platform/release/mygo-native/qa }
   macos:
     runs-on: macos-15
     steps:
@@ -75,4 +77,6 @@ jobs:
       - run: npm run macos:build
       - run: node tests/desktop-smoke.mjs
       - uses: actions/upload-artifact@v4
-        with: { name: HushNest-macOS-MyGo, path: cross-platform/release/mygo/darwin-universal/*.dmg }
+        with: { name: HushNest-macOS-MyGo-Native, path: cross-platform/release/mygo-native/darwin-universal/*.dmg }
+      - uses: actions/upload-artifact@v4
+        with: { name: HushNest-macOS-Native-QA, path: cross-platform/release/mygo-native/qa }

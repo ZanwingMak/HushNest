@@ -1,5 +1,5 @@
 import { spawn, spawnSync } from 'node:child_process';
-import { copyFile, cp, mkdir, mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
+import { copyFile, cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -15,24 +15,38 @@ function run(command, args, options = {}) {
   if (result.error) throw result.error;
   if (result.status !== 0) throw new Error(`${command} failed (${result.status})`);
 }
-const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const mygo = path.join(root, 'node_modules/mygo-cli/bin/mygo.js');
-const shell = process.platform === 'win32';
-run(process.execPath, [mygo, 'generate']);
-if (process.env.npm_execpath) run(process.execPath, [process.env.npm_execpath, 'run', 'build']);
-else run(npm, ['run', 'build'], { shell });
-await mkdir(path.join(root, 'desktop/frontend'), { recursive: true });
-for (const entry of await readdir(path.join(root, 'dist'), { withFileTypes: true })) {
-  if (entry.name === 'audio' || entry.name === 'sw.js') continue;
-  await cp(path.join(root, 'dist', entry.name), path.join(root, 'desktop/frontend', entry.name), { recursive: true });
+// Native desktop builds only stage Go UI assets, never the React frontend.
+const original = path.resolve(root, '../HushNest/Resources');
+await mkdir(path.join(root, 'resources/audio'), { recursive: true });
+await mkdir(path.join(root, 'resources/locales'), { recursive: true });
+for (const file of await readdir(original)) {
+  if (file.endsWith('.wav') || file === 'FieldRecordings.json') await copyFile(path.join(original, file), path.join(root, 'resources/audio', file));
 }
-await mkdir(path.join(root, 'desktop/frontend/audio'), { recursive: true });
-await copyFile(path.join(root, 'dist/audio/FieldRecordings.json'), path.join(root, 'desktop/frontend/audio/FieldRecordings.json'));
-await mkdir(path.join(root, 'resources'), { recursive: true });
+const decode = s => s.replace(/\\(["\\nr])/g, (_, c) => ({ n: '\n', r: '\r' }[c] ?? c));
+for (const language of ['zh-Hans', 'zh-Hant', 'en', 'ja', 'ko', 'es']) {
+  const source = await readFile(path.join(original, `${language}.lproj/Localizable.strings`), 'utf8');
+  const dictionary = {};
+  for (const match of source.matchAll(/"((?:\\.|[^"\\])*)"\s*=\s*"((?:\\.|[^"\\])*)";/g)) dictionary[decode(match[1])] = decode(match[2]);
+  await writeFile(path.join(root, 'resources/locales', `${language}.json`), JSON.stringify(dictionary));
+}
 await mkdir(path.join(root, 'desktop/bin'), { recursive: true });
-await sharp(path.join(root, 'public/icon.png')).resize(32, 32).png().toFile(path.join(root, 'resources/tray.png'));
+await copyFile(path.join(original, 'Assets.xcassets/AppIcon.appiconset/AppIcon.png'), path.join(root, 'resources/icon.png'));
+await sharp(path.join(root, 'resources/icon.png')).resize(32, 32).png().toFile(path.join(root, 'resources/tray.png'));
 await copyFile(path.join(root, 'THIRD_PARTY_NOTICES.md'), path.join(root, 'resources/THIRD_PARTY_NOTICES.md'));
 await copyFile(path.join(root, 'desktop/licenses/MyGo.LICENSE.txt'), path.join(root, 'resources/MyGo.LICENSE.txt'));
+await copyFile(path.resolve(root, '../LICENSE'), path.join(root, 'resources/HushNest.LICENSE.txt'));
+run(go, ['mod', 'download']);
+const moduleCache = spawnSync(go, ['env', 'GOMODCACHE'], { cwd: root, env, encoding: 'utf8' });
+if (moduleCache.status !== 0) throw new Error('Could not locate the pinned Go module licenses.');
+await mkdir(path.join(root, 'resources/licenses'), { recursive: true });
+for (const [module, filename] of [
+  ['github.com/ebitengine/purego@v0.11.1', 'purego'],
+  ['github.com/go-text/typesetting@v0.3.5', 'typesetting'],
+  ['golang.org/x/image@v0.46.0', 'x-image'],
+  ['golang.org/x/net@v0.59.0', 'x-net'],
+  ['golang.org/x/text@v0.43.0', 'x-text'],
+]) await copyFile(path.join(moduleCache.stdout.trim(), module, 'LICENSE'), path.join(root, 'resources/licenses', `${filename}.LICENSE.txt`));
 let platform;
 if (target === 'windows') {
   if (process.platform !== 'win32') throw new Error('Build the Windows audio helper on Windows.');
@@ -55,17 +69,17 @@ if (target === 'windows') {
 const buildOutput = await mkdtemp(path.join(tmpdir(), 'hushnest-mygo-build-'));
 const args = ['build', '-platform', platform, '-skip-build-command', '-o', buildOutput];
 run(process.execPath, [mygo, ...args]);
-await mkdir(path.join(root, 'release/mygo'), { recursive: true });
+await mkdir(path.join(root, 'release/mygo-native'), { recursive: true });
 for (const entry of await readdir(buildOutput, { withFileTypes: true })) {
-  await cp(path.join(buildOutput, entry.name), path.join(root, 'release/mygo', entry.name), { recursive: true });
+  await cp(path.join(buildOutput, entry.name), path.join(root, 'release/mygo-native', entry.name), { recursive: true });
 }
 const resolvedBuild = path.resolve(buildOutput);
 if (path.dirname(resolvedBuild) === path.resolve(tmpdir()) && /^hushnest-mygo-build-/.test(path.basename(resolvedBuild))) {
   await rm(resolvedBuild, { recursive: true, force: true }).catch(() => {});
 }
-console.log(`Desktop artifacts: ${path.join(root, 'release/mygo', platform.replace('/', '-'))}`);
+console.log(`Native desktop artifacts: ${path.join(root, 'release/mygo-native', platform.replace('/', '-'))}`);
 if (mode === 'dev') {
-  const executable = target === 'windows' ? 'release/mygo/windows-amd64/HushNest.exe' : 'release/mygo/darwin-universal/HushNest.app/Contents/MacOS/HushNest';
+  const executable = target === 'windows' ? 'release/mygo-native/windows-amd64/HushNest.exe' : 'release/mygo-native/darwin-universal/HushNest.app/Contents/MacOS/HushNest';
   const child = spawn(path.join(root, executable), [], { cwd: root, env, stdio: 'inherit', windowsHide: true });
   child.on('exit', code => process.exit(code ?? 1));
-} else await writeFile(path.join(root, 'release/mygo/BUILD.txt'), `HushNest MyGo 0.7.3\nTarget: ${platform}\n`);
+} else await writeFile(path.join(root, 'release/mygo-native/BUILD.txt'), `HushNest 0.2.0 / MyGo 0.7.3 native Go UI\nTarget: ${platform}\nNo HTML, JavaScript or WebView\n`);

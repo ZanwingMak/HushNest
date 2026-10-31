@@ -2,14 +2,12 @@
   "name": "HushNest",
   "slug": "hushnest",
   "identifier": "com.hushnest.desktop",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "copyright": "Copyright © 2026 ZHENYING MAI",
-  "icon": "public/icon.png",
+  "icon": "resources/icon.png",
   "main": "./desktop",
-  "frontendDist": "desktop/frontend",
-  "bindings": "src/mygo.ts",
-  "out": "release/mygo",
-  "resources": ["dist/audio"],
+  "bindings": "desktop/bin/unused-bindings.ts",
+  "out": "release/mygo-native",
   "macos": { "minimumSystemVersion": "12.0", "signingIdentity": "-" },
   "windows": { "displayName": "耳憩 HushNest" }
 }

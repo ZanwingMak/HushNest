@@ -98,6 +98,16 @@ static class Program
                     switch (data.GetProperty("action").GetString())
                     {
                         case "route": result = CurrentRoute(); break;
+                        case "inspect":
+                            var media = data.GetProperty("sound").GetString() ?? "";
+                            if (!media.StartsWith("custom:") || !Guid.TryParseExact(media[7..], "D", out var mediaId)) throw new InvalidOperationException("invalid-media");
+                            using (var probe = new MediaFoundationReader(Path.Combine(mediaRoot, mediaId.ToString() + ".media")))
+                            {
+                                var duration = probe.TotalTime.TotalSeconds;
+                                if (!double.IsFinite(duration) || duration <= 0 || probe.WaveFormat.Channels < 1) throw new InvalidOperationException("invalid-media");
+                                result = new { seconds = duration };
+                            }
+                            break;
                         case "play": Play(data); break;
                         case "stop": Stop(); break;
                         case "volume": if (loop != null) loop.Volume = (float)Math.Clamp(data.GetProperty("value").GetDouble(), 0, 1); break;
