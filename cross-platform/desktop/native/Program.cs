@@ -15,6 +15,43 @@ static class Program
     private static DateTime previewEnd = DateTime.MaxValue;
     private static readonly JsonSerializerOptions Json = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
     private static string audioRoot = "", mediaRoot = "";
+    private static readonly HashSet<string> Sounds = new(["rain", "ocean", "stream", "forest", "fireplace", "night", "brown", "pink", "dawn", "bell", "orbit", "piano", "marimba", "harp", "bamboo", "aurora", "classic", "twinbell", "digital", "pulse", "beacon", "reveille"]);
+
+    static WaveStream OpenSound(string sound)
+    {
+        if (sound.StartsWith("custom:"))
+        {
+            if (!Guid.TryParseExact(sound[7..], "D", out var id)) throw new InvalidOperationException("invalid-sound");
+            return new MediaFoundationReader(Path.Combine(mediaRoot, id.ToString() + ".media"));
+        }
+        if (!Sounds.Contains(sound)) throw new InvalidOperationException("invalid-sound");
+        return new WaveFileReader(Path.Combine(audioRoot, sound + ".wav"));
+    }
+    static double Number(JsonElement data, string key, double fallback, double max)
+    {
+        var value = data.TryGetProperty(key, out var field) ? field.GetDouble() : fallback;
+        if (!double.IsFinite(value) || value < 0 || value > max) throw new InvalidOperationException("invalid-number");
+        return value;
+    }
+    static object Inspect(JsonElement data)
+    {
+        using var stream = OpenSound(data.GetProperty("sound").GetString() ?? "");
+        var duration = stream.TotalTime.TotalSeconds;
+        if (!double.IsFinite(duration) || duration <= 0 || stream.WaveFormat.Channels < 1) throw new InvalidOperationException("invalid-media");
+        var start = Number(data, "startSeconds", 0, 7200);
+        var seconds = Number(data, "sampleSeconds", 0, 4);
+        var source = new LoopSource(stream, double.PositiveInfinity, start) { Volume = 1 };
+        var wanted = seconds > 0 ? (long)(seconds * source.WaveFormat.SampleRate * source.WaveFormat.Channels) : 2048;
+        var buffer = new float[4096]; long samples = 0; double sum = 0, peak = 0;
+        while (samples < wanted)
+        {
+            int read = source.Read(buffer, 0, (int)Math.Min(buffer.Length, wanted - samples));
+            if (read <= 0) throw new InvalidOperationException("empty-audio");
+            for (int i = 0; i < read; i++) { sum += buffer[i] * buffer[i]; peak = Math.Max(peak, Math.Abs(buffer[i])); }
+            samples += read;
+        }
+        return new { seconds = duration, samples, rms = Math.Sqrt(sum / samples), peak };
+    }
 
     record Route(bool Connected, bool Verified, string Name, string Token, bool RequiresConfirmation);
     static Route CurrentRoute()
@@ -48,29 +85,18 @@ static class Program
     {
         Stop(); var route = CurrentRoute(); if (!route.Connected) throw new InvalidOperationException("routeLost");
         var sound = data.GetProperty("sound").GetString() ?? "";
-        var custom = sound.StartsWith("custom:"); string file;
-        if (custom)
-        {
-            if (!Guid.TryParseExact(sound[7..], "D", out var id)) throw new InvalidOperationException("invalid-sound");
-            file = Path.Combine(mediaRoot, id.ToString() + ".media");
-        }
-        else
-        {
-            var allowed = new HashSet<string>(["rain", "ocean", "stream", "forest", "fireplace", "night", "brown", "pink", "dawn", "bell", "orbit", "piano", "marimba", "harp", "bamboo", "aurora", "classic", "twinbell", "digital", "pulse", "beacon", "reveille"]);
-            if (!allowed.Contains(sound)) throw new InvalidOperationException("invalid-sound");
-            file = Path.Combine(audioRoot, sound + ".wav");
-        }
+        var custom = sound.StartsWith("custom:");
         using var enumerator = new MMDeviceEnumerator(); selected = enumerator.GetDevice(route.Token); selectedToken = route.Token;
-        reader = custom ? new MediaFoundationReader(file) : new WaveFileReader(file);
+        reader = OpenSound(sound);
         var alarm = data.TryGetProperty("alarm", out var a) && a.GetBoolean();
         var preview = data.TryGetProperty("preview", out var p) && p.GetBoolean();
-        loop = new LoopSource(reader, custom && alarm ? 60 : double.PositiveInfinity);
+        loop = new LoopSource(reader, custom && alarm ? 60 : double.PositiveInfinity, preview ? Number(data, "startSeconds", 0, 7200) : 0);
         loop.Volume = alarm && !preview ? 0 : (float)Math.Clamp(data.GetProperty("volume").GetDouble(), 0, 1);
         output = new WasapiOut(selected, AudioClientShareMode.Shared, true, 100);
         var current = output;
         current.PlaybackStopped += (_, e) => { if (e.Exception != null) { Interlocked.Exchange(ref confirmedToken, ""); Emit(new { eventType = "routeLost" }); } };
         current.Init(loop.ToWaveProvider()); current.Play();
-        previewEnd = preview ? DateTime.UtcNow.AddSeconds(2) : DateTime.MaxValue;
+        previewEnd = preview ? DateTime.UtcNow.AddSeconds(Number(data, "previewSeconds", 4, 4)) : DateTime.MaxValue;
     }
     static void Check()
     {
@@ -110,14 +136,7 @@ static class Program
                             confirmedToken = currentRoute.Token;
                             break;
                         case "inspect":
-                            var media = data.GetProperty("sound").GetString() ?? "";
-                            if (!media.StartsWith("custom:") || !Guid.TryParseExact(media[7..], "D", out var mediaId)) throw new InvalidOperationException("invalid-media");
-                            using (var probe = new MediaFoundationReader(Path.Combine(mediaRoot, mediaId.ToString() + ".media")))
-                            {
-                                var duration = probe.TotalTime.TotalSeconds;
-                                if (!double.IsFinite(duration) || duration <= 0 || probe.WaveFormat.Channels < 1) throw new InvalidOperationException("invalid-media");
-                                result = new { seconds = duration };
-                            }
+                            result = Inspect(data);
                             break;
                         case "play": Play(data); break;
                         case "stop": Stop(); break;
@@ -139,11 +158,15 @@ sealed class LoopSource : ISampleProvider
     private ISampleProvider source;
     private readonly long maxSamples;
     private long position;
+    private readonly long startPosition;
     public volatile float Volume;
     public WaveFormat WaveFormat => source.WaveFormat;
-    public LoopSource(WaveStream stream, double limit)
+    public LoopSource(WaveStream stream, double limit, double start = 0)
     {
-        this.stream = stream; source = stream.ToSampleProvider();
+        this.stream = stream;
+        if (!double.IsFinite(start) || start < 0 || start >= stream.TotalTime.TotalSeconds) throw new InvalidOperationException("invalid-start");
+        stream.CurrentTime = TimeSpan.FromSeconds(start); startPosition = stream.Position;
+        source = stream.ToSampleProvider();
         maxSamples = double.IsPositiveInfinity(limit) ? long.MaxValue : (long)(limit * source.WaveFormat.SampleRate * source.WaveFormat.Channels);
     }
     public int Read(float[] buffer, int offset, int count)
@@ -156,7 +179,7 @@ sealed class LoopSource : ISampleProvider
             if (read == 0)
             {
                 if (++resets > 2) break;
-                stream.Position = 0; source = stream.ToSampleProvider(); position = 0; continue;
+                stream.Position = startPosition; source = stream.ToSampleProvider(); position = 0; continue;
             }
             resets = 0; total += read; position += read;
         }

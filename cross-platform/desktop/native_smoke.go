@@ -83,5 +83,23 @@ func desktopSmoke(d *Desktop, resources, report string) {
 	}
 	result["deletedMedia"] = !d.service.hasMedia(item.ID, item.Size)
 	result["languages"] = len(d.view.dictionaries)
-	result["ok"] = d.window.Page() == nil && noWebAssets && invalidPath != nil && invalidSound != nil && staleConfirmation != nil && manualConfirmation && result["nativeImport"] == true && result["deletedMedia"] == true && len(d.view.dictionaries) == 6
+	previews := []map[string]any{}
+	for _, sound := range builtinAlarms {
+		var probe struct {
+			Samples int     `json:"samples"`
+			RMS     float64 `json:"rms"`
+			Peak    float64 `json:"peak"`
+		}
+		if err := d.service.backend.request("inspect", map[string]any{"sound": sound, "startSeconds": alarmPreviewStart, "sampleSeconds": previewSeconds}, &probe); err != nil {
+			result["error"] = "alarm preview " + sound + ": " + err.Error()
+			return
+		}
+		if probe.Samples < 160000 || probe.RMS < .02 || probe.Peak < .05 || probe.Peak > 1 {
+			result["error"] = fmt.Sprintf("inaudible alarm preview %s: %+v", sound, probe)
+			return
+		}
+		previews = append(previews, map[string]any{"sound": sound, "rms": probe.RMS, "peak": probe.Peak})
+	}
+	result["alarmPreviews"] = previews
+	result["ok"] = d.window.Page() == nil && noWebAssets && invalidPath != nil && invalidSound != nil && staleConfirmation != nil && manualConfirmation && result["nativeImport"] == true && result["deletedMedia"] == true && len(d.view.dictionaries) == 6 && len(previews) == 14
 }

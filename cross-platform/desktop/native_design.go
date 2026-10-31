@@ -184,7 +184,7 @@ func (a *nativeApp) sidebar(c *ui.Context) {
 		ui.Column(c).Gap(12).Padding(0, 10).Children(func() {
 			nestIcon(c, "history", 24, t.Accent.Alpha(.6))
 			nestText(c, a.t("每一次停下，都是照顾自己。")).FontSize(12).LineHeight(1.8).TextColor(t.TextMuted)
-			nestText(c, "HUSHNEST  /  0.3.1").FontSize(9).LetterSpacing(1.3).TextColor(t.TextMuted.Alpha(.7))
+			nestText(c, "HUSHNEST  /  0.3.2").FontSize(9).LetterSpacing(1.3).TextColor(t.TextMuted.Alpha(.7))
 		})
 	})
 }
@@ -518,7 +518,7 @@ func (a *nativeApp) soundSelector(c *ui.Context, label string, value *string, ch
 			if a.selectChoice(c, label, value, choices, active || a.busy).Height(35).FontSize(12).Changed() {
 				a.changed()
 			}
-			nestButton(c.Key(label+"-preview"), "").Label(a.t("试听")+" "+a.t(label)).Tooltip(a.t("试听")).Size(34, 34).Padding(0).Justify(ui.Center).Background(t.Background).Border(1, t.Border).Disabled(active || a.busy || *value == "none").Children(func() { nestIcon(c, "play", 14, t.Accent) }).OnClick(func() { a.command("preview", 0, *value) })
+			nestButton(c.Key(label+"-preview"), "").Label(a.t("试听")+" "+a.t(label)).Tooltip(a.t("试听")).Size(34, 34).Padding(0).Justify(ui.Center).Background(t.Background).Border(1, t.Border).Disabled(active || a.busy || *value == "none").Children(func() { nestIcon(c, "play", 14, t.Accent) }).OnClick(func() { a.command("preview", 0, *value, label == "唤醒铃声") })
 		})
 	})
 }

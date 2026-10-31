@@ -19,6 +19,10 @@ var idPattern = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f
 func validID(s string) bool { return idPattern.MatchString(s) }
 
 var builtinSounds = strings.Fields("rain ocean stream forest fireplace night brown pink dawn bell orbit piano marimba harp bamboo aurora classic twinbell digital pulse beacon reveille")
+var builtinAlarms = strings.Fields("dawn bell orbit piano marimba harp bamboo aurora classic twinbell digital pulse beacon reveille")
+
+const previewSeconds = 4
+const alarmPreviewStart = 12
 
 func validSound(sound string, allowNone bool) bool {
 	return allowNone && sound == "none" || slices.Contains(builtinSounds, sound) || strings.HasPrefix(sound, "custom:") && validID(strings.TrimPrefix(sound, "custom:"))
@@ -52,6 +56,7 @@ type CommandInput struct {
 	Sound       string       `json:"sound,omitempty"`
 	Volume      float64      `json:"volume,omitempty"`
 	RouteToken  string       `json:"routeToken,omitempty"`
+	Alarm       bool         `json:"alarm,omitempty"`
 }
 type CacheInput struct {
 	ID     string `json:"id"`
@@ -262,9 +267,14 @@ func (s *restService) command(input CommandInput) (result Snapshot, err error) {
 			return result, errors.New("invalid-audio")
 		}
 		s.stopAudioLocked()
-		err = s.backend.request("play", map[string]any{"sound": input.Sound, "volume": min(0.18, max(0.01, input.Volume)), "alarm": false, "preview": true}, nil)
+		alarm := input.Alarm || slices.Contains(builtinAlarms, input.Sound)
+		start := 0
+		if slices.Contains(builtinAlarms, input.Sound) {
+			start = alarmPreviewStart
+		}
+		err = s.backend.request("play", map[string]any{"sound": input.Sound, "volume": min(1, max(0.01, input.Volume)), "alarm": alarm, "preview": true, "startSeconds": start, "previewSeconds": previewSeconds}, nil)
 		if err == nil {
-			s.previewUntil = now + 2000
+			s.previewUntil = time.Now().UnixMilli() + previewSeconds*1000
 			s.outputToken = s.route.Token
 		}
 		return

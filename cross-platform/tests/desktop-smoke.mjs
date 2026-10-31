@@ -21,6 +21,8 @@ try {
   assert.equal(result.invalidPath, true); assert.equal(result.invalidSound, true);
   assert.equal(result.nativeImport, true); assert.equal(result.deletedMedia, true);
   assert.equal(result.staleConfirmationRejected, true); assert.equal(result.manualConfirmation, true);
+  assert.equal(result.alarmPreviews.length, 14);
+  for (const preview of result.alarmPreviews) assert.ok(preview.rms >= 0.02 && preview.peak >= 0.05 && preview.peak <= 1, preview.sound);
   const qa = path.resolve('release/mygo-native/qa', process.platform);
   await mkdir(qa, { recursive: true });
   await cp(report, path.join(qa, 'report.json'));

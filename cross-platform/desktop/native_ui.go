@@ -152,9 +152,16 @@ func (a *nativeApp) save() {
 		return saveNativeSettings(a.service.directory, settings)
 	}, nil)
 }
-func (a *nativeApp) command(action string, duration int, sound string) {
+func (a *nativeApp) command(action string, duration int, sound string, previewAlarm ...bool) {
 	p := a.preferences
 	input := CommandInput{Action: action, Preferences: &p, Sound: sound, Volume: 0.12}
+	if action == "preview" {
+		input.Alarm = slices.Contains(builtinAlarms, sound) || len(previewAlarm) > 0 && previewAlarm[0]
+		input.Volume = p.SleepVolume
+		if input.Alarm {
+			input.Volume = p.AlarmVolume
+		}
+	}
 	if action == "start" {
 		input.Session = &Session{Duration: duration}
 	}

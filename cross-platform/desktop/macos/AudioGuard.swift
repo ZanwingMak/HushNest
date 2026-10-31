@@ -25,6 +25,7 @@ final class AudioGuard {
     var source: URL?
     var sourceAlias: URL?
     var sourceLimit = Double.infinity
+    var sourceStart = 0.0
     var pending = Data()
     var pendingOffset = 0
     var selectedToken = ""
@@ -73,12 +74,27 @@ final class AudioGuard {
         try FileManager.default.linkItem(at: stored, to: alias)
         return alias
     }
-    func inspect(_ id: String) throws -> Double {
-        let url = try decoderURL(mediaDirectory.appendingPathComponent(id + ".media"))
-        defer { try? FileManager.default.removeItem(at: url) }
+    func storedSound(_ sound: String) throws -> URL {
+        if sound.hasPrefix("custom:") {
+            let id = String(sound.dropFirst(7)); guard UUID(uuidString: id) != nil && id.count == 36 else { throw GuardError.invalidSound }
+            return mediaDirectory.appendingPathComponent(id + ".media")
+        }
+        let allowed = Set("rain ocean stream forest fireplace night brown pink dawn bell orbit piano marimba harp bamboo aurora classic twinbell digital pulse beacon reveille".split(separator: " ").map(String.init))
+        guard allowed.contains(sound) else { throw GuardError.invalidSound }
+        return audioDirectory.appendingPathComponent(sound + ".wav")
+    }
+    func number(_ input: [String: Any], _ key: String, _ fallback: Double, _ maximum: Double) throws -> Double {
+        let value = input[key] as? Double ?? fallback
+        guard value.isFinite && value >= 0 && value <= maximum else { throw GuardError.invalidCommand }
+        return value
+    }
+    func inspect(_ sound: String, start: Double, sampleSeconds: Double) throws -> [String: Any] {
+        let stored = try storedSound(sound)
+        let url = try decoderURL(stored)
+        defer { if url != stored { try? FileManager.default.removeItem(at: url) } }
         let asset = AVURLAsset(url: url)
         let seconds = asset.duration.seconds
-        guard seconds.isFinite && seconds > 0 && !asset.hasProtectedContent else { throw GuardError.mediaProbe("invalid-duration-or-protected") }
+        guard seconds.isFinite && seconds > 0 && start < seconds && !asset.hasProtectedContent else { throw GuardError.mediaProbe("invalid-duration-or-protected") }
         guard let track = asset.tracks(withMediaType: .audio).first else { throw GuardError.mediaProbe("missing-audio-track") }
         let probe = try AVAssetReader(asset: asset)
         let output = AVAssetReaderTrackOutput(track: track, outputSettings: [
@@ -87,10 +103,19 @@ final class AudioGuard {
         ])
         output.alwaysCopiesSampleData = false
         guard probe.canAdd(output) else { throw GuardError.mediaProbe("unsupported-audio-track") }; probe.add(output)
+        probe.timeRange = CMTimeRange(start: CMTime(seconds: start, preferredTimescale: 48000), duration: CMTime(seconds: sampleSeconds > 0 ? sampleSeconds : min(seconds - start, 0.05), preferredTimescale: 48000))
         guard probe.startReading() else { throw probe.error ?? GuardError.mediaProbe("decoder-start") }
         defer { probe.cancelReading() }
-        guard output.copyNextSampleBuffer() != nil else { throw probe.error ?? GuardError.mediaProbe("decoder-empty") }
-        return seconds
+        var samples = 0; var sum = 0.0; var peak = 0.0
+        while let sample = output.copyNextSampleBuffer(), let block = CMSampleBufferGetDataBuffer(sample) {
+            let length = CMBlockBufferGetDataLength(block)
+            guard length > 0 && length <= 4 * 1024 * 1024 else { throw GuardError.invalidMedia }
+            var values = [Float](repeating: 0, count: length / MemoryLayout<Float>.size)
+            try values.withUnsafeMutableBytes { p in try check(CMBlockBufferCopyDataBytes(block, atOffset: 0, dataLength: length, destination: p.baseAddress!)) }
+            for value in values { let v = Double(value); sum += v * v; peak = max(peak, abs(v)) }; samples += values.count
+        }
+        guard samples > 0 && probe.status != .failed else { throw probe.error ?? GuardError.mediaProbe("decoder-empty") }
+        return ["seconds": seconds, "samples": samples, "rms": sqrt(sum / Double(samples)), "peak": peak]
     }
     func emit(_ value: [String: Any]) {
         guard JSONSerialization.isValidJSONObject(value), let bytes = try? JSONSerialization.data(withJSONObject: value, options: [.sortedKeys]) else { return }
@@ -125,6 +150,7 @@ final class AudioGuard {
         let old = output; output = nil
         if let old { AudioQueueSetParameter(old, kAudioQueueParam_Volume, 0); AudioQueueStop(old, true); AudioQueueDispose(old, true) }
         reader?.cancelReading(); reader = nil; trackOutput = nil; source = nil
+        sourceStart = 0
         if let alias = sourceAlias { try? FileManager.default.removeItem(at: alias) }; sourceAlias = nil
         selectedToken = ""; previewEnd = .distantFuture; pending.removeAll(keepingCapacity: false); pendingOffset = 0
     }
@@ -143,7 +169,7 @@ final class AudioGuard {
         ])
         output.alwaysCopiesSampleData = false
         guard next.canAdd(output) else { throw GuardError.invalidMedia }; next.add(output)
-        if sourceLimit.isFinite { next.timeRange = CMTimeRange(start: .zero, duration: CMTime(seconds: sourceLimit, preferredTimescale: 48000)) }
+        if sourceLimit.isFinite || sourceStart > 0 { next.timeRange = CMTimeRange(start: CMTime(seconds: sourceStart, preferredTimescale: 48000), duration: CMTime(seconds: sourceLimit.isFinite ? sourceLimit : asset.duration.seconds - sourceStart, preferredTimescale: 48000)) }
         guard next.startReading() else { throw next.error ?? GuardError.invalidMedia }
         reader = next; trackOutput = output
     }
@@ -178,13 +204,13 @@ final class AudioGuard {
         guard current.connected else { throw GuardError.noHeadphones }
         guard let sound = input["sound"] as? String else { throw GuardError.invalidSound }
         let custom = sound.hasPrefix("custom:")
+        let stored = try storedSound(sound)
         if custom {
-            let id = String(sound.dropFirst(7)); guard UUID(uuidString: id) != nil && id.count == 36 else { throw GuardError.invalidSound }
-            sourceAlias = try decoderURL(mediaDirectory.appendingPathComponent(id + ".media")); source = sourceAlias
+            sourceAlias = try decoderURL(stored); source = sourceAlias
         } else {
-            let allowed = Set("rain ocean stream forest fireplace night brown pink dawn bell orbit piano marimba harp bamboo aurora classic twinbell digital pulse beacon reveille".split(separator: " ").map(String.init))
-            guard allowed.contains(sound) else { throw GuardError.invalidSound }; source = audioDirectory.appendingPathComponent(sound + ".wav")
+            source = stored
         }
+        if input["preview"] as? Bool == true { sourceStart = try number(input, "startSeconds", 0, 7200) }
         sourceLimit = custom && input["alarm"] as? Bool == true ? 60 : .infinity
         try resetReader()
         var format = AudioStreamBasicDescription(mSampleRate: 48000, mFormatID: kAudioFormatLinearPCM, mFormatFlags: kAudioFormatFlagIsFloat | kAudioFormatFlagIsPacked, mBytesPerPacket: 8, mFramesPerPacket: 1, mBytesPerFrame: 8, mChannelsPerFrame: 2, mBitsPerChannel: 32, mReserved: 0)
@@ -210,7 +236,7 @@ final class AudioGuard {
         let volume = max(0, min(1, input["volume"] as? Double ?? 0.1))
         try check(AudioQueueSetParameter(queue, kAudioQueueParam_Volume, Float(volume)))
         try check(AudioQueueStart(queue, nil))
-        if input["preview"] as? Bool == true { previewEnd = Date().addingTimeInterval(2) }
+        if input["preview"] as? Bool == true { previewEnd = Date().addingTimeInterval(try number(input, "previewSeconds", 4, 4)) }
     }
     func handle(_ bytes: Data) {
         var id: Int64 = 0
@@ -221,10 +247,8 @@ final class AudioGuard {
             switch action {
             case "route": result = try JSONSerialization.jsonObject(with: JSONEncoder().encode(route()))
             case "inspect":
-                guard let sound = input["sound"] as? String, sound.hasPrefix("custom:") else { throw GuardError.invalidMedia }
-                let id = String(sound.dropFirst(7))
-                guard UUID(uuidString: id) != nil && id.count == 36 else { throw GuardError.invalidMedia }
-                result = ["seconds": try inspect(id)]
+                guard let sound = input["sound"] as? String else { throw GuardError.invalidMedia }
+                result = try inspect(sound, start: try number(input, "startSeconds", 0, 7200), sampleSeconds: try number(input, "sampleSeconds", 0, 4))
             case "confirmRoute":
                 let current = route()
                 guard let expected = input["token"] as? String, !expected.isEmpty, expected == current.token else { throw GuardError.noHeadphones }

@@ -1,6 +1,6 @@
 # 耳憩 HushNest · Web / Android / macOS / Windows
 
-独立的多端应用，开发分支为 `codex/web-android-windows`。桌面客户端 0.3.1 使用 [MyGo 0.7.3](https://github.com/egoist/mygo) 的原生 `ui` 包：Go 界面、Go 后台和系统音频组件。桌面窗口没有 WebView，不加载 React、HTML 或 JavaScript，也不要求安装 WebView2。Web / Android 保留现有前端，原生 iOS 工程及官网保持原样。
+独立的多端应用，开发分支为 `codex/web-android-windows`。桌面客户端 0.3.2 使用 [MyGo 0.7.3](https://github.com/egoist/mygo) 的原生 `ui` 包：Go 界面、Go 后台和系统音频组件。桌面窗口没有 WebView，不加载 React、HTML 或 JavaScript，也不要求安装 WebView2。Web / Android 保留现有前端，原生 iOS 工程及官网保持原样。
 
 0.3.0 重做桌面视觉：侧边导航、原生绘制的圆环计时、紧凑的耳机/时长/声音面板、自然声音卡片及足迹统计。窄窗口自动改为顶部导航和纵向布局，较矮的窗口缩小计时圆环，保留首屏开始按钮。沿用四种主题、深浅外观、六种语言和原有本机数据。
 
@@ -18,6 +18,8 @@ MyGo `ui` 通过 GPU 绘制原生窗口，所有界面和事件均由 Go 实现�
 - 沿用先前桌面包的计时、记录及媒体缓存；旧缓存没有原生媒体目录时会重新检查音轨，以通用名称显示，原文件不变。原 WebView/IndexedDB 中独有的外观设置不会迁移。
 
 桌面 0.3.1：自动检测未识别到耳机，但系统有可用输出时，点击开始、恢复或试听会弹出确认框，展示输出设备名称。选择“我已确认连接耳机，继续”后使用该输出；取消则不播放。也可先在耳机面板手动确认。Go 服务和音频组件均校验确认时的设备标识，确认过程中发生切换不会放行。手动确认只在当前进程、当前输出有效，切换、设备消失或重启后重新确认。若系统根本没有输出设备则不能放行。声卡把 3.5mm 插孔始终报告为同一“扬声器”端点时，软件可能无法察觉物理插拔，因此用户需确认实际声音确实来自耳机。
+
+桌面 0.3.2 修复柔和唤醒铃声试听过轻：内置闹铃试听从第 12 秒的正常片段开始，持续 4 秒，使用当前唤醒铃声音量；助眠音和自定义音轨仍从开头试听。正式到点响铃仍从开头播放并保留渐强。自动化会在 Windows / macOS 原生解码器中无声读取全部 14 种闹铃试听片段，检查样本数、RMS 和峰值。
 
 ## 各平台边界
 
@@ -52,7 +54,7 @@ npm run windows:build
 npm run windows:dev
 ```
 
-输出 `release/mygo-native/windows-amd64/HushNest.exe`、原生音频组件与资源目录，以及 `hushnest-setup-0.3.1-amd64.exe` 安装器。便携使用时保留整个目录；主程序不是包含所有录音与音频组件的单文件应用。未配置代码签名。桌面构建不执行 Vite / React 构建，不打包 `dist/`。
+输出 `release/mygo-native/windows-amd64/HushNest.exe`、原生音频组件与资源目录，以及 `hushnest-setup-0.3.2-amd64.exe` 安装器。便携使用时保留整个目录；主程序不是包含所有录音与音频组件的单文件应用。未配置代码签名。桌面构建不执行 Vite / React 构建，不打包 `dist/`。
 
 安装器默认为当前用户安装，目录为 `%LOCALAPPDATA%\Programs\HushNest`，不自动申请管理员权限。选择 `C:\Program Files`、`D:\Program Files` 等受保护目录时，普通权限可能出现 `Error opening file for writing`，即使报错指向许可证文件。此时中止安装，重新运行并保留默认目录，或选择自己有写入权限的目录；确实需要安装到受保护目录时，可手动以管理员身份运行安装器。不要用“忽略”跳过安装文件。
 
