@@ -26,7 +26,7 @@ export interface Session {
 }
 export interface RestRecord { id: string; startedAt: number; endedAt: number; seconds: number; completed: boolean; sound: string }
 export interface MediaItem { id: string; name: string; duration: number; size: number; blob?: Blob }
-export interface Route { connected: boolean; verified: boolean; name: string; token: string }
+export interface Route { connected: boolean; verified: boolean; name: string; token: string; requiresConfirmation?: boolean }
 export const defaultPreferences: Preferences = {
   duration: 1800, presets: [900, 1800, 2700, 3600], sleepSound: 'rain', alarmSound: 'dawn',
   sleepVolume: 0.18, alarmVolume: 0.55, snoozeMinutes: 5, repeatAlarm: false, vibration: false,

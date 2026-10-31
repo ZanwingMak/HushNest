@@ -6,6 +6,10 @@ public/locales/
 public/icon.png
 public/LICENSE.txt
 desktop/bin/
+desktop/frontend/
+resources/
+desktop/mygo_windows_*.syso
+desktop.exe
 desktop/native/bin/
 desktop/native/obj/
 *.tsbuildinfo

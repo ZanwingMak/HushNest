@@ -2,9 +2,8 @@
   "name": "hushnest-multiplatform",
   "version": "0.1.0",
   "private": true,
-  "description": "HushNest for Web, Android and Windows",
+  "description": "HushNest for Web, Android, macOS and Windows",
   "type": "module",
-  "main": "desktop/main.cjs",
   "author": "ZHENYING MAI",
   "license": "MIT",
   "scripts": {
@@ -17,13 +16,18 @@
     "android:sync": "npm run build && cap sync android",
     "android:build": "npm run android:sync && node scripts/build-android.mjs",
     "windows:helper": "node scripts/build-windows-helper.mjs",
-    "windows:dev": "npm run build && npm run windows:helper && electron .",
-    "windows:build": "npm run build && npm run windows:helper && electron-builder --win portable --x64"
+    "windows:dev": "node scripts/desktop.mjs dev windows",
+    "windows:build": "node scripts/desktop.mjs build windows",
+    "macos:dev": "node scripts/desktop.mjs dev macos",
+    "macos:build": "node scripts/desktop.mjs build macos",
+    "desktop:generate": "mygo generate",
+    "test:desktop": "go test ./desktop/..."
   },
   "dependencies": {
     "@capacitor/android": "8.6.0",
     "@capacitor/core": "8.6.0",
     "@phosphor-icons/react": "^2.1.10",
+    "mygo-runtime": "0.7.3",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },
@@ -35,45 +39,10 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^6.0.0",
-    "electron": "45.2.0",
-    "electron-builder": "26.18.0",
+    "mygo-cli": "0.7.3",
     "sharp": "^0.35.5",
     "tailwindcss": "^4.3.0",
     "typescript": "^6.0.0",
     "vite": "8.3.5"
-  },
-  "build": {
-    "appId": "com.hushnest.desktop",
-    "productName": "HushNest",
-    "copyright": "Copyright © 2026 ZHENYING MAI",
-    "directories": {
-      "output": "release"
-    },
-    "files": [
-      "dist/**",
-      "!dist/audio/**",
-      "desktop/main.cjs",
-      "desktop/preload.cjs",
-      "package.json"
-    ],
-    "extraResources": [
-      {
-        "from": "desktop/bin/",
-        "to": "audio-guard/",
-        "filter": [
-          "**/*",
-          "!*.pdb"
-        ]
-      },
-      {
-        "from": "dist/audio/",
-        "to": "audio/"
-      }
-    ],
-    "win": {
-      "icon": "public/icon.png",
-      "signExecutable": false,
-      "artifactName": "HushNest-${version}-Windows-${arch}.${ext}"
-    }
   }
 }

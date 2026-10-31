@@ -1,9 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
-import { appendRecord, loadJSON, loadRecords, saveJSON } from './core/storage';
+import { appendRecord, getMedia, loadJSON, loadRecords, saveJSON } from './core/storage';
 import { block, createSession, defaultPreferences, finish, normalizePreferences, pause, restoreSession, resume, rested, snooze, tick } from './core/model';
 import type { Preferences, RestRecord, Route, Session } from './core/model';
 import { AudioEngine } from './audio';
-import { isAndroid, isWindows, isWeb, native, unknownRoute } from './platform';
+import { isAndroid, isDesktop, isWeb, native, unknownRoute } from './platform';
+const nativeSessions = isAndroid || isDesktop;
+const nativeController = isAndroid ? native : window.hushnestDesktop;
+async function cacheDesktopSound(sound: string) {
+  if (!isDesktop || !sound.startsWith('custom:')) return;
+  const media = await getMedia(sound.slice(7));
+  if (!media?.blob) throw new Error('missing-media');
+  await window.hushnestAudio!.cacheMedia({ id: media.id, name: media.name, bytes: await media.blob.arrayBuffer() });
+}
 
 function initialPreferences() {
   const stored = loadJSON('preferences');
@@ -13,23 +21,24 @@ function initialPreferences() {
 }
 export function useNest() {
   const [preferences, setPreferences] = useState<Preferences>(initialPreferences);
-  const [session, setSession] = useState<Session | null>(() => isAndroid ? null : restoreSession(loadJSON('session'), Date.now()));
+  const [session, setSession] = useState<Session | null>(() => nativeSessions ? null : restoreSession(loadJSON('session'), Date.now()));
   const [records, setRecords] = useState<RestRecord[]>(loadRecords);
   const [route, setRoute] = useState<Route>(unknownRoute);
   const [error, setError] = useState(''); const [busy, setBusy] = useState(false);
-  const [now, setNow] = useState(Date.now()); const [ready, setReady] = useState(!isAndroid);
+  const [now, setNow] = useState(Date.now()); const [ready, setReady] = useState(!nativeSessions);
   const [exclusive, setExclusive] = useState(true);
   const state = useRef({ session, preferences, records, route });
   state.current = { session, preferences, records, route };
   const engine = useRef<AudioEngine | null>(null);
-  const audioKey = useRef(''); const checkedToken = useRef('');
+  const audioKey = useRef('');
   const save = (key: string, data: unknown) => { try { saveJSON(key, data); } catch { setError('storageError'); } };
-  const commit = (s: Session | null) => { state.current.session = s; setSession(s); if (!isAndroid) save('session', s); };
+  const commit = (s: Session | null) => { state.current.session = s; setSession(s); if (!nativeSessions) save('session', s); };
   const stopRecord = (s: Session, completed: boolean) => {
     const next = appendRecord(state.current.records, finish(s, Date.now(), completed, state.current.preferences.sleepSound));
     state.current.records = next; setRecords(next); save('records', next); commit(null); engine.current?.stop(); audioKey.current = '';
   };
   useEffect(() => {
+    if (nativeSessions) return;
     engine.current = new AudioEngine(() => {
       const s = state.current.session;
       if (s) commit(block(s, Date.now(), 'audioError')); setError('audioError');
@@ -58,10 +67,10 @@ export function useNest() {
     const interval = setInterval(() => {
       const time = Date.now(); setNow(time);
       if (!exclusive) return;
-      if (isAndroid) {
+      if (nativeSessions) {
         if (!polling && time - lastNative >= 1000) {
           polling = true; lastNative = time;
-          void native.snapshot().then(snapshot => { if (!disposed) ingest(snapshot); }).catch(() => setError('audioError')).finally(() => { polling = false; });
+          void nativeController!.snapshot().then(snapshot => { if (!disposed) ingest(snapshot); }).catch(() => setError('audioError')).finally(() => { polling = false; });
         }
         return;
       }
@@ -78,37 +87,13 @@ export function useNest() {
     return () => { disposed = true; clearInterval(interval); };
   }, [exclusive]);
   useEffect(() => {
-    if (isWeb) return;
-    const lost = () => {
-      setRoute(unknownRoute); state.current.route = unknownRoute; checkedToken.current = '';
-      engine.current?.stop(); audioKey.current = '';
-      const s = state.current.session; if (s) commit(block(s, Date.now(), 'routeLost'));
-    };
-    navigator.mediaDevices?.addEventListener('devicechange', lost);
-    const unsubscribe = window.hushnestAudio?.onRouteLost(lost);
-    const unsuspend = window.hushnestDesktop?.onSuspend(() => { lost(); setError('restored'); });
-    return () => { navigator.mediaDevices?.removeEventListener('devicechange', lost); unsubscribe?.(); unsuspend?.(); };
+    if (!isDesktop) return;
+    return window.hushnestDesktop!.onSuspend(() => {
+      void nativeController!.snapshot().then(ingest).catch(() => setError('audioError'));
+    });
   }, []);
   useEffect(() => {
-    if (!isWindows) return;
-    let disposed = false; let pending = false;
-    const check = async () => {
-      if (pending) return; pending = true;
-      try {
-        const next = await window.hushnestDesktop!.route(); if (disposed) return;
-        const s = state.current.session;
-        if (s && (!next.connected || (checkedToken.current && checkedToken.current !== next.token))) {
-          engine.current?.stop(); audioKey.current = ''; commit(block(s, Date.now(), 'routeLost'));
-        }
-        state.current.route = next; setRoute(next);
-      } catch { if (!disposed) { engine.current?.stop(); const s = state.current.session; if (s) commit(block(s, Date.now(), 'routeLost')); setRoute(unknownRoute); } }
-      finally { pending = false; }
-    };
-    void check(); const interval = setInterval(check, 500);
-    return () => { disposed = true; clearInterval(interval); };
-  }, []);
-  useEffect(() => {
-    if (isAndroid || !engine.current) return;
+    if (nativeSessions || !engine.current) return;
     const active = session && ['resting', 'ringing'].includes(session.phase) && exclusive;
     const key = active ? `${session.id}:${session.phase}:${session.phase === 'ringing' ? preferences.alarmSound : preferences.sleepSound}` : '';
     if (key === audioKey.current) return;
@@ -121,14 +106,13 @@ export function useNest() {
     });
   }, [session?.phase, session?.id, preferences.sleepSound, preferences.alarmSound, exclusive]);
   useEffect(() => {
-    if (isAndroid || !session) return;
+    if (nativeSessions || !session) return;
     engine.current?.update(preferences, session.phase === 'ringing', (now - session.deadline) / 1000);
-    if (session.phase === 'ringing' && preferences.vibration && !isWindows && Math.floor(now / 1000) % 3 === 0) navigator.vibrate?.(250);
+    if (session.phase === 'ringing' && preferences.vibration && Math.floor(now / 1000) % 3 === 0) navigator.vibrate?.(250);
   }, [now, preferences, session?.phase]);
   const running = !!session && ['resting', 'ringing', 'blocked'].includes(session.phase);
   useEffect(() => {
-    if (isAndroid) return;
-    if (isWindows) { void window.hushnestDesktop!.keepAwake(running); return () => { void window.hushnestDesktop!.keepAwake(false); }; }
+    if (nativeSessions) return;
     let lock: WakeLockSentinel | undefined; let disposed = false;
     const acquire = async () => {
       if (!running || document.visibilityState !== 'visible') return;
@@ -150,14 +134,15 @@ export function useNest() {
     try {
       const { preferences: p, session: s, route: r } = state.current;
       if (!isWeb && ['start', 'resume', 'snooze'].includes(action) && !r.connected) throw new Error('routeLost');
-      if (isAndroid) {
-        if (action === 'start') await native.requestNotifications();
-        ingest(await native.command({ action, preferences: p, session: action === 'start' ? createSession(Date.now(), duration ?? p.duration) : undefined }));
+      if (nativeSessions) {
+        if (isAndroid && action === 'start') await native.requestNotifications();
+        if (['start', 'resume', 'snooze'].includes(action)) await Promise.all([cacheDesktopSound(p.sleepSound), cacheDesktopSound(p.alarmSound)]);
+        ingest(await nativeController!.command({ action, preferences: p, session: action === 'start' ? createSession(Date.now(), duration ?? p.duration) : undefined }));
         return;
       }
-      if (action === 'start') { checkedToken.current = r.token; commit(createSession(Date.now(), duration ?? p.duration)); }
+      if (action === 'start') commit(createSession(Date.now(), duration ?? p.duration));
       else if (s && action === 'pause') commit(pause(s, Date.now()));
-      else if (s && action === 'resume') { checkedToken.current = r.token; commit(resume(s, Date.now())); }
+      else if (s && action === 'resume') commit(resume(s, Date.now()));
       else if (s && action === 'snooze') commit(snooze(s, Date.now(), p.snoozeMinutes));
       else if (s && action === 'stop') stopRecord(s, s.phase === 'ringing' || Date.now() >= s.deadline && s.pausedRemaining === null);
     } catch (e) { setError(e instanceof Error && ['routeLost', 'otherTab'].includes(e.message) ? e.message : 'audioError'); }
@@ -168,21 +153,20 @@ export function useNest() {
     if (!isWeb && !route.connected) { setError('routeLost'); return; }
     setBusy(true); setError('');
     try {
-      if (isAndroid) await native.command({ action: 'preview', sound, volume: alarm ? preferences.alarmVolume : preferences.sleepVolume });
+      if (nativeSessions) { await cacheDesktopSound(sound); await nativeController!.command({ action: 'preview', sound, volume: alarm ? preferences.alarmVolume : preferences.sleepVolume }); }
       else await engine.current!.play(sound, Math.min(0.18, alarm ? preferences.alarmVolume : preferences.sleepVolume), alarm, true);
     } catch { setError('audioError'); } finally { setBusy(false); }
   }
   async function checkRoute() {
-    if (isAndroid) ingest(await native.snapshot());
-    else if (isWindows) { const r = await window.hushnestDesktop!.route(); setRoute(r); state.current.route = r; }
+    if (nativeSessions) ingest(await nativeController!.snapshot());
   }
   async function clearRecords() {
-    if (isAndroid) await native.command({ action: 'clearRecords' });
+    if (nativeSessions) await nativeController!.command({ action: 'clearRecords' });
     state.current.records = []; setRecords([]); save('records', []);
   }
   function updatePreferences(patch: Partial<Preferences>) {
     const next = normalizePreferences({ ...state.current.preferences, ...patch }); state.current.preferences = next; setPreferences(next);
-    if (isAndroid && session) void native.command({ action: 'volume', preferences: next }).catch(() => setError('audioError'));
+    if (nativeSessions && session) void nativeController!.command({ action: 'volume', preferences: next }).catch(() => setError('audioError'));
   }
   return { preferences, updatePreferences, session, records, route, error: !exclusive ? 'otherTab' : error, setError,
     busy, ready, now, command, preview, checkRoute, clearRecords, exclusive };

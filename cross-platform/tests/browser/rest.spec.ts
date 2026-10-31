@@ -63,15 +63,26 @@ test('Web previews sleep audio and alarms without a headphone check', async ({ p
 });
 test('native desktop still requires headphones and blocks on an output change', async ({ page }) => {
   await page.addInitScript(() => {
+    let session: import('../../src/core/model').Session | null = null;
+    const route = () => {
+      const connected = document.documentElement.dataset.testNativeConnected === 'true';
+      return { connected, verified: connected, name: connected ? 'Test headphones' : '', token: connected ? 'test-headphones' : '' };
+    };
+    const snapshot = async () => {
+      if (session && !route().connected) session = { ...session, phase: 'blocked', reason: 'routeLost' };
+      return { session, route: route(), records: [] };
+    };
     window.hushnestDesktop = {
-      route: async () => {
-        const connected = document.documentElement.dataset.testNativeConnected === 'true';
-        return { connected, verified: connected, name: connected ? 'Test headphones' : '', token: connected ? 'test-headphones' : '' };
+      platform: 'windows', route: async () => route(), snapshot,
+      command: async input => {
+        if (input.action === 'start' && input.session) session = { ...input.session };
+        if (input.action === 'stop') session = null;
+        return snapshot();
       },
       keepAwake: async () => {}, onSuspend: () => () => {},
     };
     window.hushnestAudio = {
-      play: async () => {}, stop: async () => {}, volume: async () => {}, cacheMedia: async () => {}, deleteMedia: async () => {}, onRouteLost: () => () => {},
+      cacheMedia: async () => {}, deleteMedia: async () => {},
     };
   });
   await page.reload();
@@ -86,9 +97,28 @@ test('native desktop still requires headphones and blocks on an output change', 
   await duration(page, 30);
   await page.getByRole('button', { name: '开始我的片刻安静' }).click();
   await expect(page.getByRole('button', { name: '暂停一下' })).toBeVisible();
-  await page.evaluate(() => navigator.mediaDevices.dispatchEvent(new Event('devicechange')));
+  await page.evaluate(() => { document.documentElement.dataset.testNativeConnected = 'false'; });
   await expect(page.getByRole('button', { name: '确认耳机，继续休息' })).toBeVisible();
   await expect(page.getByText('耳机输出已变化，声音已停止。确认耳机后继续。')).toBeVisible();
+});
+test('macOS requires confirming an ambiguous external headphone device', async ({ page }) => {
+  await page.addInitScript(() => {
+    const route = () => ({ connected: document.documentElement.dataset.testConfirmed === 'true', verified: false, name: 'USB headphones', token: 'usb-test', requiresConfirmation: true });
+    const snapshot = async () => ({ session: null, route: route(), records: [] });
+    window.hushnestDesktop = {
+      platform: 'darwin', snapshot, route: async () => route(), keepAwake: async () => {}, onSuspend: () => () => {},
+      command: async input => { if (input.action === 'confirmRoute') document.documentElement.dataset.testConfirmed = 'true'; return snapshot(); },
+    };
+    window.hushnestAudio = { cacheMedia: async () => {}, deleteMedia: async () => {} };
+  });
+  await page.reload();
+  await expect(page.locator('.section-kicker').first()).toContainText('MACOS');
+  await page.getByRole('button', { name: '开始我的片刻安静' }).click();
+  const dialog = page.getByRole('dialog', { name: '检查耳机' });
+  await expect(dialog.getByRole('button', { name: '完成', exact: true })).toBeDisabled();
+  await dialog.getByRole('checkbox', { name: '我确认此设备是耳机，不是音箱或车载设备', exact: true }).check();
+  await dialog.getByRole('button', { name: '完成', exact: true }).click();
+  await expect(page.locator('.route-card')).toContainText('USB headphones');
 });
 test('imported audio survives reload and deletion resets its selected sound', async ({ page }) => {
   await page.getByRole('button', { name: '我的声音', exact: true }).click();

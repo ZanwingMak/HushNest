@@ -2,6 +2,7 @@ import type { Language } from './core/model';
 // Existing product copy comes directly from the untouched Swift localization resources.
 // Only platform-specific copy is defined here, in the same six languages.
 const newCopy: Record<string, string[]> = {
+  headphoneDeviceConfirm: ['我确认此设备是耳机，不是音箱或车载设备', '我確認此裝置是耳機，而非音箱或車載裝置', 'This output device is headphones, not a speaker or car', 'この出力機器はスピーカーや車載機器ではなくイヤホンです', '이 출력 기기는 스피커나 차량이 아닌 이어폰입니다', 'Este dispositivo de salida son auriculares, no un altavoz ni un coche'],
   '把提醒留给自己': ['把提醒留给自己', '把提醒留給自己', 'A MOMENT FOR YOU', '自分だけのひととき', '나만을 위한 순간', 'UN MOMENTO PARA TI'],
   '片刻安静': ['片刻安静', '片刻安靜', 'Quiet time', '静かな時間', '조용한 시간', 'Un momento de calma'],
   '试听': ['试听', '試聽', 'Preview', '試聴', '미리 듣기', 'Escuchar'],

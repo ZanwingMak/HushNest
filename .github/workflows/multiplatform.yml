@@ -1,4 +1,4 @@
-name: Web Android Windows
+name: Web Android MyGo desktop
 on:
   push:
     branches: [codex/web-android-windows]
@@ -52,10 +52,27 @@ jobs:
         with: { node-version: '24', cache: npm, cache-dependency-path: cross-platform/package-lock.json }
       - uses: actions/setup-dotnet@v4
         with: { dotnet-version: '8.0.x' }
+      - uses: actions/setup-go@v7
+        with: { go-version-file: cross-platform/go.mod, cache-dependency-path: cross-platform/go.sum }
       - run: npm ci
+      - run: go test ./desktop/...
+      - run: go vet ./desktop/...
       - run: npm run windows:build
-      - run: node tests/windows-smoke.mjs
-        env:
-          HUSHNEST_PACKAGED_EXE: '${{ github.workspace }}/cross-platform/release/win-unpacked/HushNest.exe'
+      - run: node tests/desktop-smoke.mjs
       - uses: actions/upload-artifact@v4
-        with: { name: HushNest-Windows, path: cross-platform/release/*.exe }
+        with: { name: HushNest-Windows-MyGo, path: cross-platform/release/mygo/windows-amd64 }
+  macos:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '24', cache: npm, cache-dependency-path: cross-platform/package-lock.json }
+      - uses: actions/setup-go@v7
+        with: { go-version-file: cross-platform/go.mod, cache-dependency-path: cross-platform/go.sum }
+      - run: npm ci
+      - run: go test ./desktop/...
+      - run: go vet ./desktop/...
+      - run: npm run macos:build
+      - run: node tests/desktop-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        with: { name: HushNest-macOS-MyGo, path: cross-platform/release/mygo/darwin-universal/*.dmg }

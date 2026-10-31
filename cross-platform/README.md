@@ -1,87 +1,87 @@
-# 耳憩 HushNest · Web / Android / Windows
+# 耳憩 HushNest · Web / Android / macOS / Windows
 
-本目录是独立的多端应用，开发分支为 `codex/web-android-windows`。原生 iOS 工程、Swift 代码、音频源文件、官网及原有发布工作流保持原样；没有生成或替换 iOS 平台。
+独立的多端应用，开发分支为 `codex/web-android-windows`。桌面客户端使用 [MyGo 0.7.3](https://github.com/egoist/mygo)：Go 后台、macOS WKWebView / Windows WebView2 和现有 React 界面。原生 iOS 工程及官网保持原样。
 
-## 已实现
+## 功能
 
-- 1 秒至 12 小时倒计时、下一次本地指定时间（需在 12 小时内）、15 / 30 / 45 / 60 分钟预设、秒级自定义预设及删除。
-- 暂停、恢复、结束、1–30 分钟稍后提醒；以绝对截止时间计时，暂停及中断期间不累计休息时间。
-- 原应用 8 种助眠音、无助眠音、14 种唤醒铃声；15 秒渐强唤醒、最多 3 分钟响铃或持续重复；2 秒低音量试听、实时音量调整。
-- 本机音频/视频导入、选择为助眠音或闹铃、删除；每个文件不超过 200 MB / 2 小时，最多 20 个。自定义闹铃循环前 60 秒。
-- 最多 365 条本机休息记录、统计和清空；设置与音轨本地持久化。无需账号、后端、麦克风或分析服务。
-- 原应用六语言文案 + 六语言平台说明；四主题、浅/深/系统外观、大字体、键盘焦点、减少动态效果、移动端布局。
+秒级倒计时（1 秒至 12 小时）、本地指定时间、可保存预设、暂停恢复、稍后提醒、15 秒渐强闹铃、最多 3 分钟或持续响铃；复用原应用 8 种助眠音、14 种闹铃、图标与六种语言。支持本地媒体导入（每个 200 MB / 2 小时、最多 20 个）、最多 365 条记录、四主题、明暗外观、大字体及减少动态效果。全部功能免费，无账号、后端、麦克风、广告或分析服务。
 
-## 各平台的实现与边界
+## 桌面架构
 
-| 能力 | Web / PWA | Android 9+ | Windows 10/11 x64 |
+MyGo 的 Go 后台拥有计时、会话持久化、音量渐强和播放调度；WebView 仅显示状态和发送命令。窗口最小化、隐藏到托盘或页面重新加载不会改变原生截止时间。后台服务以绝对时间计时，暂停和中断不计入休息记录；进程关闭后手动恢复。休息期间通过 MyGo Power 保持电脑唤醒，关闭窗口收至托盘，退出需确认。
+
+- Windows：MyGo + 系统 WebView2；沿用自包含 .NET 8 / NAudio 的原生 WASAPI 音频组件，将声音固定到具体耳机端点。设备断开或默认输出变化会停止声音，不回退到系统默认扬声器。
+- macOS 12+：MyGo + 系统 WKWebView；Swift 原生音频组件通过 CoreAudio 获取输出，通过 AudioQueue 固定设备 UID，以 AVAssetReader 流式解码。支持系统暴露插孔状态的有线耳机；蓝牙或 USB 无法确定是否为耳机时需用户确认。内置扬声器、AirPlay、聚合和未知输出不会自动获准。
+- 原生音频组件仅通过 stdin/stdout 与 Go 主程序通信，不提供网络端口。WebView 使用 MyGo 的类型化 Go ↔ TypeScript IPC，没有 Node.js 或任意文件/进程接口。导入媒体按 UUID 分块写入应用私有目录，校验总大小与偏移；闹铃最多循环自定义音轨的前 60 秒。
+
+## 各平台边界
+
+| 能力 | Web / PWA | Android 9+ | macOS / Windows MyGo |
 | --- | --- | --- | --- |
-| 界面 | React + TypeScript | 同一界面，Capacitor 原生壳 | 同一界面，Electron 桌面壳 |
-| 音频 | 浏览器媒体播放 | 原生 MediaPlayer；确认实际路由后放开音量 | .NET + NAudio，绑定 WASAPI 具体端点 |
-| 耳机 | 不判断、不要求确认；计时与试听可直接开始，声音跟随系统当前输出 | 有线/USB 耳机；蓝牙需确认设备是耳机。多个可选输出时拒绝猜测 | 默认多媒体输出必须被 Windows 标记为 Headphones / Headset；无法识别的 USB DAC / Speakers 端点会被拒绝 |
-| 断连 | 不监听设备变化来中断计时或声音；耳机断开后可能转为扬声器播放 | noisy 广播、设备回调和实际播放路由校验；停止声音、保留截止时间 | 输出固定端点，无默认扬声器回退；每 100 ms 复查设备及默认输出 |
-| 后台 | 需保持页面打开与设备唤醒；不能保证锁屏或后台闹铃 | 原生前台服务拥有会话、静默常驻通知和有时限的 wake lock | 禁止 Chromium 后台节流，休息时阻止自动睡眠；关闭窗口收至托盘，明确退出才结束程序 |
-| 恢复 | 进程关闭后进入中断状态，人工确认恢复 | WebView 重载不影响服务；进程被杀后人工恢复。暂时音频焦点中断可在系统允许后恢复 | 进程关闭/系统睡眠后人工确认恢复 |
-| 自定义媒体 | 原文件保存在 IndexedDB，播放其中音轨，不导出独立音频文件 | 应用私有目录；支持的视频提取音轨，依赖系统支持的编码 | 原文件保存在 IndexedDB，播放时缓存至应用私有目录，Media Foundation 解码音轨 |
-| 离线 | 首次加载缓存界面；用过的内置音频缓存后可离线播放 | 所有内置音频随包分发 | 所有内置音频随包分发 |
-| 震动 | 取决于浏览器是否支持 Vibration API | 支持，有耳机且响铃时触发 | 不提供 |
+| 耳机 | 不判断、不要求确认，声音跟随系统当前输出 | 原生耳机路由校验；蓝牙需确认是耳机 | 原生输出检测和固定设备播放；macOS 模糊类型需确认 |
+| 设备变化 | 不据此中断计时，可能转到扬声器 | 停止声音、保留截止时间 | 原生音频组件停止，Go 会话进入中断状态 |
+| 后台 | 需页面打开、设备唤醒；锁屏和后台提醒不可靠 | 原生前台服务、静默常驻通知与 wake lock | Go 计时与原生播放，独立于 WebView 的计时器 |
+| 媒体 | IndexedDB 本机保存并播放音轨 | 私有目录，提取支持的视频音轨 | IndexedDB 保存原文件，分块缓存到私有目录供原生解码 |
+| 离线 | 缓存界面及已用过的内置音频 | 内置音频随包分发 | 内置音频随包分发 |
+| 震动 | 取决于浏览器支持 | 支持 | 不提供 |
 
-Web 需保持页面打开与设备唤醒，锁屏或后台限制可能使提醒失效。Web 不进行耳机判断，声音跟随系统当前输出，可能通过扬声器播放。原生端需真机确认耳机、来电、厂商电池策略与驱动行为；开始休息后切换设备会中断声音，需要检查后手动继续。不要作为重要事项的唯一提醒。
+Web 无耳机判断，不保证阻止外放。原生端仍需实体耳机验证锁屏、蓝牙、来电、驱动及电池限制；不要将它作为重要事项的唯一提醒。AirPods 切换、StoreKit 赞助和相册专用选择器保留在原 iOS 应用，本目录使用系统文件选择器，无付费功能。
 
-StoreKit 赞助、AirPods 切换和相册专用选择器为 iOS 功能；这些端没有移植 Apple 支付，也没有添加任何付费功能。导入使用系统文件选择器。
+## 运行及构建
 
-## 本地运行和构建
-
-需要 Node.js 24。依赖由 `package-lock.json` 固定；从仓库根目录进入本目录：
+需要 Node.js 24；桌面构建另需 Go 1.27.3。依赖由 `package-lock.json`、`go.mod` 和 `go.sum` 固定。从本目录执行：
 
 ```sh
 npm ci
 npm run dev
-```
-
-Web 开发地址为 `http://127.0.0.1:5173/`。静态产物：
-
-```sh
 npm run build
 npm run preview
 ```
 
-`dist/` 可部署到 HTTPS 静态托管或任意子路径。请通过 HTTP / HTTPS 访问，不要直接双击 index.html。服务工作线程不预下载全部音频；首次使用某个内置音频时会缓存完整文件。
+Web 开发地址 `http://127.0.0.1:5173/`，静态产物为 `dist/`，可部署到 HTTPS 子路径。通过 HTTP / HTTPS 访问，不要双击 index.html。服务工作线程只为 Web 注册，桌面及安卓不使用它。
 
-Android 需要 JDK 21、Android SDK 36 和对应 build tools；设置 `JAVA_HOME`、`ANDROID_HOME`，然后：
+Windows 构建需要 Windows x64、.NET 8 SDK 和 WebView2 Runtime：
+
+```sh
+npm run windows:build
+npm run windows:dev
+```
+
+输出 `release/mygo/windows-amd64/HushNest.exe`、原生音频组件与资源目录，以及 `hushnest-setup-0.1.0-amd64.exe` 安装器。便携使用时保留整个目录；主程序不是包含所有录音与音频组件的单文件应用。未配置代码签名。
+
+macOS 构建需要 macOS 与 Xcode Command Line Tools：
+
+```sh
+npm run macos:build
+npm run macos:dev
+```
+
+输出 `release/mygo/darwin-universal/` 中的通用 `.app` / `.dmg`，同时支持 Apple Silicon 与 Intel。当前为 ad hoc 签名测试包，尚未使用 Developer ID 签名或公证。Windows 可交叉编译检查 Go 主程序，但 Swift 音频组件、应用签名和磁盘映像在 macOS CI 中验证。
+
+可选环境变量 `HUSHNEST_GO` / `HUSHNEST_DOTNET` 指定 go / dotnet 的完整路径。脚本不需要 Bun；运行时不需要 Node.js、Go SDK 或 .NET SDK。
+
+Android 需要 JDK 21 与 Android SDK 36，设置 `JAVA_HOME`、`ANDROID_HOME`：
 
 ```sh
 npm run android:build
 ```
 
-输出 `android/app/build/outputs/apk/debug/app-debug.apk`，为可侧载的调试签名 APK。Google Play 上架前需要自己的发布签名，并申报/审核 `specialUse` 前台服务用途；不要把调试 APK 当作已签名上架版本。应用禁用 Android 自动备份，且不申请麦克风、相册全量读取或后台精确闹钟权限。
+输出 `android/app/build/outputs/apk/debug/app-debug.apk`，为调试签名包。Google Play 上架需要自己的签名，并申报审核 `specialUse` 前台服务。Android 禁用自动备份和设备数据迁移，不请求麦克风或后台精确闹钟权限。
 
-Windows 需要 Windows x64 与 .NET 8 SDK（只在构建机需要）。可选设置 `HUSHNEST_DOTNET` 为 dotnet.exe 的完整路径：
-
-```sh
-npm run windows:dev
-npm run windows:build
-```
-
-输出 `release/HushNest-0.1.0-Windows-x64.exe`，为便携应用；原生音频组件已自包含 .NET 运行时。未配置发布证书，程序没有代码签名，正式分发需开发者签名。
-
-## 测试
+## 验证
 
 ```sh
 npm test
 npx playwright install chromium
 npm run test:web
-node tests/windows-smoke.mjs
+npm run test:desktop
+go vet ./desktop/...
 node tests/offline-smoke.mjs
+node tests/desktop-smoke.mjs
 ```
 
-核心测试覆盖时钟漂移、暂停累计、断连截止时间、3 分钟响铃窗口、持续重复、稍后提醒、恢复校验、非法配置、跨午夜、记录上限及音频校验摘要。浏览器测试覆盖 Web 无耳机确认时直接计时及试听、秒级唤醒、稍后提醒、暂停恢复、刷新恢复、设备变化不中断 Web、原生端耳机保护、本机媒体导入/删除、移动布局、语言持久化和多窗口互斥。自动化浏览器使用无声播放替身；Windows smoke 仅查询设备并验证 IPC / 资源 / 沙箱，不播放声音。
+Go 测试覆盖没有前端调用时的到点响铃、三分钟期限、持续响铃、断连、暂停累计、稍后提醒、进程恢复、记录上限、媒体分块及路径校验。浏览器测试覆盖 Web 无耳机门槛、原生端耳机保护、macOS 模糊设备确认、记录、媒体导入、主题语言和多窗口互斥。桌面 smoke 实际运行 MyGo / WebView，核验 IPC、资源、平台、拒绝非法输入和无 Node.js；自动化不播放声音。
 
-`.github/workflows/multiplatform.yml` 分别构建 Web、调试 APK 和 Windows 便携程序并上传 Actions artifacts。它不发布网站或修改 App Store。现有 iOS 与官网 workflow 未修改。
+CI 分别构建 Web、Android、Windows MyGo 和 macOS MyGo 并上传产物，不自动上架或发布网站。原 iOS 工作流不变。实体安卓 / Mac / Windows 耳机的热插拔、音量、来电和厂商策略仍需硬件验证。
 
-仍需实体安卓设备及耳机测试锁屏到点、蓝牙断连/重连、来电和各厂商电池限制，以及 Windows 实际耳机热插拔和音量行为。编译通过和无声自动化不能替代这些硬件验证。
-
-## 目录
-
-`src/core/` 是共享计时和存储逻辑；`src/` 为响应式界面和 Web 控制器；`android/` 的原生服务拥有安卓会话；`desktop/` 为沙箱桌面进程及 WASAPI 子进程；`scripts/prepare-assets.mjs` 只读取原 iOS 音频和六语言资源，生成各端的构建资源。
-
-所有外部依赖及录音许可见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+许可证及录音署名见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
