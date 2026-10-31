@@ -50,6 +50,8 @@ npm run windows:dev
 
 输出 `release/mygo-native/windows-amd64/HushNest.exe`、原生音频组件与资源目录，以及 `hushnest-setup-0.2.0-amd64.exe` 安装器。便携使用时保留整个目录；主程序不是包含所有录音与音频组件的单文件应用。未配置代码签名。桌面构建不执行 Vite / React 构建，不打包 `dist/`。
 
+安装器默认为当前用户安装，目录为 `%LOCALAPPDATA%\Programs\HushNest`，不自动申请管理员权限。选择 `C:\Program Files`、`D:\Program Files` 等受保护目录时，普通权限可能出现 `Error opening file for writing`，即使报错指向许可证文件。此时中止安装，重新运行并保留默认目录，或选择自己有写入权限的目录；确实需要安装到受保护目录时，可手动以管理员身份运行安装器。不要用“忽略”跳过安装文件。
+
 macOS 构建需要 macOS 与 Xcode Command Line Tools：
 
 ```sh
@@ -84,5 +86,7 @@ node tests/desktop-smoke.mjs
 Go 测试覆盖独立于界面的计时状态机，以及原生界面的开始、暂停、恢复、稍后提醒、断连保护、设备确认、设置、文件导入/删除、大小限制和失败回滚。原生视图在常规 / 最小窗口尺寸及深色外观下运行。浏览器测试继续覆盖 Web 无耳机门槛等现有行为。桌面 smoke 实际运行 MyGo 原生窗口，要求 `window.Page() == nil`，截图四个页面，检查安装包没有 HTML/JS/CSS 资源，并用真实解码器无声导入、验证和删除音轨。截图和报告在 `release/mygo-native/qa/`；自动化不播放声音。
 
 CI 分别构建 Web、Android、Windows MyGo 和 macOS MyGo 并上传产物，不自动上架或发布网站。原 iOS 工作流不变。实体安卓 / Mac / Windows 耳机的热插拔、音量、来电和厂商策略仍需硬件验证。
+
+Windows CI 还会运行 `node tests/windows-installer.mjs`：在隔离 runner 上实际安装并覆盖安装到含空格和中文的可写目录，核对程序、许可证及音频资源，最后运行安装后的原生应用测试。此检查会写入当前用户的应用注册信息及开始菜单，因此仅在隔离 CI 中执行。
 
 许可证及录音署名见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。

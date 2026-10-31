@@ -59,6 +59,7 @@ jobs:
       - run: go vet ./desktop/...
       - run: npm run windows:build
       - run: node tests/desktop-smoke.mjs
+      - run: node tests/windows-installer.mjs
       - uses: actions/upload-artifact@v4
         with: { name: HushNest-Windows-MyGo-Native, path: cross-platform/release/mygo-native/windows-amd64 }
       - uses: actions/upload-artifact@v4
