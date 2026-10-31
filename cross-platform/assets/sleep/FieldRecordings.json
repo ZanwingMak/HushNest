@@ -1,0 +1,170 @@
+{
+  "packVersion": 2,
+  "sampleRate": 24000,
+  "format": "PCM signed 16-bit WAV; stereo field recordings except mono night; mono noise",
+  "processing": "Continuous excerpts, 35 Hz high-pass, 10 kHz low-pass, EBU R128 normalization, 12-second equal-power circular overlap. No tiling of short clips.",
+  "recordings": [
+    {
+      "id": "rain",
+      "title": "long_easy_rain_08.wav",
+      "author": "joedeshon",
+      "source": "https://freesound.org/people/joedeshon/sounds/430765/",
+      "download": "https://cdn.freesound.org/previews/430/430765_1218676-hq.mp3",
+      "license": "CC0-1.0",
+      "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "start": 60,
+      "seconds": 600,
+      "crossfade": 12,
+      "channels": 2,
+      "sourceSHA256": "837f9a1dfa4573d04c1b008e3f474c2415cbfcfc541b9f358c38edae099c2051",
+      "outputSHA256": "038fd0945da0ebb289b3c8ecc2d64d20350bd660afc6cc7a10ea6c35d78a3c24",
+      "analysis": {
+        "seconds": 600.0,
+        "sampleRate": 24000,
+        "channels": 2,
+        "peak": 0.255859375,
+        "rms": 0.021628260612487793,
+        "minimumSecondRMS": 0.016629895195364952,
+        "seamDelta": 0.06976318359375,
+        "seamToTypicalDelta": 1.1339285714285714,
+        "seamLevelDB": 0.1965079378894437,
+        "uniqueSecondBlocks": 600,
+        "maxShortLagCorrelation": 0.00737981380307504
+      }
+    },
+    {
+      "id": "ocean",
+      "title": "Gentle Ocean Waves Mix (2018)",
+      "author": "esh9419",
+      "contributors": [
+        "subtyrant: Xerokambos beach",
+        "indieground: Marée basse"
+      ],
+      "source": "https://freesound.org/people/esh9419/sounds/417797/",
+      "download": "https://cdn.freesound.org/previews/417/417797_3285887-hq.mp3",
+      "license": "CC0-1.0",
+      "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "start": 30,
+      "seconds": 600,
+      "crossfade": 12,
+      "channels": 2,
+      "sourceSHA256": "a9865a6b05163a691bc29fe3d559533d2e147c6066b25f515a764e19b980363a",
+      "outputSHA256": "9cdd739b661f5918f57ce87837dd5159d6dbe858aeb86751d5418b5141cfbf93",
+      "analysis": {
+        "seconds": 600.0,
+        "sampleRate": 24000,
+        "channels": 2,
+        "peak": 0.400604248046875,
+        "rms": 0.05777508020401001,
+        "minimumSecondRMS": 0.01914309523999691,
+        "seamDelta": 0.004486083984375,
+        "seamToTypicalDelta": 0.15489989462592202,
+        "seamLevelDB": 2.366252769641476,
+        "uniqueSecondBlocks": 600,
+        "maxShortLagCorrelation": 0.021309319103373546
+      }
+    },
+    {
+      "id": "stream",
+      "title": "Water Stream 03",
+      "author": "sammerz_",
+      "source": "https://freesound.org/people/sammerz_/sounds/864286/",
+      "download": "https://cdn.freesound.org/previews/864/864286_12821231-hq.mp3",
+      "license": "CC0-1.0",
+      "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "start": 2,
+      "seconds": 360,
+      "crossfade": 12,
+      "channels": 2
+    },
+    {
+      "id": "forest",
+      "title": "Spring forest (nature)",
+      "author": "gadesound (Konrad Lesniak)",
+      "source": "https://freesound.org/people/gadesound/sounds/653519/",
+      "download": "https://cdn.freesound.org/previews/653/653519_8666001-hq.mp3",
+      "license": "CC0-1.0",
+      "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "start": 30,
+      "seconds": 480,
+      "crossfade": 12,
+      "channels": 2
+    },
+    {
+      "id": "fireplace",
+      "title": "Fireplace for Six Minutes (Stereo)",
+      "author": "petebuchwald",
+      "source": "https://freesound.org/people/petebuchwald/sounds/496130/",
+      "download": "https://cdn.freesound.org/previews/496/496130_2367139-hq.mp3",
+      "license": "CC0-1.0",
+      "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "start": 30,
+      "seconds": 300,
+      "crossfade": 12,
+      "channels": 2
+    },
+    {
+      "id": "night",
+      "title": "Quiet Night Atmosphere – Soft Crickets (Eagle Mountain, Utah)",
+      "author": "Goldenboy76",
+      "source": "https://freesound.org/people/Goldenboy76/sounds/857163/",
+      "download": "https://cdn.freesound.org/previews/857/857163_12970089-hq.mp3",
+      "license": "CC0-1.0",
+      "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "start": 20,
+      "seconds": 480,
+      "crossfade": 12,
+      "channels": 1
+    }
+  ],
+  "generated": [
+    {
+      "id": "brown",
+      "seconds": 600,
+      "channels": 1,
+      "seed": 2026110101,
+      "spectrumPower": 2,
+      "license": "MIT",
+      "generator": "Full-length periodic FFT colored noise; no repeated sub-blocks",
+      "outputSHA256": "0b0ee20c11633b3c851baa3a3d4c81ce311f7e82ea3e126381e4349f673f647e",
+      "analysis": {
+        "seconds": 600.0,
+        "sampleRate": 24000,
+        "channels": 1,
+        "peak": 0.391448974609375,
+        "rms": 0.07999755442142487,
+        "minimumSecondRMS": 0.0712587758898735,
+        "seamDelta": 0.004302978515625,
+        "seamToTypicalDelta": 0.15666666666666668,
+        "seamLevelDB": 0.1976273070420184,
+        "uniqueSecondBlocks": 600,
+        "maxShortLagCorrelation": 0.031554968635689296
+      }
+    },
+    {
+      "id": "pink",
+      "seconds": 600,
+      "channels": 1,
+      "seed": 2026110102,
+      "spectrumPower": 1,
+      "license": "MIT",
+      "generator": "Full-length periodic FFT colored noise; no repeated sub-blocks",
+      "outputSHA256": "b511df3da760909ad2489ea10a2b96c2c2fcfb054da6730d96c71cf627be428f",
+      "analysis": {
+        "seconds": 600.0,
+        "sampleRate": 24000,
+        "channels": 1,
+        "peak": 0.455718994140625,
+        "rms": 0.07999755442142487,
+        "minimumSecondRMS": 0.07721739262342453,
+        "seamDelta": 0.068511962890625,
+        "seamToTypicalDelta": 0.4955849889624724,
+        "seamLevelDB": 0.3389400945315746,
+        "uniqueSecondBlocks": 600,
+        "maxShortLagCorrelation": 0.010641723809195749
+      }
+    }
+  ],
+  "ffmpegVersion": "ffmpeg version 7.1-essentials_build-www.gyan.dev Copyright (c) 2000-2024 the FFmpeg developers",
+  "numpyVersion": "2.5.4"
+}

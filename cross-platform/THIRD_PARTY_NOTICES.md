@@ -2,7 +2,18 @@
 
 Application code and the original HushNest icon / synthesized audio use the repository MIT license (Copyright 2026 ZHENYING MAI).
 
-The six field recordings are reused without modifying the source WAV files. Authors, source links, CC0 / public-domain licenses, and checksums are preserved in `../HushNest/Resources/FieldRecordings.json`, copied to every target at build time and linked in Settings.
+The cross-platform sleep pack is independent of the original iOS resources. Six longer CC0 field recordings are trimmed, filtered, normalized and crossfaded into circular PCM WAVs. Attribution, public full-length preview URLs, source/output SHA256 checksums and signal analysis are in `assets/sleep/FieldRecordings.json`; that manifest is distributed with every target and linked in Web Settings.
+
+| Sound | Recording / author | License |
+| --- | --- | --- |
+| Rain | [long_easy_rain_08.wav — joedeshon](https://freesound.org/people/joedeshon/sounds/430765/) | CC0 1.0 |
+| Ocean | [Gentle Ocean Waves Mix (2018) — esh9419](https://freesound.org/people/esh9419/sounds/417797/), with CC0 sources by subtyrant and indieground | CC0 1.0 |
+| Stream | [Water Stream 03 — sammerz_](https://freesound.org/people/sammerz_/sounds/864286/) | CC0 1.0 |
+| Forest | [Spring forest (nature) — gadesound / Konrad Lesniak](https://freesound.org/people/gadesound/sounds/653519/) | CC0 1.0 |
+| Fireplace | [Fireplace for Six Minutes (Stereo) — petebuchwald](https://freesound.org/people/petebuchwald/sounds/496130/) | CC0 1.0 |
+| Night | [Quiet Night Atmosphere – Soft Crickets — Goldenboy76](https://freesound.org/people/Goldenboy76/sounds/857163/) | CC0 1.0 |
+
+[CC0 1.0 Public Domain Dedication](https://creativecommons.org/publicdomain/zero/1.0/). The new full-length brown/pink noise generator and its output use the repository MIT license. The original iOS recordings and their manifest remain unchanged; only original alarm WAVs are reused by cross-platform builds.
 
 The Windows WASAPI audio helper uses NAudio.Wasapi and NAudio.Core 2.2.1, copyright Mark Heath and contributors, MIT: https://github.com/naudio/NAudio/blob/v2.2.1/license.txt .
 

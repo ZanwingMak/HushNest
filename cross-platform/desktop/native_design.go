@@ -185,7 +185,7 @@ func (a *nativeApp) sidebar(c *ui.Context) {
 		ui.Column(c).Gap(12).Padding(0, 10).Children(func() {
 			nestIcon(c, "history", 24, t.Accent.Alpha(.6))
 			nestText(c, a.t("每一次停下，都是照顾自己。")).FontSize(12).LineHeight(1.8).TextColor(t.TextMuted)
-			nestText(c, "HUSHNEST  /  0.3.2").FontSize(9).LetterSpacing(1.3).TextColor(t.TextMuted.Alpha(.7))
+			nestText(c, "HUSHNEST  /  0.4.0").FontSize(9).LetterSpacing(1.3).TextColor(t.TextMuted.Alpha(.7))
 		})
 	})
 }
@@ -596,6 +596,9 @@ func (a *nativeApp) libraryPage(c *ui.Context) {
 					}
 				})
 				nestText(c, a.t(sound.name)).FontSize(14).FontWeight(500)
+				if seconds := a.sleepDurations[sound.id]; seconds > 0 {
+					nestText(c, clockText(seconds)+" · "+a.t("循环衔接")).FontSize(10).TextColor(t.TextMuted)
+				}
 				ui.Row(c).Gap(6).Children(func() {
 					label := "设为助眠音"
 					if selected {

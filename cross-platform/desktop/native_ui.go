@@ -28,6 +28,7 @@ type nativeApp struct {
 	preferences              Preferences
 	settings                 nativeSettings
 	dictionaries             map[string]map[string]string
+	sleepDurations           map[string]float64
 	snapshot                 Snapshot
 	page                     string
 	mode                     string
@@ -53,6 +54,7 @@ func newNativeApp(service *restService, resources string) (*nativeApp, error) {
 	service.mu.Unlock()
 	a := &nativeApp{service: service, preferences: preferences, settings: settings, dictionaries: dictionaries,
 		snapshot: service.snapshot(), page: "rest", mode: "countdown", target: time.Now().Add(30 * time.Minute)}
+	a.sleepDurations = loadSleepDurations(resources)
 	a.setDuration(a.preferences.Duration)
 	if settingsErr != nil {
 		a.errorText = a.t("本机存储不可用或空间不足。")

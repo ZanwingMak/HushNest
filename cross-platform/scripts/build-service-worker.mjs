@@ -10,13 +10,21 @@ async function scan(prefix = '') {
   }
 }
 await scan();
+// Version audio separately so an upgrade cannot serve the previous short loops.
+const audioHash = createHash('sha256');
+for (const file of (await readdir(new URL('audio/', directory))).sort()) {
+  audioHash.update(file); audioHash.update(await readFile(new URL(`audio/${file}`, directory)));
+}
+const audioCache = `hushnest-audio-${audioHash.digest('hex').slice(0, 12)}`;
 const hash = createHash('sha256'); for (const file of files) hash.update(await readFile(new URL(file, directory)));
+hash.update(audioCache);
 const version = `hushnest-${hash.digest('hex').slice(0, 12)}`;
 await writeFile(new URL('sw.js', directory), `
 const CACHE = ${JSON.stringify(version)};
+const AUDIO_CACHE = ${JSON.stringify(audioCache)};
 const FILES = ${JSON.stringify(files)};
 self.addEventListener('install', event => { event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES))); });
-self.addEventListener('activate', event => { event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k.startsWith('hushnest-') && k !== CACHE && k !== 'hushnest-audio-v1').map(k => caches.delete(k)))).then(() => self.clients.claim())); });
+self.addEventListener('activate', event => { event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k.startsWith('hushnest-') && k !== CACHE && k !== AUDIO_CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   if (event.request.method !== 'GET' || url.origin !== self.location.origin) return;
@@ -25,7 +33,7 @@ self.addEventListener('fetch', event => {
   }
   if (url.pathname.endsWith('.wav')) {
     event.respondWith((async () => {
-      const cache = await caches.open('hushnest-audio-v1');
+      const cache = await caches.open(AUDIO_CACHE);
       const key = new Request(url.href); let full = await cache.match(key);
       if (!full) {
         // Always cache the complete file, even when the player requests a byte range.

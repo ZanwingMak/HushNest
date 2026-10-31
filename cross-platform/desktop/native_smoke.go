@@ -101,5 +101,43 @@ func desktopSmoke(d *Desktop, resources, report string) {
 		previews = append(previews, map[string]any{"sound": sound, "rms": probe.RMS, "peak": probe.Peak})
 	}
 	result["alarmPreviews"] = previews
-	result["ok"] = d.window.Page() == nil && noWebAssets && invalidPath != nil && invalidSound != nil && staleConfirmation != nil && manualConfirmation && result["nativeImport"] == true && result["deletedMedia"] == true && len(d.view.dictionaries) == 6 && len(previews) == 14
+	// Decode both ends of every long sleep file with the actual system codec.
+	// The PCM asset tests separately check the joined boundary for clicks,
+	// level jumps and repeated short segments. No output device is opened.
+	var catalog struct {
+		Recordings []struct {
+			ID      string
+			Seconds float64
+		} `json:"recordings"`
+		Generated []struct {
+			ID      string
+			Seconds float64
+		} `json:"generated"`
+	}
+	manifest, err := os.ReadFile(filepath.Join(resources, "audio", "FieldRecordings.json"))
+	if err != nil || json.Unmarshal(manifest, &catalog) != nil {
+		result["error"] = "missing sleep pack manifest"
+		return
+	}
+	sleepAudio := []map[string]any{}
+	for _, item := range append(catalog.Recordings, catalog.Generated...) {
+		for _, start := range []float64{0, item.Seconds - 2} {
+			var probe struct {
+				Seconds   float64
+				Samples   int
+				RMS, Peak float64
+			}
+			if err := d.service.backend.request("inspect", map[string]any{"sound": item.ID, "startSeconds": start, "sampleSeconds": 2}, &probe); err != nil {
+				result["error"] = "sleep decoder " + item.ID + ": " + err.Error()
+				return
+			}
+			if probe.Seconds != item.Seconds || probe.Samples < 48000 || probe.RMS < .0001 || probe.Peak >= .75 {
+				result["error"] = fmt.Sprintf("invalid long sleep audio %s at %v: %+v", item.ID, start, probe)
+				return
+			}
+			sleepAudio = append(sleepAudio, map[string]any{"sound": item.ID, "start": start, "seconds": probe.Seconds, "rms": probe.RMS, "peak": probe.Peak})
+		}
+	}
+	result["sleepAudio"] = sleepAudio
+	result["ok"] = d.window.Page() == nil && noWebAssets && invalidPath != nil && invalidSound != nil && staleConfirmation != nil && manualConfirmation && result["nativeImport"] == true && result["deletedMedia"] == true && len(d.view.dictionaries) == 6 && len(previews) == 14 && len(sleepAudio) == 16
 }

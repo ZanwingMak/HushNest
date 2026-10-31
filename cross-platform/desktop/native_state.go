@@ -181,8 +181,32 @@ func loadDictionaries(resources string) (map[string]map[string]string, error) {
 var languageIDs = []string{"zh-Hans", "zh-Hant", "en", "ja", "ko", "es"}
 var languageNames = []string{"简体中文", "繁體中文", "English", "日本語", "한국어", "Español"}
 
+func loadSleepDurations(resources string) map[string]float64 {
+	var catalog struct {
+		Recordings []struct {
+			ID      string
+			Seconds float64
+		} `json:"recordings"`
+		Generated []struct {
+			ID      string
+			Seconds float64
+		} `json:"generated"`
+	}
+	durations := map[string]float64{}
+	bytes, err := os.ReadFile(filepath.Join(resources, "audio", "FieldRecordings.json"))
+	if err == nil && json.Unmarshal(bytes, &catalog) == nil {
+		for _, item := range append(catalog.Recordings, catalog.Generated...) {
+			if validSound(item.ID, false) && item.Seconds >= 300 && item.Seconds <= 7200 {
+				durations[item.ID] = item.Seconds
+			}
+		}
+	}
+	return durations
+}
+
 // Extra desktop copy supplements the original six translation dictionaries.
 var desktopCopy = map[string][6]string{
+	"循环衔接":     {"循环衔接", "循環銜接", "Smooth loop", "スムーズなループ", "부드러운 반복", "Bucle suave"},
 	"停止试听":     {"停止试听", "停止試聽", "Stop preview", "試聴を停止", "미리 듣기 중지", "Detener muestra"},
 	"请确认已连接耳机": {"请确认已连接耳机", "請確認已連接耳機", "Confirm your headphones", "イヤホンの接続を確認", "이어폰 연결 확인", "Confirma tus auriculares"},
 	"自动检测未识别出耳机。当前输出：%@。请确认声音确实从耳机播放；继续后将使用此输出，若实际是扬声器则会外放。": {"自动检测未识别出耳机。当前输出：%@。请确认声音确实从耳机播放；继续后将使用此输出，若实际是扬声器则会外放。", "自動偵測未識別出耳機。目前輸出：%@。請確認聲音確實從耳機播放；繼續後將使用此輸出，若實際是揚聲器則會外放。", "Headphones were not detected automatically. Current output: %@. Confirm that sound actually comes through headphones. Continuing uses this output; if it is a speaker, sound will play aloud.", "イヤホンを自動認識できませんでした。現在の出力：%@。実際にイヤホンから音が出ることを確認してください。続行するとこの出力を使用し、スピーカーの場合は外部に音が出ます。", "이어폰을 자동으로 감지하지 못했습니다. 현재 출력: %@. 실제로 이어폰에서 소리가 나오는지 확인하세요. 계속하면 이 출력을 사용하며 스피커인 경우 소리가 밖으로 나옵니다.", "No se detectaron auriculares automáticamente. Salida actual: %@. Confirma que el sonido sale por tus auriculares. Al continuar se usará esta salida; si es un altavoz, sonará en voz alta."},

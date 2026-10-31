@@ -1,3 +1,7 @@
+import sleepPack from '../../assets/sleep/FieldRecordings.json' with { type: 'json' };
+
+export const sleepSoundSeconds: Record<string, number> = Object.fromEntries([...sleepPack.recordings, ...sleepPack.generated].map(item => [item.id, item.seconds]));
+
 export const sleepSounds = [
   ['rain', '细雨', '庭院细雨，真实录音'], ['ocean', '潮汐', '真实海浪，缓慢起落'],
   ['stream', '溪流', '自然溪水，连续流淌'], ['forest', '林间', '林间鸟鸣，清晨实录'],

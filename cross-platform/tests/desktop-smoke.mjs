@@ -23,6 +23,8 @@ try {
   assert.equal(result.staleConfirmationRejected, true); assert.equal(result.manualConfirmation, true);
   assert.equal(result.alarmPreviews.length, 14);
   for (const preview of result.alarmPreviews) assert.ok(preview.rms >= 0.02 && preview.peak >= 0.05 && preview.peak <= 1, preview.sound);
+  assert.equal(result.sleepAudio.length, 16);
+  for (const probe of result.sleepAudio) assert.ok(probe.seconds >= 300 && probe.rms >= .0001 && probe.peak < .75, probe.sound);
   const qa = path.resolve('release/mygo-native/qa', process.platform);
   await mkdir(qa, { recursive: true });
   await cp(report, path.join(qa, 'report.json'));

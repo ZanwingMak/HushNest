@@ -23,7 +23,7 @@ function run(executable, args, env = process.env) {
     child.once('exit', (code, signal) => code === 0 ? resolve() : reject(new Error(`Installer validation failed: ${path.basename(executable)} exit ${code}, signal ${signal}`)));
   });
 }
-const files = ['HushNest.exe', 'HushNest.LICENSE.txt', 'MyGo.LICENSE.txt', 'audio/dawn.wav', 'audio-guard/AudioGuard.exe'];
+const files = ['HushNest.exe', 'HushNest.LICENSE.txt', 'MyGo.LICENSE.txt', 'audio/dawn.wav', 'audio/FieldRecordings.json', 'audio-guard/AudioGuard.exe', ...['rain', 'ocean', 'stream', 'forest', 'fireplace', 'night', 'brown', 'pink'].map(id => `audio/${id}.wav`)];
 const hash = async file => createHash('sha256').update(await readFile(file)).digest('hex');
 for (const pass of ['install', 'upgrade']) {
   // NSIS requires /D= to be the final, unquoted argument, including spaces.

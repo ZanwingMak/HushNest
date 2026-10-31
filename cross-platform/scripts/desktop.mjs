@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import sharp from 'sharp';
+import { stageAudio } from './stage-audio.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const mode = process.argv[2] || 'build';
@@ -18,11 +19,8 @@ function run(command, args, options = {}) {
 const mygo = path.join(root, 'node_modules/mygo-cli/bin/mygo.js');
 // Native desktop builds only stage Go UI assets, never the React frontend.
 const original = path.resolve(root, '../HushNest/Resources');
-await mkdir(path.join(root, 'resources/audio'), { recursive: true });
+await stageAudio(path.join(root, 'resources/audio'));
 await mkdir(path.join(root, 'resources/locales'), { recursive: true });
-for (const file of await readdir(original)) {
-  if (file.endsWith('.wav') || file === 'FieldRecordings.json') await copyFile(path.join(original, file), path.join(root, 'resources/audio', file));
-}
 const decode = s => s.replace(/\\(["\\nr])/g, (_, c) => ({ n: '\n', r: '\r' }[c] ?? c));
 for (const language of ['zh-Hans', 'zh-Hant', 'en', 'ja', 'ko', 'es']) {
   const source = await readFile(path.join(original, `${language}.lproj/Localizable.strings`), 'utf8');

@@ -1,15 +1,12 @@
-import { copyFile, mkdir, readFile, writeFile, readdir } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import sharp from 'sharp';
+import { stageAudio } from './stage-audio.mjs';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const resources = path.resolve(root, '../HushNest/Resources');
-await mkdir(path.join(root, 'public/audio'), { recursive: true });
+await stageAudio(path.join(root, 'public/audio'));
 await mkdir(path.join(root, 'public/locales'), { recursive: true });
-for (const file of await readdir(resources)) {
-  if (file.endsWith('.wav')) await copyFile(path.join(resources, file), path.join(root, 'public/audio', file));
-}
-await copyFile(path.join(resources, 'FieldRecordings.json'), path.join(root, 'public/audio/FieldRecordings.json'));
 await copyFile(path.join(resources, 'Assets.xcassets/AppIcon.appiconset/AppIcon.png'), path.join(root, 'public/icon.png'));
 // The Android launcher derives from the same existing icon, at each native density.
 const androidRes = path.join(root, 'android/app/src/main/res');
@@ -29,4 +26,4 @@ for (const language of ['zh-Hans', 'zh-Hant', 'en', 'ja', 'ko', 'es']) {
   await writeFile(path.join(root, `public/locales/${language}.json`), JSON.stringify(dictionary));
 }
 await copyFile(path.resolve(root, '../LICENSE'), path.join(root, 'public/LICENSE.txt'));
-console.log('Prepared the original audio, icon, licenses and six translations.');
+console.log('Prepared long sleep audio, original alarms, icon, licenses and six translations.');
