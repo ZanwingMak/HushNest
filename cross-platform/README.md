@@ -1,8 +1,8 @@
 # 耳憩 HushNest · Web / Android / macOS / Windows
 
-多端应用已集成到 `main`，原开发分支为 `codex/web-android-windows`。桌面客户端 0.4.0 使用 [MyGo 0.7.3](https://github.com/egoist/mygo) 的原生 `ui` 包：Go 界面、Go 后台和系统音频组件。桌面窗口没有 WebView，不加载 React、HTML 或 JavaScript，也不要求安装 WebView2。Web / Android 使用现有前端，原生 iOS 工程独立维护。
+多端应用已集成到 `main`，原开发分支为 `codex/web-android-windows`。桌面客户端 0.4.1 使用 [MyGo 0.7.3](https://github.com/egoist/mygo) 的原生 `ui` 包：Go 界面、Go 后台和系统音频组件。桌面窗口没有 WebView，不加载 React、HTML 或 JavaScript，也不要求安装 WebView2。Web / Android 使用现有前端，原生 iOS 工程独立维护。
 
-[官网下载与在线版](https://zanwingmak.github.io/HushNest/#downloads) · [多平台预览 Release](https://github.com/ZanwingMak/HushNest/releases/tag/multiplatform-v0.4.0) · [下载、安装及发行维护](../docs/DOWNLOADS.md)。Windows / macOS 为 0.4.0，Android / Web 为 0.1.0，安装条件及校验文件见发行说明。
+[官网下载与在线版](https://zanwingmak.github.io/HushNest/#downloads) · [多平台预览 Release](https://github.com/ZanwingMak/HushNest/releases/tag/multiplatform-v0.4.1) · [下载、安装及发行维护](../docs/DOWNLOADS.md)。Windows / macOS 为 0.4.1，Android / Web 为 0.1.1，安装条件及校验文件见发行说明。
 
 本次需求范围、最终决策、验收标准与验证记录归档于 [跨平台需求与交付文档](../docs/requirements/2026-11-01-multiplatform.md)。
 
@@ -62,7 +62,7 @@ npm run windows:build
 npm run windows:dev
 ```
 
-输出 `release/mygo-native/windows-amd64/HushNest.exe`、原生音频组件与资源目录，以及 `hushnest-setup-0.4.0-amd64.exe` 安装器。便携使用时保留整个目录；主程序不是包含所有录音与音频组件的单文件应用。未配置代码签名。桌面构建不执行 Vite / React 构建，不打包 `dist/`。
+输出 `release/mygo-native/windows-amd64/HushNest.exe`、原生音频组件与资源目录，以及 `hushnest-setup-0.4.1-amd64.exe` 安装器。便携使用时保留整个目录；主程序不是包含所有录音与音频组件的单文件应用。未配置代码签名。桌面构建不执行 Vite / React 构建，不打包 `dist/`。
 
 安装器默认为当前用户安装，目录为 `%LOCALAPPDATA%\Programs\HushNest`，不自动申请管理员权限。选择 `C:\Program Files`、`D:\Program Files` 等受保护目录时，普通权限可能出现 `Error opening file for writing`，即使报错指向许可证文件。此时中止安装，重新运行并保留默认目录，或选择自己有写入权限的目录；确实需要安装到受保护目录时，可手动以管理员身份运行安装器。不要用“忽略”跳过安装文件。
 

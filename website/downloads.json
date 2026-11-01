@@ -10,17 +10,23 @@
     "ipa": "HushNest-1.6.0-unsigned.ipa"
   },
   "release": {
-    "tag": "multiplatform-v0.4.0",
-    "name": "HushNest 多平台预览 · 桌面 0.4.0 / Android 与 Web 0.1.0",
+    "tag": "multiplatform-v0.4.1",
+    "name": "HushNest 多平台预览 · 桌面 0.4.1 / Android 与 Web 0.1.1",
     "prerelease": true,
-    "sourceRun": 41225418108,
-    "sourceCommit": "a1d2673bb861aa9158ca6f230583b5f49427f733",
+    "sourceRun": 41307697008,
+    "sourceCommit": "0312f5f41f2511f816ebe33717d472abc915bd9c",
     "assets": {
-      "windows": "HushNest-0.4.0-windows-x64-setup.exe",
-      "windowsPortable": "HushNest-0.4.0-windows-x64-portable.zip",
-      "macos": "HushNest-0.4.0-macos-universal.dmg",
-      "android": "HushNest-0.1.0-android-debug.apk",
-      "web": "HushNest-0.1.0-web.zip"
-    }
+      "windows": "HushNest-0.4.1-windows-x64-setup.exe",
+      "windowsPortable": "HushNest-0.4.1-windows-x64-portable.zip",
+      "macos": "HushNest-0.4.1-macos-universal.dmg",
+      "android": "HushNest-0.1.1-android-debug.apk",
+      "web": "HushNest-0.1.1-web.zip"
+    },
+    "notes": [
+      "Android 耳机确认绑定界面显示的设备标识，切换设备时拒绝旧确认。",
+      "各平台试听按所选音量播放；调整滑杆更新现有播放器，不重置进度。",
+      "Web 首次音频请求流式返回，完整音轨在后台缓存；支持离线 Range 与播放取消保护。",
+      "八条助眠音描述补齐六种语言，避免依赖 iOS 已移除的文案键。"
+    ]
   }
 }
