@@ -25,10 +25,11 @@ function worker(fetcher: (request: Request) => Promise<Response>) {
   });
   return {
     entries, cache,
-    request(range: string) {
+    /** 按真实 FetchEvent 调用 worker，同时保留后台完成信号。 */
+    request(range: string, signal?: AbortSignal) {
       let response!: Promise<Response>;
       const background: Promise<unknown>[] = [];
-      handlers.fetch({ request: new Request(url, { headers: { Range: range } }),
+      handlers.fetch({ request: new Request(url, { headers: { Range: range }, signal }),
         respondWith: (result: Promise<Response>) => { response = result; },
         waitUntil: (job: Promise<unknown>) => background.push(job) });
       return { response, done: () => Promise.all(background) };
@@ -62,6 +63,18 @@ test('first audio bytes stream before the complete download, then remain availab
   const cached = await app.request('bytes=44-91').response;
   assert.equal(cached.status, 206); assert.equal((await cached.arrayBuffer()).byteLength, 48);
   assert.equal(app.entries.get(url)?.headers.get('Content-Range'), null);
+});
+
+test('stopping the client request does not cancel the full background cache download', async () => {
+  const audio = delayedAudio(); const controller = new AbortController();
+  let networkSignal!: AbortSignal;
+  const app = worker(async request => { networkSignal = request.signal; return audio.response; });
+  const request = app.request('bytes=0-43', controller.signal);
+  await (await request.response).arrayBuffer();
+  controller.abort();
+  assert.equal(networkSignal.aborted, false);
+  audio.complete(); await request.done();
+  assert.equal((await app.entries.get(url)!.arrayBuffer()).byteLength, 1024);
 });
 
 test('a partial network response returns while one full download is shared by concurrent requests', async () => {

@@ -60,7 +60,7 @@ async function respondAudio(event, background) {
     const range = event.request.headers.get('range');
     return range ? audioRange(full, range, await full.blob()) : full;
   }
-  const response = await fetch(event.request);
+  const response = await fetch(new Request(event.request, { signal: null }));
   if (response.status === 200) background.push(cacheAudio(cache, key, response));
   else if (response.status === 206) {
     const match = /^bytes 0-(\d+)\/(\d+)$/.exec(response.headers.get('Content-Range') ?? '');
@@ -73,6 +73,14 @@ async function respondAudio(event, background) {
 
 self.addEventListener('install', event => { event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES))); });
 self.addEventListener('activate', event => { event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k.startsWith('hushnest-') && k !== CACHE && k !== AUDIO_CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
+// 离线检查等待 Cache.put 完成确认，避免把尚在写入的可见条目当作完整缓存。
+self.addEventListener('message', event => {
+  if (event.data !== 'hushnest:audio-cache-status' || !event.ports[0]) return;
+  event.waitUntil(Promise.all([...audioDownloads.values()]).then(async () => {
+    const cache = await caches.open(AUDIO_CACHE);
+    event.ports[0].postMessage({ urls: (await cache.keys()).map(request => request.url) });
+  }));
+});
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   if (event.request.method !== 'GET' || url.origin !== self.location.origin) return;

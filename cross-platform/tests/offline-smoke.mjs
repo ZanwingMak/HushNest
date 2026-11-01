@@ -39,6 +39,13 @@ try {
     return { status: response.status, length: (await response.arrayBuffer()).byteLength };
   });
   assert.deepEqual(online, { status: 206, length: 44 });
+  // 由 worker 确认后台写入已结束，再检查离线资源；不能只等待缓存元数据出现。
+  await page.evaluate(() => new Promise((resolve, reject) => {
+    const channel = new MessageChannel();
+    const timer = setTimeout(() => { channel.port1.close(); reject(new Error('Audio cache did not settle')); }, 15000);
+    channel.port1.onmessage = event => { clearTimeout(timer); channel.port1.close(); resolve(event.data); };
+    navigator.serviceWorker.controller.postMessage('hushnest:audio-cache-status', [channel.port2]);
+  }));
   // 完整缓存异步完成后才进入离线；首个 Range 响应无需等待整轨下载。
   await page.waitForFunction(async sounds => {
     const names = await caches.keys();
