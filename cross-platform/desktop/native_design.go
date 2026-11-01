@@ -162,6 +162,7 @@ func (a *nativeApp) render(c *ui.Context) {
 
 var nestPages = []soundChoice{{"rest", "休息"}, {"library", "我的声音"}, {"history", "足迹"}, {"settings", "设置"}}
 
+// sidebar 从应用元数据读取版本，保持侧栏显示与实际安装包一致。
 func (a *nativeApp) sidebar(c *ui.Context) {
 	t := c.Theme()
 	background := ui.Hex("#edf0e8")
@@ -185,7 +186,7 @@ func (a *nativeApp) sidebar(c *ui.Context) {
 		ui.Column(c).Gap(12).Padding(0, 10).Children(func() {
 			nestIcon(c, "history", 24, t.Accent.Alpha(.6))
 			nestText(c, a.t("每一次停下，都是照顾自己。")).FontSize(12).LineHeight(1.8).TextColor(t.TextMuted)
-			nestText(c, "HUSHNEST  /  0.4.0").FontSize(9).LetterSpacing(1.3).TextColor(t.TextMuted.Alpha(.7))
+			nestText(c, "HUSHNEST  /  "+mygo.App.Version()).FontSize(9).LetterSpacing(1.3).TextColor(t.TextMuted.Alpha(.7))
 		})
 	})
 }
