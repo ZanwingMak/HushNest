@@ -19,6 +19,7 @@ function initialPreferences() {
   const lang = navigator.language;
   return normalizePreferences({ ...defaultPreferences, language: lang.startsWith('zh') ? /TW|HK|Hant/.test(lang) ? 'zh-Hant' : 'zh-Hans' : lang.split('-')[0] });
 }
+/** 协调计时、原生快照与播放状态，音量更新同时覆盖会话和独立试听。 */
 export function useNest() {
   const [preferences, setPreferences] = useState<Preferences>(initialPreferences);
   const [session, setSession] = useState<Session | null>(() => nativeSessions ? null : restoreSession(loadJSON('session'), Date.now()));
@@ -31,6 +32,7 @@ export function useNest() {
   state.current = { session, preferences, records, route };
   const engine = useRef<AudioEngine | null>(null);
   const audioKey = useRef('');
+  const nativePreview = useRef('');
   const save = (key: string, data: unknown) => { try { saveJSON(key, data); } catch { setError('storageError'); } };
   const commit = (s: Session | null) => { state.current.session = s; setSession(s); if (!nativeSessions) save('session', s); };
   const stopRecord = (s: Session, completed: boolean) => {
@@ -58,6 +60,7 @@ export function useNest() {
     return () => { disposed = true; release?.(); };
   }, []);
   const ingest = (snapshot: Awaited<ReturnType<typeof native.snapshot>>) => {
+    nativePreview.current = snapshot.previewSound ?? '';
     commit(snapshot.session); setRoute(snapshot.route); state.current.route = snapshot.route;
     const merged = [...snapshot.records, ...state.current.records.filter(r => !snapshot.records.some(n => n.id === r.id))].sort((a, b) => b.endedAt - a.endedAt).slice(0, 365);
     state.current.records = merged; setRecords(merged); save('records', merged); setReady(true);
@@ -106,9 +109,9 @@ export function useNest() {
     });
   }, [session?.phase, session?.id, preferences.sleepSound, preferences.alarmSound, exclusive]);
   useEffect(() => {
-    if (nativeSessions || !session) return;
-    engine.current?.update(preferences, session.phase === 'ringing', (now - session.deadline) / 1000);
-    if (session.phase === 'ringing' && preferences.vibration && Math.floor(now / 1000) % 3 === 0) navigator.vibrate?.(250);
+    if (nativeSessions) return;
+    engine.current?.update(preferences, session?.phase === 'ringing', session ? (now - session.deadline) / 1000 : 15);
+    if (session?.phase === 'ringing' && preferences.vibration && Math.floor(now / 1000) % 3 === 0) navigator.vibrate?.(250);
   }, [now, preferences, session?.phase]);
   const running = !!session && ['resting', 'ringing', 'blocked'].includes(session.phase);
   useEffect(() => {
@@ -150,13 +153,14 @@ export function useNest() {
     } catch (e) { setError(e instanceof Error && ['routeLost', 'otherTab'].includes(e.message) ? e.message : 'audioError'); }
     finally { setBusy(false); }
   }
+  /** 试听使用所选音量，并读取原生返回的试听状态以支持即时调音量。 */
   async function preview(sound: string, alarm = false) {
     if (session || busy || !exclusive) return;
     if (!isWeb && !route.connected) { setError('routeLost'); return; }
     setBusy(true); setError('');
     try {
-      if (nativeSessions) { await cacheDesktopSound(sound); await nativeController!.command({ action: 'preview', sound, volume: alarm ? preferences.alarmVolume : preferences.sleepVolume }); }
-      else await engine.current!.play(sound, Math.min(0.18, alarm ? preferences.alarmVolume : preferences.sleepVolume), alarm, true);
+      if (nativeSessions) { await cacheDesktopSound(sound); ingest(await nativeController!.command({ action: 'preview', sound, alarm, volume: alarm ? preferences.alarmVolume : preferences.sleepVolume })); }
+      else await engine.current!.play(sound, alarm ? preferences.alarmVolume : preferences.sleepVolume, alarm, true);
     } catch { setError('audioError'); } finally { setBusy(false); }
   }
   async function checkRoute() {
@@ -166,9 +170,10 @@ export function useNest() {
     if (nativeSessions) await nativeController!.command({ action: 'clearRecords' });
     state.current.records = []; setRecords([]); save('records', []);
   }
+  /** 保存设置并更新正在运行的原生会话或试听，不启动新的播放。 */
   function updatePreferences(patch: Partial<Preferences>) {
     const next = normalizePreferences({ ...state.current.preferences, ...patch }); state.current.preferences = next; setPreferences(next);
-    if (nativeSessions && session) void nativeController!.command({ action: 'volume', preferences: next }).catch(() => setError('audioError'));
+    if (nativeSessions && (session || nativePreview.current)) void nativeController!.command({ action: 'volume', preferences: next }).catch(() => setError('audioError'));
   }
   return { preferences, updatePreferences, session, records, route, error: !exclusive ? 'otherTab' : error, setError,
     busy, ready, now, command, preview, checkRoute, clearRecords, exclusive };

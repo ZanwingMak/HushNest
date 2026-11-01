@@ -24,15 +24,26 @@ public class HushNestPlugin extends Plugin {
     @PluginMethod public void snapshot(PluginCall call) {
         main.post(() -> { try { call.resolve(RestService.snapshot(getContext())); } catch (Exception e) { call.reject("snapshot-failed", e); } });
     }
+    /** 校验用户看到的设备标识，确认和服务命令均在主线程执行。 */
     @PluginMethod public void command(PluginCall call) {
         String action = call.getString("action", "");
         if (action.equals("confirmRoute")) {
-            android.media.AudioDeviceInfo d = HeadphoneRoute.candidate(getContext());
-            if (d != null) RestService.prefs(getContext()).edit().putString("confirmedRoute", HeadphoneRoute.token(d)).apply();
-            snapshot(call); return;
+            main.post(() -> {
+                String expected = call.getString("routeToken", "");
+                android.media.AudioDeviceInfo d = HeadphoneRoute.candidate(getContext());
+                if (expected == null || expected.isEmpty() || d == null || !expected.equals(HeadphoneRoute.token(d))) { call.reject("routeChanged"); return; }
+                RestService.prefs(getContext()).edit().putString("confirmedRoute", expected).apply();
+                d = HeadphoneRoute.approved(getContext());
+                if (d == null || !expected.equals(HeadphoneRoute.token(d))) {
+                    RestService.prefs(getContext()).edit().remove("confirmedRoute").apply(); call.reject("routeChanged"); return;
+                }
+                snapshot(call);
+            });
+            return;
         }
         if (action.equals("clearRecords")) { RestService.prefs(getContext()).edit().putString("records", "[]").apply(); snapshot(call); return; }
         if (!java.util.Arrays.asList("start", "stop", "pause", "resume", "snooze", "volume", "preview").contains(action)) { call.reject("invalid-action"); return; }
+        if (action.equals("volume") && RestService.instance == null) { snapshot(call); return; }
         if (RestService.instance == null && !action.equals("start") && !action.equals("preview") && !action.equals("resume") && !action.equals("stop")) { call.reject("no-session"); return; }
         String commandID = UUID.randomUUID().toString();
         Intent intent = new Intent(getContext(), RestService.class);

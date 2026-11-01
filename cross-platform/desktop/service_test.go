@@ -16,8 +16,10 @@ type silentAudio struct {
 	confirmedToken string
 	observedToken  string
 	confirmations  int
+	volumes        []float64
 }
 
+// request 记录无声播放和增益命令，用于验证实际服务调用且不访问音频设备。
 func (f *silentAudio) request(action string, data map[string]any, out any) error {
 	if f.fail {
 		return errors.New("test-device-unavailable")
@@ -39,6 +41,8 @@ func (f *silentAudio) request(action string, data map[string]any, out any) error
 		f.plays = append(f.plays, data)
 	case "stop":
 		f.stops++
+	case "volume":
+		f.volumes = append(f.volumes, data["value"].(float64))
 	case "confirmRoute":
 		if token, _ := data["token"].(string); token == "" || token != f.route.Token {
 			return errors.New("routeChanged")

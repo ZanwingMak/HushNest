@@ -74,11 +74,37 @@ try {
     return { scope: new URL(registration.scope).pathname, start: new URL(manifest.start_url, location.href).pathname, status: response.status, seconds: header.getUint32(40, true) / header.getUint32(28, true) };
   });
   assert.deepEqual(app, { scope: prefix + 'app/', start: prefix + 'app/', status: 206, seconds: 600 });
+  // 由 worker 确认后台写入已结束，再检查离线资源；不能只等待缓存元数据出现。
+  await page.evaluate(() => new Promise((resolve, reject) => {
+    const channel = new MessageChannel();
+    const timer = setTimeout(() => { channel.port1.close(); reject(new Error('Audio cache did not settle')); }, 15000);
+    channel.port1.onmessage = event => { clearTimeout(timer); channel.port1.close(); resolve(event.data); };
+    navigator.serviceWorker.controller.postMessage('hushnest:audio-cache-status', [channel.port2]);
+  }));
+  // 完整缓存异步完成后才进入离线；首个 Range 响应无需等待整轨下载。
+  await page.waitForFunction(async sounds => {
+    const names = await caches.keys();
+    for (const name of names.filter(name => name.startsWith('hushnest-audio-') && name !== 'hushnest-audio-v1')) {
+      const cache = await caches.open(name);
+      const responses = await Promise.all(sounds.map(sound => cache.match(new URL(`./audio/${sound}.wav`, location.href).href)));
+      if (responses.every(Boolean)) {
+        const bodies = await Promise.all(responses.map(response => response.arrayBuffer()));
+        if (bodies.every((body, index) => body.byteLength === Number(responses[index].headers.get('Content-Length')))) return true;
+      }
+    }
+    return false;
+  }, ['rain'], { timeout: 15000 });
   await context.setOffline(true); await page.reload();
   await page.getByRole('heading', { name: '好好休息.' }).waitFor();
   const cached = await page.evaluate(async () => {
-    const response = await fetch('./audio/rain.wav', { headers: { Range: 'bytes=44-91' } });
-    return { status: response.status, bytes: (await response.arrayBuffer()).byteLength };
+    try {
+      const response = await fetch('./audio/rain.wav', { headers: { Range: 'bytes=44-91' } });
+      return { status: response.status, bytes: (await response.arrayBuffer()).byteLength };
+    } catch (error) {
+      const names = await caches.keys();
+      return { error: String(error), controller: navigator.serviceWorker.controller?.scriptURL,
+        caches: await Promise.all(names.map(async name => ({ name, urls: (await (await caches.open(name)).keys()).map(request => request.url) }))) };
+    }
   });
   assert.deepEqual(cached, { status: 206, bytes: 48 });
   await context.setOffline(false);

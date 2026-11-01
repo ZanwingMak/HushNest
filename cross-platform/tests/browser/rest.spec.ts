@@ -1,16 +1,111 @@
 import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
+
+/** 模拟 Capacitor 命令边界，原生设备可在用户点击确认后立即切换；不播放音频。 */
+async function androidBridge(page: Page) {
+  await page.addInitScript(() => {
+    let confirmed = '', previewSound = '', previewAlarm = false;
+    const snapshot = () => {
+      const data = document.documentElement.dataset;
+      const token = data.testDevice ?? 'headset-a';
+      return { session: null, records: [], previewSound, route: { connected: confirmed === token, verified: false,
+        name: token === 'headset-a' ? 'Test Bluetooth headphones' : 'Test Bluetooth speaker', token } };
+    };
+    Object.assign(window, { androidBridge: {}, Capacitor: {
+      PluginHeaders: [{ name: 'HushNest', methods: ['snapshot', 'command', 'listMedia', 'requestNotifications'].map(name => ({ name, rtype: 'promise' })) }],
+      nativePromise: async (_plugin: string, method: string, input: Record<string, unknown> = {}) => {
+        const data = document.documentElement.dataset;
+        if (method === 'listMedia') return { items: [] };
+        if (method === 'requestNotifications') return { granted: true };
+        if (method === 'command') {
+          if (input.action === 'confirmRoute') {
+            data.testConfirmedToken = String(input.routeToken);
+            if (data.testSwitchOnConfirm) data.testDevice = 'speaker-b';
+            if (input.routeToken !== snapshot().route.token) throw new Error('routeChanged');
+            confirmed = String(input.routeToken);
+          }
+          if (input.action === 'preview') {
+            previewSound = String(input.sound); previewAlarm = input.alarm === true;
+            data.testNativeGain = String(input.volume); data.testPreviewAlarm = String(previewAlarm);
+          }
+          if (input.action === 'volume') {
+            const p = input.preferences as { sleepVolume: number; alarmVolume: number };
+            data.testNativeGain = String(previewAlarm ? p.alarmVolume : p.sleepVolume);
+          }
+        }
+        return snapshot();
+      },
+    } });
+  });
+  await page.reload();
+}
+
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     // Exercise timer/UI transitions without outputting audio on the developer's machine.
     window.HTMLMediaElement.prototype.play = async function () {
       const data = document.documentElement.dataset;
       data.testPlayCount = String(Number(data.testPlayCount ?? 0) + 1);
+      Object.assign(document, { testAudio: this });
       this.dispatchEvent(new Event('play'));
     };
   });
   await page.goto('/');
   await expect(page.getByRole('heading', { name: '好好休息.' })).toBeVisible();
+});
+
+test('alarm and sleep preview volumes follow their own sliders without restarting playback', async ({ page }) => {
+  await page.clock.install();
+  await page.clock.pauseAt(new Date());
+  await page.getByRole('button', { name: '试听唤醒铃声', exact: true }).click();
+  const volume = () => page.evaluate(() => (document as Document & { testAudio: HTMLMediaElement }).testAudio.volume);
+  await expect.poll(volume).toBe(.55);
+  const alarm = page.getByRole('slider', { name: '唤醒铃声音量', exact: true });
+  await alarm.focus(); await alarm.press('End');
+  await expect.poll(volume).toBe(1);
+  await alarm.press('Home');
+  await expect.poll(volume).toBe(.05);
+  const sleep = page.getByRole('slider', { name: '助眠音量', exact: true });
+  await sleep.focus(); await sleep.press('End');
+  await expect.poll(volume).toBe(.05);
+  expect(await page.evaluate(() => Number(document.documentElement.dataset.testPlayCount))).toBe(1);
+  await page.getByRole('button', { name: '试听', exact: true }).click();
+  await expect.poll(volume).toBe(.6);
+  await sleep.press('Home');
+  await expect.poll(volume).toBe(.01);
+  expect(await page.evaluate(() => Number(document.documentElement.dataset.testPlayCount))).toBe(2);
+});
+
+test('Android confirmation sends the shown device token and rejects a device changed during confirmation', async ({ page }) => {
+  await androidBridge(page);
+  await page.getByRole('button', { name: '开始我的片刻安静' }).click();
+  const dialog = page.getByRole('dialog', { name: '检查耳机' });
+  await expect(dialog.getByText('Test Bluetooth headphones', { exact: true })).toBeVisible();
+  await page.evaluate(() => { document.documentElement.dataset.testSwitchOnConfirm = 'true'; });
+  await dialog.getByRole('checkbox').click();
+  await expect(page.getByRole('alert')).toBeVisible();
+  await expect(dialog.getByRole('checkbox')).not.toBeChecked();
+  expect(await page.evaluate(() => document.documentElement.dataset.testConfirmedToken)).toBe('headset-a');
+  await expect(dialog.getByRole('button', { name: '完成', exact: true })).toBeDisabled();
+  expect(await page.evaluate(() => Number(document.documentElement.dataset.testPlayCount ?? 0))).toBe(0);
+});
+
+test('Android preview uses alarm volume and forwards live adjustments without a session', async ({ page }) => {
+  await androidBridge(page);
+  await page.getByRole('button', { name: '开始我的片刻安静' }).click();
+  const dialog = page.getByRole('dialog', { name: '检查耳机' });
+  await dialog.getByRole('checkbox').check();
+  await dialog.getByRole('button', { name: '完成', exact: true }).click();
+  await page.getByRole('button', { name: '试听唤醒铃声', exact: true }).click();
+  const gain = () => page.evaluate(() => Number(document.documentElement.dataset.testNativeGain));
+  await expect.poll(gain).toBe(.55);
+  expect(await page.evaluate(() => document.documentElement.dataset.testPreviewAlarm)).toBe('true');
+  const alarm = page.getByRole('slider', { name: '唤醒铃声音量', exact: true });
+  await alarm.focus(); await alarm.press('End');
+  await expect.poll(gain).toBe(1);
+  await alarm.press('Home');
+  await expect.poll(gain).toBe(.05);
+  await expect(page.getByRole('button', { name: '开始我的片刻安静' })).toBeVisible();
 });
 async function duration(page: Page, seconds: number) {
   await page.getByRole('button', { name: '添加常用时长' }).click();

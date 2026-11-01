@@ -39,6 +39,26 @@ try {
     return { status: response.status, length: (await response.arrayBuffer()).byteLength };
   });
   assert.deepEqual(online, { status: 206, length: 44 });
+  // 由 worker 确认后台写入已结束，再检查离线资源；不能只等待缓存元数据出现。
+  await page.evaluate(() => new Promise((resolve, reject) => {
+    const channel = new MessageChannel();
+    const timer = setTimeout(() => { channel.port1.close(); reject(new Error('Audio cache did not settle')); }, 15000);
+    channel.port1.onmessage = event => { clearTimeout(timer); channel.port1.close(); resolve(event.data); };
+    navigator.serviceWorker.controller.postMessage('hushnest:audio-cache-status', [channel.port2]);
+  }));
+  // 完整缓存异步完成后才进入离线；首个 Range 响应无需等待整轨下载。
+  await page.waitForFunction(async sounds => {
+    const names = await caches.keys();
+    for (const name of names.filter(name => name.startsWith('hushnest-audio-') && name !== 'hushnest-audio-v1')) {
+      const cache = await caches.open(name);
+      const responses = await Promise.all(sounds.map(sound => cache.match(new URL(`./audio/${sound}.wav`, location.href).href)));
+      if (responses.every(Boolean)) {
+        const bodies = await Promise.all(responses.map(response => response.arrayBuffer()));
+        if (bodies.every((body, index) => body.byteLength === Number(responses[index].headers.get('Content-Length')))) return true;
+      }
+    }
+    return false;
+  }, ['rain', 'dawn'], { timeout: 15000 });
   await context.setOffline(true); await page.reload();
   await page.getByRole('heading', { name: '好好休息.' }).waitFor();
   const offline = await page.evaluate(async () => {

@@ -7,7 +7,7 @@ import type { Route } from './core/model';
 export interface DesktopBridge {
   platform: 'windows' | 'darwin';
   snapshot(): Promise<NativeSnapshot>;
-  command(input: CommandInput): Promise<NativeSnapshot>;
+  command(input: CommandInput & { routeToken?: string; alarm?: boolean }): Promise<NativeSnapshot>;
   route(): Promise<Route>;
   keepAwake(active: boolean): Promise<void>;
   onSuspend(callback: () => void): () => void;

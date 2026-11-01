@@ -1,10 +1,10 @@
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import type { MediaItem, Preferences, Route, Session, RestRecord } from './core/model';
 import { connectMyGoDesktop } from './desktop-bridge';
-export interface NativeSnapshot { session: Session | null; route: Route; records: RestRecord[] }
+export interface NativeSnapshot { session: Session | null; route: Route; records: RestRecord[]; previewSound?: string }
 interface RestNative {
   snapshot(): Promise<NativeSnapshot>;
-  command(data: { action: string; session?: Session; preferences?: Preferences; sound?: string; volume?: number }): Promise<NativeSnapshot>;
+  command(data: { action: string; session?: Session; preferences?: Preferences; sound?: string; volume?: number; alarm?: boolean; routeToken?: string }): Promise<NativeSnapshot>;
   importMedia(): Promise<MediaItem>;
   deleteMedia(data: { id: string }): Promise<void>;
   listMedia(): Promise<{ items: MediaItem[] }>;

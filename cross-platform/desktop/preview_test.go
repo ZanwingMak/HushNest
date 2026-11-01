@@ -5,6 +5,37 @@ import (
 	"testing"
 )
 
+// TestPreviewVolumeUpdatesWithoutRestart 覆盖内置及自定义两种用途的动态增益。
+func TestPreviewVolumeUpdatesWithoutRestart(t *testing.T) {
+	for _, alarm := range []bool{false, true} {
+		for _, sound := range []string{"rain", "custom:" + newID()} {
+			s, audio := fixture(t)
+			if _, err := s.command(CommandInput{Action: "preview", Sound: sound, Alarm: alarm, Volume: .3}); err != nil {
+				t.Fatal(err)
+			}
+			deadline := s.previewUntil
+			p := s.state.Preferences
+			p.SleepVolume, p.AlarmVolume = .47, .89
+			if _, err := s.command(CommandInput{Action: "volume", Preferences: &p}); err != nil {
+				t.Fatal(err)
+			}
+			want := p.SleepVolume
+			if alarm {
+				want = p.AlarmVolume
+			}
+			if len(audio.volumes) == 0 || audio.volumes[len(audio.volumes)-1] != want || len(audio.plays) != 1 || s.previewUntil != deadline {
+				t.Fatalf("volume restarted or changed the wrong track: alarm=%v volumes=%v", alarm, audio.volumes)
+			}
+			_, _ = s.command(CommandInput{Action: "stopPreview"})
+			count := len(audio.volumes)
+			_, _ = s.command(CommandInput{Action: "volume", Preferences: &p})
+			if len(audio.volumes) != count || len(audio.plays) != 1 {
+				t.Fatal("volume adjustment after stopping restarted preview")
+			}
+		}
+	}
+}
+
 func TestAllNativeAlarmPreviewsSkipQuietIntro(t *testing.T) {
 	for _, sound := range builtinAlarms {
 		t.Run(sound, func(t *testing.T) {

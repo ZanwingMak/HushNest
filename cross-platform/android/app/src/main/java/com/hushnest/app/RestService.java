@@ -27,6 +27,8 @@ public class RestService extends Service {
     private AudioFocusRequest focus;
     private PowerManager.WakeLock wake;
     private String playbackKey = "", outputToken = "";
+    private String previewSound = "";
+    private boolean previewAlarm;
     private boolean prepared, routeValidated, interrupted, stopping;
     private long lastSave, lastNotification, preparedAt, previewUntil;
     private float previewVolume;
@@ -50,10 +52,12 @@ public class RestService extends Service {
             result.put("restingSince", JSONObject.NULL); return result;
         } catch (JSONException e) { return null; }
     }
+    /** 返回原生会话及仍在播放的试听，供界面更新音量而不创建新会话。 */
     static JSObject snapshot(Context context) throws JSONException {
         JSObject result = new JSObject();
         result.put("session", instance == null ? (storedSession(context) == null ? JSONObject.NULL : storedSession(context)) : instance.session == null ? JSONObject.NULL : new JSONObject(instance.session.toString()));
         result.put("route", HeadphoneRoute.snapshot(context));
+        result.put("previewSound", instance == null || instance.previewUntil <= System.currentTimeMillis() ? "" : instance.previewSound);
         result.put("records", new JSONArray(prefs(context).getString("records", "[]"))); return result;
     }
     @Override public void onCreate() {
@@ -86,14 +90,24 @@ public class RestService extends Service {
         } catch (Exception error) { lastError = "service-failed"; lastCommand = intent.getStringExtra("commandID"); stopSelf(); }
         return START_NOT_STICKY;
     }
+    /** 试听保留原用途和截止时间，音量命令只更新已有播放器。 */
     private void apply(JSONObject data) throws Exception {
         String action = data.optString("action"); long now = System.currentTimeMillis();
         if (data.has("preferences")) { config = data.getJSONObject("preferences"); prefs(this).edit().putString("config", config.toString()).apply(); }
+        if (action.equals("volume") && session == null) {
+            if (previewUntil > now) {
+                previewVolume = (float) Math.min(previewAlarm ? 1 : 0.6, Math.max(previewAlarm ? 0.05 : 0.01,
+                    config.optDouble(previewAlarm ? "alarmVolume" : "sleepVolume", previewVolume)));
+                validateAndVolume(previewVolume);
+            }
+            return;
+        }
         if (action.equals("preview")) {
             if (session != null) throw new IllegalStateException("session-active");
             if (HeadphoneRoute.approved(this) == null) throw new IllegalStateException("routeLost");
-            previewUntil = now + 2000; previewVolume = (float) Math.min(0.18, Math.max(0.01, data.optDouble("volume", 0.1)));
-            requestFocus(); play(data.getString("sound"), false); return;
+            previewAlarm = data.optBoolean("alarm");
+            previewUntil = now + 2000; previewVolume = (float) Math.min(previewAlarm ? 1 : 0.6, Math.max(previewAlarm ? 0.05 : 0.01, data.optDouble("volume", 0.1)));
+            requestFocus(); play(data.getString("sound"), false); previewSound = data.getString("sound"); return;
         }
         if (action.equals("start")) {
             if (session != null) throw new IllegalStateException("session-active");
@@ -212,7 +226,9 @@ public class RestService extends Service {
         if (actual != null && approved != null && HeadphoneRoute.token(actual).equals(outputToken) && HeadphoneRoute.token(approved).equals(outputToken)) { routeValidated = true; player.setVolume(volume, volume); }
         else { player.setVolume(0, 0); if (System.currentTimeMillis() - preparedAt > 1000) fail("routeLost"); }
     }
+    /** 清理播放器及试听标识，停止后滑杆变化不能重新开始音频。 */
     private void stopAudio() {
+        previewSound = "";
         MediaPlayer old = player; player = null; prepared = false; routeValidated = false; playbackKey = "";
         if (old != null) { try { old.setVolume(0, 0); old.release(); } catch (Exception ignored) { } }
         Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE); if (vibrator != null) vibrator.cancel();

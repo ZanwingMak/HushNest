@@ -104,6 +104,7 @@ if (mode === 'preflight') {
     }
   }
   const desktop = JSON.parse(await readFile(path.join(root, 'cross-platform/mygo.json'), 'utf8'));
+  const webPackage = JSON.parse(await readFile(path.join(root, 'cross-platform/package.json'), 'utf8'));
   const installer = path.join(windows, `hushnest-setup-${desktop.version}-amd64.exe`);
   if ((await readFile(installer)).subarray(0, 2).toString() !== 'MZ') throw new Error('Invalid Windows installer');
   await cp(installer, path.join(output, release.assets.windows));
@@ -127,14 +128,15 @@ with zipfile.ZipFile(sys.argv[1]) as z:
   await cp(apk, path.join(output, release.assets.android));
   const webFolder = path.join(output, 'static/HushNest-web');
   await cp(web, webFolder, { recursive: true });
-  await writeFile(path.join(webFolder, 'README.txt'), `HushNest Web 0.1.0\nOnline: ${config.webApp}\n\nServe this directory with an HTTP/HTTPS static server; do not open index.html with file://.\nUse HTTPS (or localhost) for offline/PWA support. Audio caches after first use.\nKeep the browser and device awake for reminders. Web does not check headphones.\n`);
+  await writeFile(path.join(webFolder, 'README.txt'), `HushNest Web ${webPackage.version}\nOnline: ${config.webApp}\n\nServe this directory with an HTTP/HTTPS static server; do not open index.html with file://.\nUse HTTPS (or localhost) for offline/PWA support. Audio caches after first use.\nKeep the browser and device awake for reminders. Web does not check headphones.\n`);
   command('zip', ['-q', '-r', '-6', path.join(output, release.assets.web), 'HushNest-web'], { cwd: path.dirname(webFolder) });
   const files = [];
   for (const name of Object.values(release.assets)) files.push({ name, size: (await stat(path.join(output, name))).size, sha256: await sha256(path.join(output, name)) });
   await writeFile(path.join(output, checksumName), files.map(file => `${file.sha256}  ${file.name}`).join('\n') + '\n');
   files.push({ name: checksumName, size: (await stat(path.join(output, checksumName))).size, sha256: await sha256(path.join(output, checksumName)) });
   await writeFile(path.join(output, proofName), JSON.stringify({ schemaVersion: 1, releaseTag: release.tag, sourceCommit: release.sourceCommit, sourceRun: release.sourceRun, files }, null, 2) + '\n');
-  const notes = `HushNest 多平台预览：Windows / macOS 0.4.0，Android / Web 0.1.0。所有功能免费。\n\n` +
+  const notes = `HushNest 多平台预览：Windows / macOS ${desktop.version}，Android / Web ${webPackage.version}。所有功能免费。\n\n` +
+    (release.notes?.length ? release.notes.map(note => `- ${note}`).join('\n') + '\n\n' : '') +
     `| 平台 | 下载 / 使用 | 安装条件 |\n| --- | --- | --- |\n` +
     `| Windows x64 | [安装器](${assetURL(release.assets.windows)}) · [完整便携包](${assetURL(release.assets.windowsPortable)}) | 未签名测试包；安装器默认使用当前用户目录。便携版需保留整个解压目录。 |\n` +
     `| macOS 12+ | [通用 DMG](${assetURL(release.assets.macos)}) | Apple Silicon / Intel；当前未公证，系统可能要求确认打开。 |\n` +
