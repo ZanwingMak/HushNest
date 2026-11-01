@@ -87,8 +87,14 @@ try {
   await context.setOffline(true); await page.reload();
   await page.getByRole('heading', { name: '好好休息.' }).waitFor();
   const cached = await page.evaluate(async () => {
-    const response = await fetch('./audio/rain.wav', { headers: { Range: 'bytes=44-91' } });
-    return { status: response.status, bytes: (await response.arrayBuffer()).byteLength };
+    try {
+      const response = await fetch('./audio/rain.wav', { headers: { Range: 'bytes=44-91' } });
+      return { status: response.status, bytes: (await response.arrayBuffer()).byteLength };
+    } catch (error) {
+      const names = await caches.keys();
+      return { error: String(error), controller: navigator.serviceWorker.controller?.scriptURL,
+        caches: await Promise.all(names.map(async name => ({ name, urls: (await (await caches.open(name)).keys()).map(request => request.url) }))) };
+    }
   });
   assert.deepEqual(cached, { status: 206, bytes: 48 });
   await context.setOffline(false);

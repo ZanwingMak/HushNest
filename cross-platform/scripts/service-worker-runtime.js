@@ -1,7 +1,7 @@
 const audioDownloads = new Map();
 
 /** 为完整响应流生成单段 Range，已收到的数据立即返回，不等待文件尾部。 */
-function audioRange(response, range) {
+function audioRange(response, range, cachedBlob) {
   if (!range || response.status !== 200 || !response.body || response.headers.has('Content-Encoding')) return response;
   const size = Number(response.headers.get('Content-Length'));
   if (!Number.isSafeInteger(size) || size <= 0) return response;
@@ -13,7 +13,7 @@ function audioRange(response, range) {
     return new Response(null, { status: 416, headers: { 'Content-Range': `bytes */${size}` } });
   }
   let offset = 0;
-  const body = response.body.pipeThrough(new TransformStream({
+  const body = cachedBlob ? cachedBlob.slice(start, end + 1) : response.body.pipeThrough(new TransformStream({
     transform(chunk, controller) {
       const next = offset + chunk.byteLength;
       if (next > start && offset <= end) controller.enqueue(chunk.subarray(Math.max(0, start - offset), Math.min(chunk.byteLength, end + 1 - offset)));
@@ -56,7 +56,10 @@ async function respondAudio(event, background) {
   const cache = await caches.open(AUDIO_CACHE);
   const key = new Request(event.request.url);
   const full = await cache.match(key);
-  if (full) return audioRange(full, event.request.headers.get('range'));
+  if (full) {
+    const range = event.request.headers.get('range');
+    return range ? audioRange(full, range, await full.blob()) : full;
+  }
   const response = await fetch(event.request);
   if (response.status === 200) background.push(cacheAudio(cache, key, response));
   else if (response.status === 206) {
