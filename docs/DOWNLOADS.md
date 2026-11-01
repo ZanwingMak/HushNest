@@ -4,14 +4,14 @@
 
 ## 官方入口
 
-[官网选择平台](https://zanwingmak.github.io/HushNest/#downloads) · [Web 在线版](https://zanwingmak.github.io/HushNest/app/) · [多平台预览 Release](https://github.com/ZanwingMak/HushNest/releases/tag/multiplatform-v0.4.0) · [iOS 1.6.0](https://github.com/ZanwingMak/HushNest/releases/tag/v1.6.0)
+[官网选择平台](https://zanwingmak.github.io/HushNest/#downloads) · [Web 在线版](https://zanwingmak.github.io/HushNest/app/) · [多平台预览 Release](https://github.com/ZanwingMak/HushNest/releases/tag/multiplatform-v0.4.1) · [iOS 1.6.0](https://github.com/ZanwingMak/HushNest/releases/tag/v1.6.0)
 
 | 平台 | 下载文件 | 版本与条件 |
 | --- | --- | --- |
-| Windows | [安装器](https://github.com/ZanwingMak/HushNest/releases/download/multiplatform-v0.4.0/HushNest-0.4.0-windows-x64-setup.exe) · [完整便携包](https://github.com/ZanwingMak/HushNest/releases/download/multiplatform-v0.4.0/HushNest-0.4.0-windows-x64-portable.zip) | 0.4.0 / x64 / 未签名测试包 |
-| macOS | [通用 DMG](https://github.com/ZanwingMak/HushNest/releases/download/multiplatform-v0.4.0/HushNest-0.4.0-macos-universal.dmg) | 0.4.0 / macOS 12+ / Apple Silicon、Intel / 未公证测试包 |
-| Android | [测试 APK](https://github.com/ZanwingMak/HushNest/releases/download/multiplatform-v0.4.0/HushNest-0.1.0-android-debug.apk) | 0.1.0 / Android 9+ / 调试签名 |
-| Web | [在线使用](https://zanwingmak.github.io/HushNest/app/) · [静态包](https://github.com/ZanwingMak/HushNest/releases/download/multiplatform-v0.4.0/HushNest-0.1.0-web.zip) | 0.1.0 / 现代浏览器；HTTP / HTTPS 部署 |
+| Windows | [安装器](https://github.com/ZanwingMak/HushNest/releases/download/multiplatform-v0.4.1/HushNest-0.4.1-windows-x64-setup.exe) · [完整便携包](https://github.com/ZanwingMak/HushNest/releases/download/multiplatform-v0.4.1/HushNest-0.4.1-windows-x64-portable.zip) | 0.4.1 / x64 / 未签名测试包 |
+| macOS | [通用 DMG](https://github.com/ZanwingMak/HushNest/releases/download/multiplatform-v0.4.1/HushNest-0.4.1-macos-universal.dmg) | 0.4.1 / macOS 12+ / Apple Silicon、Intel / 未公证测试包 |
+| Android | [测试 APK](https://github.com/ZanwingMak/HushNest/releases/download/multiplatform-v0.4.1/HushNest-0.1.1-android-debug.apk) | 0.1.1 / Android 9+ / 调试签名 |
+| Web | [在线使用](https://zanwingmak.github.io/HushNest/app/) · [静态包](https://github.com/ZanwingMak/HushNest/releases/download/multiplatform-v0.4.1/HushNest-0.1.1-web.zip) | 0.1.1 / 现代浏览器；HTTP / HTTPS 部署 |
 | iPhone | [TestFlight](https://testflight.apple.com/join/cmFcXrjy) · [自行签名 IPA](https://github.com/ZanwingMak/HushNest/releases/download/v1.6.0/HushNest-1.6.0-unsigned.ipa) | iOS 1.6.0 / iOS 17+；TestFlight 名额由 Apple 管理，IPA 需自行签名 |
 
 多平台附件由固定的[主分支四平台构建](https://github.com/ZanwingMak/HushNest/actions/runs/41225418108)组装，源码提交为 `a1d2673bb861aa9158ca6f230583b5f49427f733`。固定版本的 Release 下载链接公开可用，无需依赖 Actions 登录或附件保留期限。多平台预览不会替换现有 iOS 发行附件，也不会变成 iOS 的“Latest”版本。
@@ -44,7 +44,7 @@ TestFlight 的外部开放、构建有效期与名额由 Apple 管理。Release 
 
 ## 校验文件
 
-[SHA256SUMS.txt](https://github.com/ZanwingMak/HushNest/releases/download/multiplatform-v0.4.0/SHA256SUMS.txt) 列出五个多平台附件的 SHA256；[HushNest-release-manifest.json](https://github.com/ZanwingMak/HushNest/releases/download/multiplatform-v0.4.0/HushNest-release-manifest.json) 记录来源提交、构建 ID、文件大小及摘要。iOS IPA 的摘要以其独立 Release 说明为准。
+[SHA256SUMS.txt](https://github.com/ZanwingMak/HushNest/releases/download/multiplatform-v0.4.1/SHA256SUMS.txt) 列出五个多平台附件的 SHA256；[HushNest-release-manifest.json](https://github.com/ZanwingMak/HushNest/releases/download/multiplatform-v0.4.1/HushNest-release-manifest.json) 记录来源提交、构建 ID、文件大小及摘要。iOS IPA 的摘要以其独立 Release 说明为准。
 
 Windows 可运行 `Get-FileHash -Algorithm SHA256 <文件>`；macOS 可运行 `shasum -a 256 <文件>`，与对应清单核对。
 

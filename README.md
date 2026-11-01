@@ -2,19 +2,19 @@
 
 免费开源的休息计时器，支持 iPhone、Android、Windows、macOS 和 Web。给自己片刻安静，让自然音陪你放松，再渐渐醒来。
 
-[官网与下载](https://zanwingmak.github.io/HushNest/#downloads) · [直接打开网页版](https://zanwingmak.github.io/HushNest/app/) · [多平台预览 Release](https://github.com/ZanwingMak/HushNest/releases/tag/multiplatform-v0.4.0) · [安装说明](docs/DOWNLOADS.md)
+[官网与下载](https://zanwingmak.github.io/HushNest/#downloads) · [直接打开网页版](https://zanwingmak.github.io/HushNest/app/) · [多平台预览 Release](https://github.com/ZanwingMak/HushNest/releases/tag/multiplatform-v0.4.1) · [安装说明](docs/DOWNLOADS.md)
 
 ## 下载
 
 | 平台 | 当前版本 | 下载 / 使用 | 条件 |
 | --- | --- | --- | --- |
-| Windows x64 | 0.4.0 预览 | [安装包](https://github.com/ZanwingMak/HushNest/releases/download/multiplatform-v0.4.0/HushNest-0.4.0-windows-x64-setup.exe) · [完整便携包](https://github.com/ZanwingMak/HushNest/releases/download/multiplatform-v0.4.0/HushNest-0.4.0-windows-x64-portable.zip) | MyGo 原生桌面；未签名测试包；默认当前用户安装。 |
-| macOS 12+ | 0.4.0 预览 | [通用 DMG](https://github.com/ZanwingMak/HushNest/releases/download/multiplatform-v0.4.0/HushNest-0.4.0-macos-universal.dmg) | Apple Silicon / Intel；当前未公证。 |
-| Android 9+ | 0.1.0 测试 | [APK](https://github.com/ZanwingMak/HushNest/releases/download/multiplatform-v0.4.0/HushNest-0.1.0-android-debug.apk) | 调试签名；非商店正式包。 |
+| Windows x64 | 0.4.1 预览 | [安装包](https://github.com/ZanwingMak/HushNest/releases/download/multiplatform-v0.4.1/HushNest-0.4.1-windows-x64-setup.exe) · [完整便携包](https://github.com/ZanwingMak/HushNest/releases/download/multiplatform-v0.4.1/HushNest-0.4.1-windows-x64-portable.zip) | MyGo 原生桌面；未签名测试包；默认当前用户安装。 |
+| macOS 12+ | 0.4.1 预览 | [通用 DMG](https://github.com/ZanwingMak/HushNest/releases/download/multiplatform-v0.4.1/HushNest-0.4.1-macos-universal.dmg) | Apple Silicon / Intel；当前未公证。 |
+| Android 9+ | 0.1.1 测试 | [APK](https://github.com/ZanwingMak/HushNest/releases/download/multiplatform-v0.4.1/HushNest-0.1.1-android-debug.apk) | 调试签名；非商店正式包。 |
 | iPhone · iOS 17+ | 1.6.0 | [TestFlight](https://testflight.apple.com/join/cmFcXrjy) · [自行签名 IPA](https://github.com/ZanwingMak/HushNest/releases/download/v1.6.0/HushNest-1.6.0-unsigned.ipa) | TestFlight 外部开放与名额由 Apple 管理；IPA 需要自行签名。 |
-| Web / PWA | 0.1.0 | [在线使用](https://zanwingmak.github.io/HushNest/app/) · [静态包](https://github.com/ZanwingMak/HushNest/releases/download/multiplatform-v0.4.0/HushNest-0.1.0-web.zip) | 不检测耳机；需保持浏览器打开及设备唤醒。 |
+| Web / PWA | 0.1.1 | [在线使用](https://zanwingmak.github.io/HushNest/app/) · [静态包](https://github.com/ZanwingMak/HushNest/releases/download/multiplatform-v0.4.1/HushNest-0.1.1-web.zip) | 不检测耳机；需保持浏览器打开及设备唤醒。 |
 
-多平台预览与原生 iOS 分别维护版本。[SHA256SUMS.txt](https://github.com/ZanwingMak/HushNest/releases/download/multiplatform-v0.4.0/SHA256SUMS.txt) 提供多平台附件摘要；[发行清单](https://github.com/ZanwingMak/HushNest/releases/download/multiplatform-v0.4.0/HushNest-release-manifest.json) 记录来源构建、源码提交和逐文件校验。长音轨随包提供，安装包体积较大。GitHub 自动生成的源码压缩包用于开发，不是安装器。
+多平台预览与原生 iOS 分别维护版本。[SHA256SUMS.txt](https://github.com/ZanwingMak/HushNest/releases/download/multiplatform-v0.4.1/SHA256SUMS.txt) 提供多平台附件摘要；[发行清单](https://github.com/ZanwingMak/HushNest/releases/download/multiplatform-v0.4.1/HushNest-release-manifest.json) 记录来源构建、源码提交和逐文件校验。长音轨随包提供，安装包体积较大。GitHub 自动生成的源码压缩包用于开发，不是安装器。
 
 ## 多平台功能与使用边界
 
@@ -84,7 +84,7 @@ bash scripts/package.sh
 
 ## 发布与许可
 
-[iOS 1.6.0](https://github.com/ZanwingMak/HushNest/releases/tag/v1.6.0) 提供长音轨、循环优化和实际时长显示，继续通过 TestFlight 和自行签名 IPA 分发。[多平台预览](https://github.com/ZanwingMak/HushNest/releases/tag/multiplatform-v0.4.0) 提供原生 MyGo 桌面、Web / Android、桌面设备二次确认、试听停止及独立长音包；具体版本与安装条件见上方下载表。
+[iOS 1.6.0](https://github.com/ZanwingMak/HushNest/releases/tag/v1.6.0) 提供长音轨、循环优化和实际时长显示，继续通过 TestFlight 和自行签名 IPA 分发。[多平台预览](https://github.com/ZanwingMak/HushNest/releases/tag/multiplatform-v0.4.1) 提供原生 MyGo 桌面、Web / Android、桌面设备二次确认、试听停止及独立长音包；具体版本与安装条件见上方下载表。
 
 应用代码、原创图标和合成音频使用 [MIT 许可证](LICENSE)。自然录音按各自来源的 CC0 / 公有领域许可分发，见 [iOS 音源清单](HushNest/Resources/FieldRecordings.json)和[跨平台第三方说明](cross-platform/THIRD_PARTY_NOTICES.md)。用户自行导入的媒体不包含在项目许可证内。
 
