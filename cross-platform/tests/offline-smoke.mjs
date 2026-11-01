@@ -45,7 +45,10 @@ try {
     for (const name of names.filter(name => name.startsWith('hushnest-audio-') && name !== 'hushnest-audio-v1')) {
       const cache = await caches.open(name);
       const responses = await Promise.all(sounds.map(sound => cache.match(new URL(`./audio/${sound}.wav`, location.href).href)));
-      if (responses.every(Boolean)) return true;
+      if (responses.every(Boolean)) {
+        const bodies = await Promise.all(responses.map(response => response.arrayBuffer()));
+        if (bodies.every((body, index) => body.byteLength === Number(responses[index].headers.get('Content-Length')))) return true;
+      }
     }
     return false;
   }, ['rain', 'dawn'], { timeout: 15000 });
