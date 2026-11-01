@@ -80,6 +80,7 @@ type restService struct {
 	outputToken  string
 	previewUntil int64
 	previewSound string
+	previewAlarm bool
 	lastRoute    int64
 	lastSave     int64
 	active       atomic.Bool
@@ -167,10 +168,13 @@ func (s *restService) routeLocked() error {
 	s.lastRoute = time.Now().UnixMilli()
 	return nil
 }
+
+// stopAudioLocked 清除播放与试听用途，防止后续音量命令重新启动声音。
 func (s *restService) stopAudioLocked() {
 	s.audioKey = ""
 	s.previewUntil = 0
 	s.previewSound = ""
+	s.previewAlarm = false
 	_ = s.backend.request("stop", nil, nil)
 }
 func (s *restService) blockLocked(now int64, reason string) {
@@ -193,6 +197,8 @@ func (s *restService) finishLocked(now int64, completed bool) error {
 	s.outputToken = ""
 	return s.saveLocked()
 }
+
+// command 在同一锁内更新会话和试听音量，不重置正在播放的试听进度。
 func (s *restService) command(input CommandInput) (result Snapshot, err error) {
 	s.mu.Lock()
 	defer func() { result = s.snapshotLocked(); s.mu.Unlock(); s.notify() }()
@@ -262,6 +268,16 @@ func (s *restService) command(input CommandInput) (result Snapshot, err error) {
 	case "clearRecords":
 		s.state.Records = []RestRecord{}
 	case "volume":
+		if s.previewUntil > now {
+			volume := p.SleepVolume
+			if s.previewAlarm {
+				volume = p.AlarmVolume
+			}
+			if err = s.backend.request("volume", map[string]any{"value": volume}, nil); err != nil {
+				s.stopAudioLocked()
+				return
+			}
+		}
 	case "stopPreview":
 		if v != nil {
 			return result, errors.New("session-active")
@@ -284,6 +300,7 @@ func (s *restService) command(input CommandInput) (result Snapshot, err error) {
 		if err == nil {
 			s.previewUntil = time.Now().UnixMilli() + previewSeconds*1000
 			s.previewSound = input.Sound
+			s.previewAlarm = alarm
 			s.outputToken = s.route.Token
 		}
 		return

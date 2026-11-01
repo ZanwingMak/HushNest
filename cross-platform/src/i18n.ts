@@ -2,6 +2,14 @@ import type { Language } from './core/model';
 // Existing product copy comes directly from the untouched Swift localization resources.
 // Only platform-specific copy is defined here, in the same six languages.
 const newCopy: Record<string, string[]> = {
+  '庭院细雨，真实录音': ['庭院细雨，真实录音', '庭院細雨，真實錄音', 'Garden rain · field recording', '庭の雨音 · 実録', '정원의 빗소리 · 현장 녹음', 'Lluvia en el jardín · grabación real'],
+  '真实海浪，缓慢起落': ['真实海浪，缓慢起落', '真實海浪，緩慢起落', 'Real waves, rolling gently', 'ゆっくり寄せる自然の波', '천천히 밀려오는 자연의 파도', 'Olas reales que llegan suavemente'],
+  '自然溪水，连续流淌': ['自然溪水，连续流淌', '自然溪水，連續流淌', 'Natural flowing stream', '自然のせせらぎ', '자연의 흐르는 시냇물', 'Arroyo natural de agua continua'],
+  '林间鸟鸣，清晨实录': ['林间鸟鸣，清晨实录', '林間鳥鳴，清晨實錄', 'Dawn birds in the forest', '森の朝の鳥のさえずり', '이른 아침 숲속 새소리', 'Aves del bosque al amanecer'],
+  '柴火燃烧，真实噼啪': ['柴火燃烧，真实噼啪', '柴火燃燒，真實噼啪', 'Real wood fire and crackles', '薪が燃えてはぜる音', '장작이 타며 탁탁거리는 소리', 'Fuego de leña y crepitaciones reales'],
+  '夜间蟋蟀，自然虫鸣': ['夜间蟋蟀，自然虫鸣', '夜間蟋蟀，自然蟲鳴', 'Crickets recorded at night', '夜のコオロギと虫の声', '밤에 녹음한 귀뚜라미 소리', 'Grillos grabados por la noche'],
+  '深沉平稳，减轻沙沙声': ['深沉平稳，减轻沙沙声', '深沉平穩，減輕沙沙聲', 'Deep and steady, less hiss', '深く穏やかな低音', '깊고 안정적인 부드러운 소리', 'Sonido grave y estable, con menos siseo'],
+  '均衡柔和的声音毯': ['均衡柔和的声音毯', '均衡柔和的聲音毯', 'A balanced, soft blanket of sound', '均整のとれた柔らかい音', '균형 잡힌 부드러운 소리', 'Una suave capa de sonido equilibrado'],
   '循环衔接': ['循环衔接', '循環銜接', 'Smooth loop', 'スムーズなループ', '부드러운 반복', 'Bucle suave'],
   headphoneDeviceConfirm: ['我确认此设备是耳机，不是音箱或车载设备', '我確認此裝置是耳機，而非音箱或車載裝置', 'This output device is headphones, not a speaker or car', 'この出力機器はスピーカーや車載機器ではなくイヤホンです', '이 출력 기기는 스피커나 차량이 아닌 이어폰입니다', 'Este dispositivo de salida son auriculares, no un altavoz ni un coche'],
   '把提醒留给自己': ['把提醒留给自己', '把提醒留給自己', 'A MOMENT FOR YOU', '自分だけのひととき', '나만을 위한 순간', 'UN MOMENTO PARA TI'],

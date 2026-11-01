@@ -564,11 +564,16 @@ func (a *nativeApp) selectChoice(c *ui.Context, label string, value *string, cho
 	}
 	return element
 }
+
+// volume 在试听期间立即发送增益，其余设置沿用原有的延迟保存。
 func (a *nativeApp) volume(c *ui.Context, label string, value *float64, low, high float64) {
 	t := c.Theme()
 	ui.Row(c).Gap(8).Children(func() {
 		if ui.Slider(c, value, low, high).Label(a.t(label)).Grow(1).Disabled(a.busy).Changed() {
 			a.changed()
+			if a.snapshot.PreviewSound != "" {
+				a.save()
+			}
 		}
 		nestText(c, fmt.Sprintf("%d%%", int(math.Round(*value*100)))).FontSize(10).FontFeatures("tnum").TextColor(t.TextMuted).Width(30).TextAlign(ui.End)
 	})

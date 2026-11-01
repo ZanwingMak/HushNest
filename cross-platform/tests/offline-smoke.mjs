@@ -39,6 +39,16 @@ try {
     return { status: response.status, length: (await response.arrayBuffer()).byteLength };
   });
   assert.deepEqual(online, { status: 206, length: 44 });
+  // 完整缓存异步完成后才进入离线；首个 Range 响应无需等待整轨下载。
+  await page.waitForFunction(async sounds => {
+    const names = await caches.keys();
+    for (const name of names.filter(name => name.startsWith('hushnest-audio-') && name !== 'hushnest-audio-v1')) {
+      const cache = await caches.open(name);
+      const responses = await Promise.all(sounds.map(sound => cache.match(new URL(`./audio/${sound}.wav`, location.href).href)));
+      if (responses.every(Boolean)) return true;
+    }
+    return false;
+  }, ['rain', 'dawn'], { timeout: 15000 });
   await context.setOffline(true); await page.reload();
   await page.getByRole('heading', { name: '好好休息.' }).waitFor();
   const offline = await page.evaluate(async () => {
